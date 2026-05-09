@@ -41,6 +41,20 @@ export default function AdminPanel() {
   const [editingCat, setEditingCat] = useState(null);
   const [newSub, setNewSub]         = useState({ name: "", points: "" });
 
+  // Subcategory editing state
+  const [editingSub, setEditingSub]   = useState(null); // { catId, sub }
+  const [editSubForm, setEditSubForm] = useState({ name: "", points: "" });
+
+  // Level management state
+  const [managingLevelsCat, setManagingLevelsCat] = useState(null); // catId
+  const [managingLevelsSub, setManagingLevelsSub] = useState(null); // subId
+  const [newLevel, setNewLevel] = useState({ name: "", prizes: [
+    { type: "Participation", points: "" },
+    { type: "First", points: "" },
+    { type: "Second", points: "" },
+    { type: "Third", points: "" },
+  ]});
+
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
@@ -180,6 +194,44 @@ export default function AdminPanel() {
       setCategories(p => p.map(c => c._id !== catId ? c : { ...c, subcategories: c.subcategories.filter(s => s._id !== subId) }));
       flash("Subcategory removed");
     } catch { flash("Failed to remove subcategory", "error"); }
+  };
+
+  const handleEditSubOpen = (cat, sub) => {
+    setEditingSub({ catId: cat._id, subId: sub._id });
+    setEditSubForm({ name: sub.name, points: sub.fixedPoints != null ? String(sub.fixedPoints) : "" });
+  };
+
+  const handleEditSubSave = async () => {
+    if (!editingSub) return;
+    const { catId, subId } = editingSub;
+    try {
+      const payload = { name: editSubForm.name, points: editSubForm.points !== "" ? Number(editSubForm.points) : null };
+      const res = await adminAxios.put(`/admin/categories/${catId}/subcategory/${subId}`, payload);
+      setCategories(p => p.map(c => c._id === catId ? res.data.category : c));
+      setEditingSub(null);
+      flash("Subcategory updated");
+    } catch (err) { flash(err.response?.data?.error || "Failed to update subcategory", "error"); }
+  };
+
+  const handleAddLevel = async () => {
+    if (!managingLevelsCat || !managingLevelsSub) return;
+    if (!newLevel.name.trim()) return flash("Level name required", "error");
+    const prizes = newLevel.prizes.filter(p => p.points !== "").map(p => ({ type: p.type, points: Number(p.points) }));
+    try {
+      const res = await adminAxios.post(`/admin/categories/${managingLevelsCat}/subcategory/${managingLevelsSub}/level`, { name: newLevel.name, prizes });
+      setCategories(p => p.map(c => c._id === managingLevelsCat ? res.data.category : c));
+      setNewLevel({ name: "", prizes: [{ type: "Participation", points: "" }, { type: "First", points: "" }, { type: "Second", points: "" }, { type: "Third", points: "" }] });
+      flash("Level added");
+    } catch (err) { flash(err.response?.data?.error || "Failed to add level", "error"); }
+  };
+
+  const handleDeleteLevel = async (catId, subId, levelName) => {
+    if (!window.confirm(`Remove level "${levelName}"?`)) return;
+    try {
+      const res = await adminAxios.delete(`/admin/categories/${catId}/subcategory/${subId}/level/${encodeURIComponent(levelName)}`);
+      setCategories(p => p.map(c => c._id === catId ? res.data.category : c));
+      flash("Level removed");
+    } catch (err) { flash(err.response?.data?.error || "Failed to remove level", "error"); }
   };
 
   const exportExcel = () => {
@@ -508,17 +560,86 @@ export default function AdminPanel() {
                     <div className="ap-sub-list">
                       {cat.subcategories.map(s => (
                         <div key={s._id} className="ap-sub-item">
-                          <div>
-                            <span className="ap-sub-name">{s.name}</span>
-                            <span className="ap-sub-pts">{s.fixedPoints ?? "level-based"} pts</span>
-                            {s.maxPoints && <span className="ap-sub-pts" style={{ background: "#fff7ed", color: "#ea580c" }}>cap {s.maxPoints}</span>}
+                          {editingSub?.catId === cat._id && editingSub?.subId === s._id ? (
+                            <div className="ap-sub-edit-row">
+                              <input className="ap-input ap-sub-edit-input" value={editSubForm.name} onChange={e => setEditSubForm({ ...editSubForm, name: e.target.value })} placeholder="Name"/>
+                              <input className="ap-input ap-sub-edit-input" type="number" value={editSubForm.points} onChange={e => setEditSubForm({ ...editSubForm, points: e.target.value })} placeholder="Points (blank=level-based)"/>
+                              <button className="btn ap-btn sm" onClick={handleEditSubSave}><Edit2 size={12}/> Save</button>
+                              <button className="btn ap-btn sm" onClick={() => setEditingSub(null)}>Cancel</button>
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="ap-sub-name">{s.name}</span>
+                              <span className="ap-sub-pts">{s.fixedPoints != null ? `${s.fixedPoints} pts` : "level-based"}</span>
+                              {s.maxPoints && <span className="ap-sub-pts" style={{ background: "#fff7ed", color: "#ea580c" }}>cap {s.maxPoints}</span>}
+                              {s.levels?.length > 0 && <span className="ap-sub-pts" style={{ background: "#f0fdf4", color: "#16a34a" }}>{s.levels.length} level{s.levels.length > 1 ? "s" : ""}</span>}
+                            </div>
+                          )}
+                          <div style={{ display: "flex", gap: "0.3rem", flexShrink: 0 }}>
+                            {!(editingSub?.catId === cat._id && editingSub?.subId === s._id) && (
+                              <>
+                                <button className="btn ap-btn sm" onClick={() => handleEditSubOpen(cat, s)} title="Edit subcategory"><Edit2 size={12}/></button>
+                                <button className="btn ap-btn sm" style={{ background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0" }}
+                                  onClick={() => { setManagingLevelsCat(cat._id); setManagingLevelsSub(s._id); }}
+                                  title="Manage levels"
+                                >Levels</button>
+                              </>
+                            )}
+                            <button className="btn ap-btn sm danger" onClick={() => handleDeleteSub(cat._id, s._id)}><Trash2 size={12}/></button>
                           </div>
-                          <button className="btn ap-btn sm danger" onClick={() => handleDeleteSub(cat._id, s._id)}>
-                            <Trash2 size={12}/>
-                          </button>
                         </div>
                       ))}
                     </div>
+                  )}
+
+                  {/* Levels management panel */}
+                  {managingLevelsCat === cat._id && (
+                    (() => {
+                      const subForLevels = cat.subcategories.find(s => s._id === managingLevelsSub);
+                      return (
+                        <div className="ap-levels-panel">
+                          <div className="ap-levels-header">
+                            <span>Levels for: <strong>{subForLevels?.name || "Subcategory"}</strong></span>
+                            <button className="btn ap-btn sm" onClick={() => { setManagingLevelsCat(null); setManagingLevelsSub(null); }}>Close ✕</button>
+                          </div>
+
+                          {subForLevels?.levels?.length > 0 ? (
+                            <div className="ap-levels-list">
+                              {subForLevels.levels.map(lvl => (
+                                <div key={lvl.name} className="ap-level-row">
+                                  <span className="ap-level-name">{lvl.name}</span>
+                                  <div className="ap-level-prizes">
+                                    {lvl.prizes.map(p => (
+                                      <span key={p.type} className="ap-prize-badge">{p.type}: {p.points}pts</span>
+                                    ))}
+                                  </div>
+                                  <button className="btn ap-btn sm danger" onClick={() => handleDeleteLevel(cat._id, managingLevelsSub, lvl.name)}><Trash2 size={11}/></button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : <p className="ap-levels-empty">No levels yet.</p>}
+
+                          <div className="ap-add-level-form">
+                            <strong style={{ fontSize: "0.82rem" }}>Add Level</strong>
+                            <input className="ap-input" placeholder="Level name (e.g. College Level)" value={newLevel.name} onChange={e => setNewLevel({ ...newLevel, name: e.target.value })}/>
+                            <div className="ap-prizes-grid">
+                              {newLevel.prizes.map((p, i) => (
+                                <div key={p.type} className="ap-prize-input">
+                                  <label>{p.type}</label>
+                                  <input className="ap-input" type="number" placeholder="pts" value={p.points}
+                                    onChange={e => {
+                                      const updated = [...newLevel.prizes];
+                                      updated[i] = { ...updated[i], points: e.target.value };
+                                      setNewLevel({ ...newLevel, prizes: updated });
+                                    }}/>
+                                </div>
+                              ))}
+                            </div>
+                            <button className="btn-primary ap-btn" style={{ marginTop: "0.5rem" }} onClick={handleAddLevel}><Plus size={13}/> Add Level</button>
+                          </div>
+                        </div>
+                      );
+                    })()
                   )}
                 </div>
               ))}

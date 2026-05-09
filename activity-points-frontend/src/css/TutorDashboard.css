@@ -160,3 +160,49 @@
     padding: 1rem;
   }
 }
+
+@media (max-width: 480px) {
+  .tutor-dashboard {
+    padding: 0.5rem;
+  }
+
+  .dashboard-header {
+    padding: 0.75rem;
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .dashboard-header p {
+    font-size: 0.8rem;
+    display: none; /* hide sub-text on very small screens */
+  }
+
+  .tutor-avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 1rem;
+  }
+
+  .btn-logout {
+    font-size: 0.85rem;
+    padding: 10px 0;
+    border-radius: 10px;
+  }
+
+  .nested-content {
+    padding: 0.75rem;
+    border-radius: 12px;
+  }
+
+  .tutor-bottom-nav {
+    padding: 0.6rem 0;
+  }
+
+  .tutor-bottom-nav .nav-button {
+    font-size: 0.7rem;
+  }
+}

@@ -178,4 +178,50 @@ router.delete("/categories/:categoryId/subcategory/:subId", adminAuth, async (re
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Edit a subcategory (name + fixedPoints)
+router.put("/categories/:categoryId/subcategory/:subId", adminAuth, async (req, res) => {
+  try {
+    const { name, points } = req.body;
+    const cat = await Category.findById(req.params.categoryId);
+    if (!cat) return res.status(404).json({ error: "Category not found" });
+    const sub = cat.subcategories.id(req.params.subId);
+    if (!sub) return res.status(404).json({ error: "Subcategory not found" });
+    if (name) sub.name = name;
+    sub.fixedPoints = points != null ? Number(points) : null;
+    await cat.save();
+    res.json({ success: true, category: cat });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// Add a level to a subcategory
+router.post("/categories/:categoryId/subcategory/:subId/level", adminAuth, async (req, res) => {
+  try {
+    const { name, prizes } = req.body;
+    const cat = await Category.findById(req.params.categoryId);
+    if (!cat) return res.status(404).json({ error: "Category not found" });
+    const sub = cat.subcategories.id(req.params.subId);
+    if (!sub) return res.status(404).json({ error: "Subcategory not found" });
+    if (sub.levels.find(l => l.name === name)) return res.status(400).json({ error: "Level already exists" });
+    sub.levels.push({ name, prizes: prizes || [] });
+    // If this subcategory has levels, clear fixedPoints so it's level-based
+    sub.fixedPoints = null;
+    await cat.save();
+    res.json({ success: true, category: cat });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// Delete a level from a subcategory
+router.delete("/categories/:categoryId/subcategory/:subId/level/:levelName", adminAuth, async (req, res) => {
+  try {
+    const cat = await Category.findById(req.params.categoryId);
+    if (!cat) return res.status(404).json({ error: "Category not found" });
+    const sub = cat.subcategories.id(req.params.subId);
+    if (!sub) return res.status(404).json({ error: "Subcategory not found" });
+    const levelName = decodeURIComponent(req.params.levelName);
+    sub.levels = sub.levels.filter(l => l.name !== levelName);
+    await cat.save();
+    res.json({ success: true, category: cat });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 module.exports = router;

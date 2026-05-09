@@ -122,36 +122,70 @@ const StudentList = () => {
       const mR = 12;
       const mT = 10;
 
-      // Draw page header — returns bottom Y of header
+      // Draw full page header (only on page 1) — returns bottom Y of header
       const drawHeader = () => {
-        try { doc.addImage(logo, 'PNG', mL, mT - 2, 22, 22); } catch (_) {}
+      try {
+        doc.addImage(logo, 'PNG', mL, mT - 2, 30, 30);
+      } catch (_) {}
 
-        const textCX = pageW / 2 + 8;
+      const textCX = pageW / 2 + 8;
 
-        doc.setFontSize(10.5);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(15, 40, 100);
-        const deptName = tutorBranch?.name
-          ? `DEPARTMENT OF ${tutorBranch.name.toUpperCase()}`
-          : 'DEPARTMENT OF COMPUTER ENGINEERING';
-        doc.text(deptName, textCX, mT + 4, { align: 'center' });
+      // Department
+      doc.setFontSize(10.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 40, 100);
 
-        doc.setFontSize(9.5);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text("MAHARAJA'S TECHNOLOGICAL INSTITUTE (MTI)", textCX, mT + 10, { align: 'center' });
+      const deptName = tutorBranch?.name
+        ? `DEPARTMENT OF ${tutorBranch.name.toUpperCase()}`
+        : 'DEPARTMENT OF COMPUTER ENGINEERING';
 
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.5);
-        doc.setTextColor(60, 60, 60);
-        doc.text('Chembukkavu, Thrissur, Kerala – 680020', textCX, mT + 15, { align: 'center' });
-        doc.text('Affiliated to SBTE Kerala | AICTE Approved | Est. 1946', textCX, mT + 19.5, { align: 'center' });
+      doc.text(deptName, textCX, mT + 4, { align: 'center' });
 
-        doc.setDrawColor(15, 40, 100);
-        doc.setLineWidth(0.7);
-        doc.line(mL, mT + 23, pageW - mR, mT + 23);
-        return mT + 23;
-      };
+      // College Name
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
+
+      doc.text(
+        "MAHARAJA'S TECHNOLOGICAL INSTITUTE (MTI)",
+        textCX,
+        mT + 10,
+        { align: 'center' }
+      );
+
+      // Address Details
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(60, 60, 60);
+
+      doc.text(
+        'Chembukkavu, Thrissur, Kerala – 680020',
+        textCX,
+        mT + 15,
+        { align: 'center' }
+      );
+
+      doc.text(
+        'Affiliated to SBTE Kerala | AICTE Approved | Est. 1946',
+        textCX,
+        mT + 20,
+        { align: 'center' }
+      );
+
+      doc.text(
+        'Phone: 0487-2333290 | E-Mail: mtithrsr@mtithrissur.ac.in',
+        textCX,
+        mT + 25,
+        { align: 'center' }
+      );
+
+      // Bottom line
+      doc.setDrawColor(15, 40, 100);
+      doc.setLineWidth(0.7);
+      doc.line(mL, mT + 29, pageW - mR, mT + 29);
+
+      return mT + 29;
+    };
 
       // Draw blue title banner — returns bottom Y
       const drawTitleBand = (y) => {
@@ -168,6 +202,8 @@ const StudentList = () => {
         doc.setTextColor(0, 0, 0);
         return y + 11;
       };
+
+      
 
       // Footer — added after all pages are done
       const addFooters = () => {
@@ -219,10 +255,8 @@ const StudentList = () => {
         // Rough height check — page break if needed
         const estH = 38 + Math.max(approvedCerts.length, 1) * 8;
         if (curY + estH > pageH - 14 && idx > 0) {
-          doc.addPage();
-          curY = drawHeader();
-          curY = drawTitleBand(curY);
-          curY += 5;
+          doc.addPage();         
+          curY = 18;
         }
 
         // ── Student info card ─────────────────────────────────────────────────
@@ -275,7 +309,7 @@ const StudentList = () => {
         doc.setFont('helvetica', 'italic');
         doc.setTextColor(...(student.isLateralEntry ? [130, 90, 0] : [100, 100, 100]));
         doc.text(
-          student.isLateralEntry ? '✦ Lateral Entry (needs 40 pts)' : 'Regular (needs 60 pts)',
+          student.isLateralEntry ? 'Lateral Entry (needs 40 pts)' : 'Regular (needs 60 pts)',
           rX - 18, curY + 5, { align: 'right' }
         );
 

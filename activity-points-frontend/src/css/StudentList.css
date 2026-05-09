@@ -260,3 +260,48 @@
   width: 36px;
   min-width: 36px;
 }
+
+/* ── Mobile Improvements ── */
+@media (max-width: 640px) {
+  .student-list-card { border-radius: 0; box-shadow: none; }
+
+  .sl-header { padding: 0.75rem 0.75rem 0; }
+  .sl-title-row { gap: 0.5rem; }
+  .sl-title-row h2 { font-size: 1.1rem; }
+
+  .sl-filters {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .sl-search-group, .sl-select, .sl-sort-group { width: 100%; }
+  .sl-sort-select { min-width: unset !important; width: 100%; }
+
+  .sl-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    width: 100%;
+  }
+
+  .sl-actions .sl-btn { justify-content: center; }
+
+  .sl-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  .sl-table { min-width: 520px; font-size: 0.78rem; }
+
+  /* Hide less important columns on mobile */
+  .sl-table th:nth-child(4),
+  .sl-table td:nth-child(4),
+  .sl-table th:nth-child(5),
+  .sl-table td:nth-child(5),
+  .sl-table th:nth-child(6),
+  .sl-table td:nth-child(6) {
+    display: none;
+  }
+
+  .sl-action-cell { flex-direction: column; gap: 0.25rem; min-width: 80px; }
+
+  .sl-scope-badge { padding: 0 0.75rem 0.5rem; }
+}
