@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 const authMiddleware = require('../middleware/auth');
+const imagekit = require('../utils/imagekit');
+const Certificate = require('../models/Certificate');
 const {
   uploadCertificate,
   getMyCertificates
@@ -12,5 +14,41 @@ router.post('/upload', authMiddleware, uploadCertificate);
 
 // Get logged-in student's certificates
 router.get('/my', authMiddleware, getMyCertificates);
+
+// DELETE /certificates/:id — student cancels their own pending certificate
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const cert = await Certificate.findById(req.params.id);
+
+    if (!cert) {
+      return res.status(404).json({ error: 'Certificate not found' });
+    }
+
+    // Safety: only the owning student can delete
+    if (cert.student.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorised to delete this certificate' });
+    }
+
+    // Only pending certificates can be cancelled by the student
+    if (cert.status !== 'pending') {
+      return res.status(400).json({ error: 'Only pending certificates can be cancelled' });
+    }
+
+    // Remove file from ImageKit (best-effort — don't fail if it errors)
+    if (cert.fileId) {
+      try {
+        await imagekit.deleteFile(cert.fileId);
+      } catch (ikErr) {
+        console.warn('ImageKit delete warning:', ikErr.message);
+      }
+    }
+
+    await Certificate.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true, message: 'Certificate cancelled and deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;

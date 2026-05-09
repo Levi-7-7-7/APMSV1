@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import {
   ArrowLeft, FileText, Calendar, Award,
-  Eye, Download, CheckCircle, Clock, XCircle, Package
+  Eye, Download, CheckCircle, Clock, XCircle, Package, Trash2
 } from 'lucide-react';
 import '../css/certificatespage.css';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +19,7 @@ export default function CertificatesPage() {
   const [modalUrl, setModalUrl] = useState(null);
   const [modalFile, setModalFile] = useState('');
   const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -134,6 +135,19 @@ export default function CertificatesPage() {
       }
     } finally {
       setBulkDownloading(false);
+    }
+  };
+
+  const handleCancelCert = async (cert) => {
+    if (!window.confirm(`Cancel and delete "${cert.eventName || cert.subcategory || 'this certificate'}"? This cannot be undone.`)) return;
+    setDeletingId(cert._id);
+    try {
+      await axiosInstance.delete(`/certificates/${cert._id}`);
+      setCertificates(prev => prev.filter(c => c._id !== cert._id));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to cancel certificate. Please try again.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -299,6 +313,17 @@ export default function CertificatesPage() {
                   You can re-upload a corrected certificate if needed.
                 </div>
               </div>
+            )}
+
+            {cert.status?.toLowerCase() === 'pending' && (
+              <button
+                className="cert-cancel-btn"
+                onClick={() => handleCancelCert(cert)}
+                disabled={deletingId === cert._id}
+              >
+                <Trash2 size={14} />
+                {deletingId === cert._id ? 'Cancelling…' : 'Cancel & Delete'}
+              </button>
             )}
           </div>
         ))}

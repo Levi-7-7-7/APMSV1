@@ -47,6 +47,20 @@ const CertificateSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  // Student-entered name of the specific event / competition / course
+  eventName: {
+    type: String,
+    default: ''
+  },
+  // Activity duration / certificate date range (optional)
+  dateFrom: {
+    type: Date,
+    default: null
+  },
+  dateTo: {
+    type: Date,
+    default: null
+  },
   // Reason provided by tutor when rejecting
   rejectionReason: {
     type: String,

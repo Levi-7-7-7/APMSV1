@@ -209,3 +209,13 @@
   gap: 0.5rem;
   background: #fafafa;
 }
+
+/* PDF loading spinner */
+.sl-spin {
+  animation: sl-spin 1s linear infinite;
+}
+@keyframes sl-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+

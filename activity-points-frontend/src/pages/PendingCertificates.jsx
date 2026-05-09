@@ -323,10 +323,25 @@ const PendingCertificates = () => {
               <p><strong>Category:</strong> {cert.category?.name || 'N/A'}</p>
               <p><strong>Subcategory:</strong> {cert.subcategory || 'N/A'}</p>
 
+              {cert.eventName && (
+                <p><strong>Event / Competition:</strong> {cert.eventName}</p>
+              )}
+
               {(cert.level || cert.prizeType) && (
                 <p className="level-info">
                   <Award size={14}/>
                   {cert.level ?? ''}{cert.level && cert.prizeType ? ' · ' : ''}{cert.prizeType ?? ''}
+                </p>
+              )}
+
+              {/* Duration / Date range */}
+              {(cert.dateFrom || cert.dateTo) && (
+                <p style={{ fontSize: '0.82rem', color: '#475569', marginTop: '0.2rem' }}>
+                  <strong>Duration:</strong>{' '}
+                  {cert.dateFrom ? new Date(cert.dateFrom).toLocaleDateString('en-IN') : '—'}
+                  {cert.dateTo && cert.dateTo !== cert.dateFrom
+                    ? ` → ${new Date(cert.dateTo).toLocaleDateString('en-IN')}`
+                    : ''}
                 </p>
               )}
 

@@ -13,7 +13,7 @@ exports.uploadCertificate = [
   async (req, res) => {
     try {
       const studentId = req.user.id;
-      const { categoryId, subcategoryName, level, prizeType } = req.body;
+      const { categoryId, subcategoryName, level, prizeType, eventName, dateFrom, dateTo } = req.body;
 
       if (!req.file || !categoryId || !subcategoryName) {
         return res.status(400).json({ message: "Missing required fields (file, categoryId, subcategoryName)" });
@@ -52,6 +52,9 @@ exports.uploadCertificate = [
         subcategory:     subcategoryName,   // FIX: store name string, not ObjectId
         level:           level   || null,
         prizeType:       prizeType || null,
+        eventName:       eventName?.trim() || '',
+        dateFrom:        dateFrom || null,
+        dateTo:          dateTo   || null,
         fileUrl:         uploadResult.url,
         fileId:          uploadResult.fileId,
         potentialPoints,

@@ -33,6 +33,7 @@ export default function CertificateUploadScreen() {
 
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [eventName, setEventName] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -169,6 +170,7 @@ export default function CertificateUploadScreen() {
       }
       if (dateFrom) formData.append('dateFrom', dateFrom);
       if (dateTo) formData.append('dateTo', dateTo);
+      if (eventName.trim()) formData.append('eventName', eventName.trim());
       formData.append('file', uploadedFile);
 
       await axiosInstance.post('/certificates/upload', formData, {
@@ -323,6 +325,18 @@ export default function CertificateUploadScreen() {
                   <option key={p} value={p}>{p}</option>
                 ))}
               </select>
+            )}
+
+            {/* Event Name — always shown once subcategory is selected */}
+            {subcategoryName && (
+              <input
+                type="text"
+                className="upload-select"
+                placeholder="Event / Competition / Course name (e.g. NPTEL Python 2024, Hackathon MTI)"
+                value={eventName}
+                onChange={e => setEventName(e.target.value)}
+                maxLength={120}
+              />
             )}
 
             {/* Eligible Points */}
