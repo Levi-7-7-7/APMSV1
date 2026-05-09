@@ -1,0 +1,417 @@
+/* ===================== ROOT CONTAINER ===================== */
+.viewcertificates-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc, #dbeafe, #d1fae5);
+  padding: 0 24px 80px;
+  max-width: 720px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #334155;
+}
+
+/* ===================== HEADER ===================== */
+.header {
+  display: flex;
+  align-items: center;
+  padding: 48px 0 24px;
+}
+
+.back-button {
+  padding: 8px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.back-button:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-left: 16px;
+  color: #1e293b;
+}
+
+/* ===================== SUMMARY ===================== */
+.summary-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border-radius: 1rem;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  margin-bottom: 24px;
+}
+
+.points-summary {
+  text-align: right;
+}
+
+.points-summary .points {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.points-summary p {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+/* ===================== FILTERS ===================== */
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.filter-btn {
+  padding: 8px 20px;
+  border-radius: 9999px;
+  border: none;
+  background: white;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+  background-color: #2563eb;
+  color: white;
+}
+
+.filter-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ===================== STATES ===================== */
+.loading-text,
+.error-text {
+  text-align: center;
+  font-size: 1rem;
+  margin: 20px 0;
+}
+
+.error-text {
+  color: #dc2626;
+}
+
+/* ===================== CERTIFICATE LIST ===================== */
+.certificates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===================== CERTIFICATE CARD ===================== */
+.certificate-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+/* Header inside card */
+.cert-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+/* Category row */
+.cert-category-subcat {
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.category-badge {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.category-technical {
+  background: #bfdbfe;
+  color: #1e40af;
+}
+
+.category-cultural {
+  background: #ddd6fe;
+  color: #5b21b6;
+}
+
+.category-sports {
+  background: #bbf7d0;
+  color: #15803d;
+}
+
+.category-socialservice {
+  background: #fed7aa;
+  color: #c2410c;
+}
+
+.category-default {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.separator {
+  user-select: none;
+}
+
+/* Prize / level */
+.prize-level {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: #78350f;
+  margin-bottom: 12px;
+}
+
+.award-icon {
+  color: #fbbf24;
+}
+
+/* ===================== STATUS BADGE ===================== */
+.status-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-approved {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-pending {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-default {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+/* ===================== FOOTER ===================== */
+.cert-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dates-points > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.points-text {
+  font-weight: 700;
+  color: #15803d;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-view,
+.btn-download {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 6px 14px;
+  cursor: pointer;
+  background: white;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.btn-view {
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+}
+
+.btn-view:hover {
+  background: #dbeafe;
+}
+
+.btn-download {
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+
+.btn-download:hover {
+  background: #f1f5f9;
+}
+
+/* ===================== REJECTED ===================== */
+.rejected-reason {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.875rem;
+}
+
+/* ===================== EMPTY STATE ===================== */
+.no-certificates {
+  text-align: center;
+  padding: 48px 24px;
+  color: #64748b;
+}
+
+.upload-first-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  font-weight: 600;
+  border-radius: 1rem;
+  cursor: pointer;
+  margin-top: 12px;
+}
+
+/* ===================== MOBILE FIXES ===================== */
+@media (max-width: 480px) {
+
+  .viewcertificates-container {
+    padding: 0 16px 96px;
+  }
+
+  .header {
+    padding: 24px 0 16px;
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
+
+  .summary-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .points-summary {
+    text-align: left;
+  }
+
+  /* 🔑 Move status badge into flow */
+  .status-badge {
+    position: static;
+    margin-top: 8px;
+    align-self: flex-start;
+  }
+
+  .cert-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .cert-category-subcat {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .cert-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .btn-view,
+  .btn-download {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 0;
+  }
+}
+
+/* ── Enhanced rejection reason block ── */
+.rejected-reason {
+  margin-top: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid #fca5a5;
+}
+
+.rejected-reason-header {
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  letter-spacing: .02em;
+}
+
+.rejected-reason-body {
+  background: #fef2f2;
+  color: #7f1d1d;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  line-height: 1.5;
+}
+
+.rejected-reason-action {
+  background: #fff1f2;
+  color: #9f1239;
+  font-size: 0.78rem;
+  font-style: italic;
+  padding: 5px 12px;
+  border-top: 1px solid #fecaca;
+}

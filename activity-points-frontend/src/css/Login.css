@@ -1,0 +1,351 @@
+/* =========================
+   GLOBAL
+========================= */
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f0f4f8, #dbeafe, #d1fae5);
+  min-height: 100vh;
+}
+
+/* =========================
+   LAYOUT
+========================= */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;   /* IMPORTANT */
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+/* Desktop background spacing */
+@media (min-width: 900px) {
+  .login-container {
+    padding: 4rem;
+  }
+}
+
+.login-card {
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 28px;
+  box-shadow:
+    0 20px 50px rgba(0,0,0,0.08),
+    0 8px 20px rgba(0,0,0,0.05);
+  backdrop-filter: blur(12px);
+
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Slight desktop hover feel */
+@media (min-width: 900px) {
+  .login-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 30px 60px rgba(0,0,0,0.12),
+      0 12px 25px rgba(0,0,0,0.08);
+  }
+}
+
+/* =========================
+   HEADER
+========================= */
+.login-header {
+  text-align: center;
+  margin-bottom: 1.8rem;
+}
+
+.login-header svg {
+  width: 54px;
+  height: 54px;
+  color: #2563eb;
+  margin-bottom: 0.6rem;
+}
+
+.login-header h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  color: #1e293b;
+}
+
+.login-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 1rem;
+}
+
+/* =========================
+   FORM
+========================= */
+.form-group {
+  margin-bottom: 1.3rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.95rem;
+}
+
+.form-input,
+.form-select {
+  height: 48px;
+  padding: 0 1rem;
+  border: 2px solid #cbd5e1;
+  border-radius: 18px;
+  font-size: 1rem;
+  transition: all 0.25s ease;
+  background: white;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+
+/* =========================
+   PASSWORD FIELD
+========================= */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.password-wrapper .form-input {
+  padding-right: 3rem;
+}
+
+.show-password-btn {
+  position: absolute;
+  right: 14px;
+  bottom: 0;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.show-password-btn:hover {
+  color: #1e293b;
+}
+
+/* =========================
+   FORM FOOTER
+========================= */
+.form-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 0.7rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.65rem 0.8rem;
+  border-radius: 14px;
+  font-size: 0.95rem;
+}
+
+.checkbox-label input {
+  width: 18px;
+  height: 18px;
+}
+
+.form-footer::after {
+  content: '';
+  height: 1px;
+  background: #e2e8f0;
+}
+
+/* =========================
+   FORGOT PASSWORD
+========================= */
+.forgot-password {
+  align-self: center;
+  padding: 0.55rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: #eff6ff;
+  cursor: pointer;
+  border: none;
+  transition: 0.2s;
+}
+
+.forgot-password:hover {
+  background: #dbeafe;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(90deg, #2563eb, #1e40af);
+  border: none;
+  color: white;
+  padding: 0.8rem 0;
+  border-radius: 24px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(37,99,235,0.35);
+}
+
+.btn-primary:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  width: 100%;
+  border: 2px solid #22c55e;
+  background: none;
+  color: #22c55e;
+  padding: 0.8rem 0;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: #dcfce7;
+}
+
+/* =========================
+   FEEDBACK
+========================= */
+.error-message {
+  color: #dc2626;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.success-message {
+  color: #16a34a;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* =========================
+   FOOTER
+========================= */
+.footer-text {
+  text-align: center;
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+/* =========================
+   SPINNER
+========================= */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+/* =========================
+   MOBILE
+========================= */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 1.8rem 1.4rem;
+    border-radius: 22px;
+  }
+
+  .login-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .forgot-password {
+    width: 100%;
+    text-align: center;
+  }
+}
+/* =========================
+   ROLE TABS
+========================= */
+.role-tabs {
+  display: flex;
+  border-radius: 16px;
+  background: #f1f5f9;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.role-tab {
+  flex: 1;
+  padding: 0.55rem 0;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.role-tab:hover:not(:disabled) {
+  color: #1e293b;
+  background: rgba(255,255,255,0.6);
+}
+
+.role-tab.active {
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.role-tab.admin-tab.active {
+  color: #7c3aed;
+}
+
+/* =========================
+   ADMIN BUTTON
+========================= */
+.btn-primary.btn-admin {
+  background: linear-gradient(90deg, #7c3aed, #5b21b6);
+}
+
+.btn-primary.btn-admin:hover:not(:disabled) {
+  box-shadow: 0 10px 20px rgba(124,58,237,0.35);
+}

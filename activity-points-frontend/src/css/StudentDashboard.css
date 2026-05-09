@@ -1,0 +1,416 @@
+/* Container */
+.student-dashboard {
+  max-width: 720px;
+  margin: 2rem auto;
+  font-family: 'Inter', sans-serif;
+  color: #334155;
+  padding: 0 1rem 80px 1rem; /* Added 80px bottom padding */
+}
+
+/* Header */
+.dashboard-header {
+  background: linear-gradient(135deg, #f0f9ff, #dbeafe);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 20px rgb(219 234 254 / 0.5);
+  margin-bottom: 2rem;
+}
+
+/* Header top flex */
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* 👈 important */
+  gap: 1rem;
+}
+
+
+.avatar-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  color: white;
+  font-weight: 700;
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.greeting h1 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.greeting p {
+  margin: 0;
+  color: #64748b;
+}
+
+/* Header actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+
+.notification-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #334155;
+  transition: color 0.2s ease-in-out;
+}
+
+.notification-btn:hover {
+  color: #3b82f6;
+}
+
+.logout-btn-header {
+  background-color: #ef4444;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.25s ease-in-out;
+  user-select: none;
+}
+
+.logout-btn-header:hover {
+  background-color: #b91c1c;
+}
+
+/* Points card */
+.points-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 5px 15px rgb(219 234 254 / 0.4);
+  flex-wrap: wrap; /* wrap for mobile */
+  gap: 1rem;
+}
+
+.points-info p {
+  margin: 0;
+  font-weight: 600;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.points-info h2 {
+  margin: 0.25rem 0 0.5rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.award-icon {
+  font-size: 2.5rem;
+}
+
+/* Main dashboard */
+.dashboard-main h3 {
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 1rem;
+}
+
+.recent-activities-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2rem 0 1rem 0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.recent-activities-header button {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.recent-activities-header button:hover {
+  background-color: #dbeafe;
+}
+
+.activities-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgb(219 234 254 / 0.4);
+  padding: 1rem;
+}
+
+.no-activities {
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* Activity rows */
+.activity-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  align-items: center;
+  flex-wrap: wrap; /* allow stacking on mobile */
+}
+
+.activity-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.activity-icon-wrapper {
+  font-size: 1.5rem;
+  color: #fbbf24;
+}
+
+.activity-details h4 {
+  margin: 0 0 0.2rem 0;
+  font-weight: 600;
+  color: #334155;
+}
+
+.activity-details p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.activity-right {
+  text-align: right;
+}
+
+.activity-points {
+  font-weight: 700;
+  color: #334155;
+  margin: 0 0 0.25rem 0;
+}
+
+.status-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  user-select: none;
+}
+
+.status-approved {
+  background-color: #dcfce7;
+  color: #22c55e;
+}
+
+.status-pending {
+  background-color: #fed7aa;
+  color: #ea580c;
+}
+
+/* Bottom navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  display: flex;
+  background: white;
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -1px 5px rgb(0 0 0 / 0.05);
+  z-index: 100;
+}
+
+/* 🔑 THIS IS THE KEY */
+.nav-btn {
+  flex: 1; /* 👈 equal width for all buttons */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  background: none;
+  border: none;
+  padding: 0.5rem 0;
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.nav-btn span {
+  margin-top: 4px;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.nav-btn.active {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+/* =================== MEDIA QUERIES FOR MOBILE =================== */
+/* Ensure the nav doesn't overlap on very small screens */
+@media (max-width: 768px) {
+  .student-dashboard {
+    margin: 1rem;
+    padding: 0 0.5rem 100px 0.5rem; /* Even more padding for mobile if needed */
+  }
+
+
+  .greeting h1 {
+    font-size: 1.25rem;
+  }
+
+  .points-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .points-info h2 {
+    font-size: 2rem;
+  }
+
+  .dashboard-header {
+    padding: 1rem;
+  }
+
+ .header-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    align-self: flex-end; /* 👈 logout moves to right */
+  }
+
+  .recent-activities-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .activity-row {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 0.5rem;
+  }
+
+  .activity-right {
+    text-align: left;
+  }
+}
+/* Skeleton Base */
+.skeleton {
+  background: #e2e8f0;
+  background: linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);
+  background-size: 200% 100%;
+  animation: shine 1.5s linear infinite;
+  border-radius: 4px;
+}
+
+.skeleton-text { width: 60px; height: 32px; margin-top: 8px; }
+.skeleton-line { width: 100%; height: 16px; margin-left: 10px; }
+.skeleton-circle { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+@keyframes shine {
+  to { background-position-x: -200%; }
+}
+
+
+
+/* ===================== PASS / APPROVED CARD ===================== */
+.pass-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.25);
+}
+
+.pass-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pass-icon {
+  color: #15803d;
+}
+
+.pass-left h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #14532d;
+}
+
+.pass-left p {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: #166534;
+}
+
+.pass-badge {
+  background: #16a34a;
+  color: white;
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 9999px;
+  letter-spacing: 0.05em;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .pass-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .pass-badge {
+    align-self: flex-start;
+  }
+}

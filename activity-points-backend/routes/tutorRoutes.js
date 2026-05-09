@@ -1,0 +1,317 @@
+const express   = require('express');
+const jwt       = require('jsonwebtoken');
+const bcrypt    = require('bcryptjs');
+const multer    = require('multer');
+const fs        = require('fs');
+const csv       = require('csv-parser');
+const tutorAuth = require('../middleware/tutorAuth');
+
+const Tutor       = require('../models/Tutor');
+const Student     = require('../models/Student');
+const Certificate = require('../models/Certificate');
+const Category    = require('../models/Category');
+
+const router = express.Router();
+const upload = multer({ dest: 'uploads/' });
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+// Calculate capped grand-total for a student given their approved certs + category data
+function calcCappedPoints(approvedCerts, categories) {
+  const grouped = approvedCerts.reduce((acc, cert) => {
+    const catId = cert.category.toString();
+    if (!acc[catId]) acc[catId] = [];
+    acc[catId].push(cert);
+    return acc;
+  }, {});
+
+  let grandTotal = 0;
+  Object.keys(grouped).forEach(catId => {
+    const catData = categories.find(c => c._id.toString() === catId);
+    if (!catData) return;
+    const certsInCat = grouped[catId];
+    const catName    = catData.name.toLowerCase();
+    let catSum       = 0;
+    if (catName.includes('arts') || catName.includes('sports')) {
+      catSum = Math.max(...certsInCat.map(c => c.pointsAwarded || 0), 0);
+    } else {
+      catSum = certsInCat.reduce((s, c) => s + (c.pointsAwarded || 0), 0);
+    }
+    grandTotal += Math.min(catSum, catData.maxPoints || 40);
+  });
+  return grandTotal;
+}
+
+// ─── LOGIN ────────────────────────────────────────────────────────────────────
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const tutor = await Tutor.findOne({ email })
+      .populate('batch',  'name')
+      .populate('branch', 'name');
+    if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
+
+    const isMatch = await bcrypt.compare(password, tutor.password);
+    if (!isMatch) return res.status(400).json({ error: 'Invalid password' });
+
+    const token = jwt.sign(
+      { id: tutor._id, role: 'tutor' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      message: 'Login successful',
+      token,
+      tutor: {
+        id:     tutor._id,
+        name:   tutor.name,
+        email:  tutor.email,
+        batch:  tutor.batch  ? { _id: tutor.batch._id,  name: tutor.batch.name  } : null,
+        branch: tutor.branch ? { _id: tutor.branch._id, name: tutor.branch.name } : null,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── GET STUDENTS (filtered to tutor's batch + branch) ───────────────────────
+router.get('/students', tutorAuth, async (req, res) => {
+  try {
+    // Fetch the tutor so we know their assigned batch/branch
+    const tutor = await Tutor.findById(req.tutor.id);
+    if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
+
+    // Build query — only filter if the tutor has an assignment
+    const query = {};
+    if (tutor.batch)  query.batch  = tutor.batch;
+    if (tutor.branch) query.branch = tutor.branch;
+
+    const students = await Student.find(query)
+      .populate('batch',  'name')
+      .populate('branch', 'name')
+      .sort({ name: 1 }); // alphabetical order
+
+    const categories = await Category.find();
+
+    const studentsWithPoints = await Promise.all(students.map(async (student) => {
+      const approvedCerts = await Certificate.find({ student: student._id, status: 'approved' });
+      return { ...student.toObject(), totalPoints: calcCappedPoints(approvedCerts, categories) };
+    }));
+
+    res.json({ success: true, students: studentsWithPoints });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── DELETE STUDENT ───────────────────────────────────────────────────────────
+router.delete('/students/:id', tutorAuth, async (req, res) => {
+  try {
+    const tutor   = await Tutor.findById(req.tutor.id);
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+
+    // Safety: tutor can only delete students in their own batch/branch
+    if (tutor.batch  && student.batch  && student.batch.toString()  !== tutor.batch.toString())
+      return res.status(403).json({ error: 'Student not in your assigned batch' });
+    if (tutor.branch && student.branch && student.branch.toString() !== tutor.branch.toString())
+      return res.status(403).json({ error: 'Student not in your assigned branch' });
+
+    await Certificate.deleteMany({ student: student._id });
+    await Student.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Student deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── UPLOAD STUDENTS via CSV ──────────────────────────────────────────────────
+router.post('/students/upload', tutorAuth, upload.single('file'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+  const tutor   = await Tutor.findById(req.tutor.id);
+  const results = [];
+
+  fs.createReadStream(req.file.path)
+    .pipe(csv())
+    .on('data', (data) => results.push(data))
+    .on('end', async () => {
+      try {
+        const studentsToInsert = results.map(s => ({
+          name:               s.name?.trim(),
+          registerNumber:     s.registerNumber?.trim(),
+          email:              s.email?.trim(),
+          batch:              tutor?.batch  || undefined,
+          branch:             tutor?.branch || undefined,
+          firstLoginCompleted: false,
+          isVerified:         false,
+        }));
+
+        const inserted = await Student.insertMany(studentsToInsert, { ordered: false });
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        res.json({ message: `${inserted.length} students uploaded successfully` });
+      } catch (err) {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        res.status(400).json({ error: err.message });
+      }
+    });
+});
+
+// ─── PENDING CERTIFICATES (tutor's batch+branch students only) ───────────────
+router.get('/certificates/pending', tutorAuth, async (req, res) => {
+  try {
+    const tutor = await Tutor.findById(req.tutor.id);
+    const query = {};
+    if (tutor?.batch)  query.batch  = tutor.batch;
+    if (tutor?.branch) query.branch = tutor.branch;
+
+    // Get student IDs in this tutor's scope
+    const students = await Student.find(query).select('_id');
+    const studentIds = students.map(s => s._id);
+
+    const certs = await Certificate.find({ status: 'pending', student: { $in: studentIds } })
+      .populate('student', 'name registerNumber email batch branch')
+      .populate('category');
+
+    res.json(certs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── ALL CERTIFICATES (tutor's scope) ────────────────────────────────────────
+router.get('/certificates', tutorAuth, async (req, res) => {
+  try {
+    const tutor = await Tutor.findById(req.tutor.id);
+    const query = {};
+    if (tutor?.batch)  query.batch  = tutor.batch;
+    if (tutor?.branch) query.branch = tutor.branch;
+
+    const students   = await Student.find(query).select('_id');
+    const studentIds = students.map(s => s._id);
+
+    const certs = await Certificate.find({ student: { $in: studentIds } })
+      .populate('student',  'name registerNumber email batch branch totalPoints')
+      .populate('category', 'name subcategories maxPoints');
+
+    res.json({ success: true, certificates: certs });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── APPROVE CERTIFICATE ─────────────────────────────────────────────────────
+router.post('/certificates/:id/approve', tutorAuth, async (req, res) => {
+  try {
+    const cert = await Certificate.findById(req.params.id);
+    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+
+    const category = await Category.findById(cert.category);
+    if (!category) return res.status(404).json({ error: 'Category not found' });
+
+    const sub = category.subcategories.find(
+      s => s.name.toLowerCase() === cert.subcategory.toLowerCase()
+    );
+    if (!sub) return res.status(404).json({ error: 'Subcategory not found in category' });
+
+    let pointsToAward = 0;
+
+    if (sub.fixedPoints !== null && sub.fixedPoints !== undefined) {
+      pointsToAward = sub.fixedPoints;
+    } else if (sub.levels?.length) {
+      const levelObj = sub.levels.find(
+        l => l.name.toLowerCase() === (cert.level || '').toLowerCase()
+      );
+      if (!levelObj) return res.status(400).json({ error: 'Invalid competition level on certificate' });
+      const prizeObj = levelObj.prizes.find(p => p.type === cert.prizeType);
+      if (!prizeObj) return res.status(400).json({ error: 'Invalid prize type on certificate' });
+      pointsToAward = prizeObj.points;
+    }
+
+    if (sub.maxPoints !== null && sub.maxPoints !== undefined) {
+      pointsToAward = Math.min(pointsToAward, sub.maxPoints);
+    }
+
+    cert.status       = 'approved';
+    cert.pointsAwarded = pointsToAward;
+    await cert.save();
+
+    const student = await Student.findByIdAndUpdate(
+      cert.student,
+      { $inc: { totalPoints: pointsToAward } },
+      { new: true }
+    );
+
+    res.json({ message: 'Certificate approved', pointsAwarded: pointsToAward, studentTotalPoints: student.totalPoints });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── REJECT CERTIFICATE ───────────────────────────────────────────────────────
+router.post('/certificates/:id/reject', tutorAuth, async (req, res) => {
+  try {
+    const cert = await Certificate.findById(req.params.id);
+    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+
+    cert.status          = 'rejected';
+    cert.pointsAwarded   = 0;
+    cert.rejectionReason = req.body.reason || '';
+    await cert.save();
+
+    res.json({ message: 'Certificate rejected' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── REASSIGN CERTIFICATE (change category / subcategory / level / prizeType) ─
+router.patch('/certificates/:id/reassign', tutorAuth, async (req, res) => {
+  try {
+    const { categoryId, subcategoryName, level, prizeType } = req.body;
+
+    if (!categoryId || !subcategoryName) {
+      return res.status(400).json({ error: 'categoryId and subcategoryName are required' });
+    }
+
+    const cert = await Certificate.findById(req.params.id);
+    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+
+    // Verify category exists
+    const category = await Category.findById(categoryId);
+    if (!category) return res.status(404).json({ error: 'Category not found' });
+
+    // Verify subcategory exists within that category
+    const sub = category.subcategories.find(
+      s => s.name.toLowerCase() === subcategoryName.toLowerCase()
+    );
+    if (!sub) return res.status(404).json({ error: 'Subcategory not found in selected category' });
+
+    // Calculate new potential points
+    let potentialPoints = 0;
+    if (sub.fixedPoints != null) {
+      potentialPoints = sub.fixedPoints;
+    } else if (sub.levels?.length && level && prizeType) {
+      const lvl   = sub.levels.find(l => l.name.toLowerCase() === level.toLowerCase());
+      const prize = lvl?.prizes.find(p => p.type === prizeType);
+      potentialPoints = prize?.points ?? 0;
+    }
+
+    cert.category        = categoryId;
+    cert.subcategory     = subcategoryName;
+    cert.level           = level   || null;
+    cert.prizeType       = prizeType || null;
+    cert.potentialPoints = potentialPoints;
+    // Keep status as pending so tutor still needs to approve after reassigning
+    cert.status          = 'pending';
+    await cert.save();
+
+    res.json({ message: 'Certificate reassigned successfully', potentialPoints });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;

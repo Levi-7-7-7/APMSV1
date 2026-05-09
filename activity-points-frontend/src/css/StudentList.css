@@ -1,0 +1,211 @@
+/* ── Student List ── */
+.student-list-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  overflow: hidden;
+}
+
+.sl-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.sl-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #0f172a;
+}
+
+.sl-title-row h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.sl-count {
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.sl-scope-badge {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.sl-scope-badge strong { color: #2563eb; }
+
+.sl-msg {
+  background: #f0fdf4;
+  color: #15803d;
+  border-left: 3px solid #22c55e;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.85rem;
+}
+
+/* ── Filters ── */
+.sl-filters {
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.sl-search-group {
+  position: relative;
+  flex: 1;
+  min-width: 160px;
+}
+
+.sl-search-icon {
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.sl-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color .15s;
+  box-sizing: border-box;
+}
+
+.sl-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+
+.sl-select {
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  outline: none;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+
+.sl-select:focus { border-color: #2563eb; }
+
+.sl-actions { display: flex; gap: 0.4rem; }
+
+/* ── Buttons ── */
+.sl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 7px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #0f172a;
+  transition: all .15s;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.9rem;
+}
+
+.sl-btn.sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
+
+.sl-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+.sl-btn.outline { background: #fff; }
+
+.sl-btn.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+.sl-btn.primary:hover { background: #1d4ed8; }
+
+.sl-btn.danger { background: #fef2f2; color: #dc2626; border-color: #fca5a5; }
+.sl-btn.danger:hover { background: #fee2e2; }
+
+.sl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Table ── */
+.sl-table-wrap { overflow-x: auto; }
+
+.sl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.sl-table thead tr {
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.sl-table th {
+  padding: 0.7rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.sl-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.sl-table tbody tr:hover td { background: #f8fafc; }
+.sl-table tbody tr:last-child td { border-bottom: none; }
+
+.sl-name  { font-weight: 600; color: #0f172a; }
+.sl-mono  { font-family: monospace; font-size: 0.85rem; color: #475569; }
+.sl-email { color: #64748b; font-size: 0.85rem; }
+
+.sl-pts {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.sl-pts.pass { background: #dcfce7; color: #15803d; }
+.sl-pts.mid  { background: #fef9c3; color: #a16207; }
+
+.sl-action-cell { display: flex; gap: 0.4rem; }
+
+.sl-loading, .sl-empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+/* Legend for lateral entry */
+.sl-legend {
+  padding: 0.6rem 1.5rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fafafa;
+}

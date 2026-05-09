@@ -1,0 +1,320 @@
+/* Container */
+.certificate-upload-container {
+  min-height: 100vh;
+  padding-bottom: 80px; /* space for BottomNav */
+  max-width: 720px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #334155;
+  background: linear-gradient(135deg, #f8fafc, #dbeafe, #d1fae5);
+}
+
+/* Header */
+.certificate-upload-container header {
+  display: flex;
+  align-items: center;
+  padding: 24px;
+}
+
+.certificate-upload-container .back-button {
+  padding: 8px;
+  border-radius: 16px;
+  background: rgba(255 255 255 / 0.8);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: box-shadow 0.2s ease;
+}
+.certificate-upload-container .back-button:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.certificate-upload-container .title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-left: 16px;
+  color: #1e293b;
+}
+
+/* Main content */
+.certificate-upload-container main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 24px;
+}
+
+/* Select dropdowns */
+.certificate-upload-container .upload-select {
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  background: white;
+  color: #1e293b;
+}
+
+/* Eligible points */
+.certificate-upload-container .eligible-points {
+  margin-top: 16px;
+  padding: 16px;
+  background: #ecfeff;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.certificate-upload-container .eligible-points strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #0c4a6e;
+}
+
+.certificate-upload-container .eligible-points p {
+  font-size: 0.875rem;
+  color: #334155;
+  margin: 0;
+}
+
+/* Custom file input */
+.certificate-upload-container .upload-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.certificate-upload-container .upload-input {
+  display: none;
+}
+
+.certificate-upload-container .upload-input-btn {
+  padding: 12px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.certificate-upload-container .upload-input-btn:hover {
+  background-color: #2563eb;
+}
+
+/* Submit button */
+.certificate-upload-container .upload-btn {
+  padding: 12px 16px;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 600;
+}
+
+.certificate-upload-container .upload-btn:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.certificate-upload-container .upload-btn:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+/* Success screen */
+.certificate-upload-container .success-screen {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ========================
+   SEARCH SECTION
+======================== */
+.upload-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.search-section {
+  position: relative;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 36px 10px 36px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-size: 14px;
+  background: white;
+  color: #1e293b;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+
+.search-clear {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+}
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 100;
+  overflow: hidden;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s;
+}
+
+.search-result-item:hover {
+  background: #f0f9ff;
+}
+
+.result-sub {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.result-cat {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.others-option {
+  border-top: 2px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.others-option .result-sub {
+  color: #7c3aed;
+}
+
+/* ========================
+   OTHERS SECTION
+======================== */
+.others-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.others-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f3f0ff;
+  border: 1px solid #c4b5fd;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 600;
+  color: #6d28d9;
+  font-size: 14px;
+}
+
+.others-clear {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6d28d9;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ========================
+   DATE / DURATION SECTION
+======================== */
+.date-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.date-row {
+  display: flex;
+  gap: 12px;
+}
+
+.date-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.date-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.date-input {
+  font-size: 13px !important;
+}
