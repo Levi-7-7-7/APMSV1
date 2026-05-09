@@ -219,3 +219,44 @@
   to   { transform: rotate(360deg); }
 }
 
+
+/* ── Sort control ── */
+.sl-sort-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.sl-sort-icon {
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #2563eb;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sl-sort-select {
+  padding-left: 2rem !important;
+  border-color: #bfdbfe !important;
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  font-weight: 600 !important;
+  min-width: 190px;
+}
+
+.sl-sort-select:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+}
+
+/* ── Rank column ── */
+.sl-rank {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #94a3b8;
+  width: 36px;
+  min-width: 36px;
+}

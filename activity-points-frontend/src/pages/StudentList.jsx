@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import tutorAxios from '../api/tutorAxios';
-import { Download, Search, Trash2, Eye, Users, Loader2 } from 'lucide-react';
+import { Download, Search, Trash2, Eye, Users, Loader2, ArrowUpDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -60,6 +60,7 @@ const StudentList = () => {
   const [deleting,      setDeleting]      = useState(null);
   const [msg,           setMsg]           = useState('');
   const [pdfLoading,    setPdfLoading]    = useState(false);
+  const [sortBy,        setSortBy]        = useState('regNo'); // 'regNo' | 'name' | 'points'
 
   const tutorBatch  = JSON.parse(localStorage.getItem('tutorBatch')  || 'null');
   const tutorBranch = JSON.parse(localStorage.getItem('tutorBranch') || 'null');
@@ -102,6 +103,11 @@ const StudentList = () => {
     const batchOk  = batchFilter  ? s.batch?.name  === batchFilter  : true;
     const branchOk = branchFilter ? s.branch?.name === branchFilter : true;
     return nameOk && regOk && batchOk && branchOk;
+  }).slice().sort((a, b) => {
+    if (sortBy === 'name')   return (a.name || '').localeCompare(b.name || '');
+    if (sortBy === 'points') return (b.totalPoints || 0) - (a.totalPoints || 0);
+    // default: register number
+    return (a.registerNumber || '').localeCompare(b.registerNumber || '', undefined, { numeric: true });
   });
 
   const exportExcel = () => {
@@ -457,6 +463,20 @@ const StudentList = () => {
           {branchOptions.map(b => <option key={b} value={b}>{b}</option>)}
         </select>
 
+        <div className="sl-sort-group">
+          <ArrowUpDown size={14} className="sl-sort-icon" />
+          <select
+            className="sl-select sl-sort-select"
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+            title="Sort students"
+          >
+            <option value="regNo">Sort: Reg. No.</option>
+            <option value="name">Sort: Name (A–Z)</option>
+            <option value="points">Sort: Highest Points</option>
+          </select>
+        </div>
+
         <div className="sl-actions">
           <button className="sl-btn outline" onClick={exportExcel} title="Export Excel">
             <Download size={15} /> Excel
@@ -485,6 +505,7 @@ const StudentList = () => {
           <table className="sl-table">
             <thead>
               <tr>
+                <th>#</th>
                 <th>Name</th>
                 <th>Reg No</th>
                 <th>Batch</th>
@@ -495,8 +516,9 @@ const StudentList = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(s => (
+              {filtered.map((s, idx) => (
                 <tr key={s._id}>
+                  <td className="sl-rank">{idx + 1}</td>
                   <td className="sl-name">{s.name}</td>
                   <td className="sl-mono">{s.registerNumber}</td>
                   <td>{s.batch?.name || '—'}</td>
