@@ -1,10 +1,10 @@
 /* =================== TUTOR DASHBOARD =================== */
 .tutor-dashboard {
   min-height: 100vh;
-  background: #f9fafb; /* softer background */
+  background: #f9fafb;
   box-sizing: border-box;
   font-family: 'Inter', sans-serif;
-  padding: 1rem;
+  padding: 1rem 1rem 6rem 1rem; /* 6rem bottom = clears fixed bottom nav */
 }
 
 /* Header */
@@ -95,7 +95,50 @@
   font-size: 1rem;
 }
 
-/* Bottom nav */
+/* Bottom nav — matches TutorBottomNav component classes */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-around;
+  padding: 0.6rem 0;
+  padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+  z-index: 100;
+}
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #6b7280;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.72rem;
+  transition: all 0.25s ease;
+  padding: 0.2rem 0.5rem;
+  flex: 1;
+  gap: 3px;
+}
+
+.nav-btn span {
+  margin-top: 2px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.nav-btn.active {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+/* Keep old class names as fallback */
 .tutor-bottom-nav {
   position: fixed;
   bottom: 0;
@@ -105,7 +148,8 @@
   border-top: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-around;
-  padding: 0.75rem 0;
+  padding: 0.6rem 0;
+  padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
   box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
   z-index: 100;
 }
@@ -119,7 +163,7 @@
   border: none;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   transition: all 0.25s ease;
 }
 
@@ -163,7 +207,7 @@
 
 @media (max-width: 480px) {
   .tutor-dashboard {
-    padding: 0.5rem;
+    padding: 0.5rem 0.5rem 6.5rem 0.5rem;
   }
 
   .dashboard-header {
@@ -178,7 +222,7 @@
 
   .dashboard-header p {
     font-size: 0.8rem;
-    display: none; /* hide sub-text on very small screens */
+    display: none;
   }
 
   .tutor-avatar {
@@ -198,11 +242,20 @@
     border-radius: 12px;
   }
 
+  .bottom-nav,
   .tutor-bottom-nav {
-    padding: 0.6rem 0;
+    padding: 0.5rem 0;
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
   }
 
+  .nav-btn,
   .tutor-bottom-nav .nav-button {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
+  }
+
+  .nav-btn svg,
+  .tutor-bottom-nav .nav-button svg {
+    width: 20px;
+    height: 20px;
   }
 }

@@ -35,7 +35,7 @@ const TutorDashboard = () => {
     .toUpperCase();
 
   return (
-    <div className="tutor-dashboard p-4 pb-20">
+    <div className="tutor-dashboard">
       {/* Header */}
       <header className="dashboard-header flex flex-wrap justify-between items-center gap-4 mb-4">
         <div className="header-left flex items-center gap-3">
