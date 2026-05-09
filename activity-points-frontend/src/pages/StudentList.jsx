@@ -7,43 +7,14 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import '../css/StudentList.css';
 import logo from '../assets/mti-logo.png';
+import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
 
-// ─── Activity-points calculation (mirrors SBTE Kerala rules) ─────────────────
-// Rules:
-//   • Regular students  → need 60 pts to pass, max 40 pts from any single segment
-//   • Lateral entry     → need 40 pts to pass, max 30 pts from any single segment
-//   • Arts / Sports     → only the HIGHEST single award counts per category (no stacking)
-function calcCappedTotal(approvedCerts, isLateralEntry) {
-  const PER_CAT_CAP = isLateralEntry ? 30 : 40;
-
-  const grouped = {};
-  approvedCerts.forEach(cert => {
-    const catId   = cert.category?._id || cert.category;
-    const catName = (cert.category?.name || '').toLowerCase();
-    if (!grouped[catId]) {
-      grouped[catId] = { certs: [], catName, maxPoints: cert.category?.maxPoints ?? 40 };
-    }
-    grouped[catId].certs.push(cert);
-  });
-
-  let grandTotal = 0;
-  Object.values(grouped).forEach(({ certs, catName, maxPoints }) => {
-    // Lateral entry: further cap each segment to 30
-    const effectiveCap = isLateralEntry ? Math.min(maxPoints, PER_CAT_CAP) : maxPoints;
-
-    let catSum = 0;
-    if (catName.includes('arts') || catName.includes('sports')) {
-      catSum = Math.max(...certs.map(c => c.pointsAwarded || 0), 0);
-    } else {
-      catSum = certs.reduce((s, c) => s + (c.pointsAwarded || 0), 0);
-    }
-    grandTotal += Math.min(catSum, effectiveCap);
-  });
-
-  return grandTotal;
-}
-
-const PASS_THRESHOLD = (isLateral) => (isLateral ? 40 : 60);
+// Alias so existing code using PASS_THRESHOLD(isLateral) still works
+const PASS_THRESHOLD = (isLateral) => passThreshold(isLateral);
+// Alias so PDF export using calcCappedTotal(certs, isLateral) still works
+// The backend already pre-calculates totalPoints correctly — this is only used in PDF export
+const calcCappedTotal = (approvedCerts, isLateralEntry) =>
+  calcCappedPoints(approvedCerts, [], isLateralEntry);
 
 // ─── Component ───────────────────────────────────────────────────────────────
 const StudentList = () => {

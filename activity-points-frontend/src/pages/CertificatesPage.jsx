@@ -7,30 +7,34 @@ import {
 import '../css/certificatespage.css';
 import { useNavigate } from 'react-router-dom';
 import CertModal from '../components/CertModal';
+import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
 
 export default function CertificatesPage() {
   const navigate = useNavigate();
 
   const [certificates, setCertificates] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories]     = useState([]);
+  const [user, setUser]                 = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [modalUrl, setModalUrl] = useState(null);
-  const [modalFile, setModalFile] = useState('');
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState(null);
+  const [modalUrl, setModalUrl]         = useState(null);
+  const [modalFile, setModalFile]       = useState('');
   const [bulkDownloading, setBulkDownloading] = useState(false);
-  const [deletingId, setDeletingId] = useState(null);
+  const [deletingId, setDeletingId]     = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [certRes, catRes] = await Promise.all([
+        const [certRes, catRes, userRes] = await Promise.all([
           axiosInstance.get('/certificates/my'),
           axiosInstance.get('/categories'),
+          axiosInstance.get('/students/me'),
         ]);
         setCertificates(certRes.data.certificates || []);
         setCategories(catRes.data.categories || []);
+        setUser(userRes.data);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load certificates');
       } finally {
@@ -71,36 +75,11 @@ export default function CertificatesPage() {
     return cert.potentialPoints ?? 0;
   };
 
-  // Capped total across all approved certificates
+  // Capped total using correct SBTE Kerala rules
   const totalPoints = useMemo(() => {
     const approved = certificates.filter(c => c.status?.toLowerCase() === 'approved');
-
-    const grouped = approved.reduce((acc, cert) => {
-      const catId = cert.category?._id || cert.category;
-      if (!acc[catId]) acc[catId] = [];
-      acc[catId].push(cert);
-      return acc;
-    }, {});
-
-    let total = 0;
-    Object.keys(grouped).forEach(catId => {
-      const catData = getCategoryById(catId);
-      const certsInCat = grouped[catId];
-      const catName = catData?.name?.toLowerCase() || '';
-
-      let catSum = 0;
-      if (catName.includes('arts') || catName.includes('sports')) {
-        catSum = Math.max(...certsInCat.map(c => c.pointsAwarded || 0), 0);
-      } else {
-        catSum = certsInCat.reduce((s, c) => s + (c.pointsAwarded || 0), 0);
-      }
-
-      const cap = catData?.maxPoints || 40;
-      total += Math.min(catSum, cap);
-    });
-
-    return total;
-  }, [certificates, categories]);
+    return calcCappedPoints(approved, categories, user?.isLateralEntry ?? false);
+  }, [certificates, categories, user]);
 
   const filteredCertificates = activeFilter === 'all'
     ? certificates

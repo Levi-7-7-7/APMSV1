@@ -4,6 +4,7 @@ import tutorAxios from '../api/tutorAxios';
 import { Loader2, Award, Info, ArrowLeft, Eye, CheckCircle, XCircle } from 'lucide-react';
 import CertModal from '../components/CertModal';
 import '../css/StudentDetails.css';
+import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
 
 const StudentDetails = () => {
   const { studentId } = useParams();
@@ -45,36 +46,17 @@ const StudentDetails = () => {
     fetchData();
   }, [studentId]);
 
+  const isLateralEntry = studentInfo?.isLateralEntry ?? false;
+  const requiredPoints = passThreshold(isLateralEntry);
+
   const pointsSummary = useMemo(() => {
     const approvedCerts = certificates.filter(c => c.status?.toLowerCase() === 'approved');
-    const rawTotal = approvedCerts.reduce((s, c) => s + (c.pointsAwarded || 0), 0);
-
-    const grouped = approvedCerts.reduce((acc, cert) => {
-      const catId = cert.category?._id || cert.category;
-      if (!acc[catId]) acc[catId] = [];
-      acc[catId].push(cert);
-      return acc;
-    }, {});
-
-    let cappedTotal = 0;
-    Object.keys(grouped).forEach(catId => {
-      const catData    = categories.find(c => c._id === catId);
-      if (!catData) return;
-      const certsInCat = grouped[catId];
-      const catName    = catData.name.toLowerCase();
-      const catSum     = (catName.includes('arts') || catName.includes('sports'))
-        ? Math.max(...certsInCat.map(c => c.pointsAwarded || 0), 0)
-        : certsInCat.reduce((s, c) => s + (c.pointsAwarded || 0), 0);
-      cappedTotal += Math.min(catSum, catData.maxPoints || 40);
-    });
-
+    const rawTotal    = approvedCerts.reduce((s, c) => s + (c.pointsAwarded || 0), 0);
+    const cappedTotal = calcCappedPoints(approvedCerts, categories, isLateralEntry);
     return { rawTotal, cappedTotal };
-  }, [certificates, categories]);
+  }, [certificates, categories, isLateralEntry]);
 
-  // Lateral entry students need 40 pts, regular students need 60 pts
-  const isLateralEntry = studentInfo?.isLateralEntry ?? false;
-  const requiredPoints = isLateralEntry ? 40 : 60;
-  const hasPassed      = pointsSummary.cappedTotal >= requiredPoints;
+  const hasPassed = pointsSummary.cappedTotal >= requiredPoints;
 
   const filteredCerts = filter === 'all'
     ? certificates

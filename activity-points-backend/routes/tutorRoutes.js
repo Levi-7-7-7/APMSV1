@@ -11,36 +11,10 @@ const Student     = require('../models/Student');
 const Certificate = require('../models/Certificate');
 const Category    = require('../models/Category');
 
+const { calcCappedPoints, syncStudentTotalPoints } = require('../utils/calcPoints');
+
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
-
-// ─── helpers ──────────────────────────────────────────────────────────────────
-
-// Calculate capped grand-total for a student given their approved certs + category data
-function calcCappedPoints(approvedCerts, categories) {
-  const grouped = approvedCerts.reduce((acc, cert) => {
-    const catId = cert.category.toString();
-    if (!acc[catId]) acc[catId] = [];
-    acc[catId].push(cert);
-    return acc;
-  }, {});
-
-  let grandTotal = 0;
-  Object.keys(grouped).forEach(catId => {
-    const catData = categories.find(c => c._id.toString() === catId);
-    if (!catData) return;
-    const certsInCat = grouped[catId];
-    const catName    = catData.name.toLowerCase();
-    let catSum       = 0;
-    if (catName.includes('arts') || catName.includes('sports')) {
-      catSum = Math.max(...certsInCat.map(c => c.pointsAwarded || 0), 0);
-    } else {
-      catSum = certsInCat.reduce((s, c) => s + (c.pointsAwarded || 0), 0);
-    }
-    grandTotal += Math.min(catSum, catData.maxPoints || 40);
-  });
-  return grandTotal;
-}
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 router.post('/login', async (req, res) => {
@@ -96,8 +70,10 @@ router.get('/students', tutorAuth, async (req, res) => {
     const categories = await Category.find();
 
     const studentsWithPoints = await Promise.all(students.map(async (student) => {
-      const approvedCerts = await Certificate.find({ student: student._id, status: 'approved' });
-      return { ...student.toObject(), totalPoints: calcCappedPoints(approvedCerts, categories) };
+      const approvedCerts = await Certificate.find({ student: student._id, status: 'approved' })
+        .populate('category', 'name maxPoints');
+      const totalPoints = calcCappedPoints(approvedCerts, categories, student.isLateralEntry);
+      return { ...student.toObject(), totalPoints };
     }));
 
     res.json({ success: true, students: studentsWithPoints });
@@ -211,40 +187,53 @@ router.post('/certificates/:id/approve', tutorAuth, async (req, res) => {
     const category = await Category.findById(cert.category);
     if (!category) return res.status(404).json({ error: 'Category not found' });
 
+    // "Others" subcategory — tutor must reassign before approving
+    const isOthers = cert.subcategory?.toLowerCase() === 'others';
+    if (isOthers) {
+      return res.status(400).json({ error: 'Please reassign this certificate to a proper category/subcategory before approving.' });
+    }
+
     const sub = category.subcategories.find(
       s => s.name.toLowerCase() === cert.subcategory.toLowerCase()
     );
     if (!sub) return res.status(404).json({ error: 'Subcategory not found in category' });
 
+    // ── Calculate raw points for THIS certificate ────────────────────────────
     let pointsToAward = 0;
 
     if (sub.fixedPoints !== null && sub.fixedPoints !== undefined) {
       pointsToAward = sub.fixedPoints;
     } else if (sub.levels?.length) {
-      const levelObj = sub.levels.find(
-        l => l.name.toLowerCase() === (cert.level || '').toLowerCase()
-      );
+      if (!cert.level || !cert.prizeType) {
+        return res.status(400).json({ error: 'Certificate is missing level or prize type. Please reassign it first.' });
+      }
+      const levelObj = sub.levels.find(l => l.name.toLowerCase() === cert.level.toLowerCase());
       if (!levelObj) return res.status(400).json({ error: 'Invalid competition level on certificate' });
       const prizeObj = levelObj.prizes.find(p => p.type === cert.prizeType);
       if (!prizeObj) return res.status(400).json({ error: 'Invalid prize type on certificate' });
       pointsToAward = prizeObj.points;
     }
 
+    // Sub-level cap if the subcategory itself has a maxPoints
     if (sub.maxPoints !== null && sub.maxPoints !== undefined) {
       pointsToAward = Math.min(pointsToAward, sub.maxPoints);
     }
 
-    cert.status       = 'approved';
+    // ── Save raw points on the cert, mark approved ───────────────────────────
+    cert.status        = 'approved';
     cert.pointsAwarded = pointsToAward;
     await cert.save();
 
-    const student = await Student.findByIdAndUpdate(
-      cert.student,
-      { $inc: { totalPoints: pointsToAward } },
-      { new: true }
-    );
+    // ── Recalculate student's capped total from scratch (Rule 6) ─────────────
+    // This is the ONLY correct way — $inc would ignore category caps and isLateralEntry
+    const categories = await Category.find();
+    const newTotal   = await syncStudentTotalPoints(cert.student, Certificate, Student, categories);
 
-    res.json({ message: 'Certificate approved', pointsAwarded: pointsToAward, studentTotalPoints: student.totalPoints });
+    res.json({
+      message: 'Certificate approved',
+      pointsAwarded: pointsToAward,
+      studentTotalPoints: newTotal,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -260,6 +249,10 @@ router.post('/certificates/:id/reject', tutorAuth, async (req, res) => {
     cert.pointsAwarded   = 0;
     cert.rejectionReason = req.body.reason || '';
     await cert.save();
+
+    // Recalculate capped total — a previously approved cert being rejected changes the student total
+    const categories = await Category.find();
+    await syncStudentTotalPoints(cert.student, Certificate, Student, categories);
 
     res.json({ message: 'Certificate rejected' });
   } catch (err) {
@@ -306,7 +299,12 @@ router.patch('/certificates/:id/reassign', tutorAuth, async (req, res) => {
     cert.potentialPoints = potentialPoints;
     // Keep status as pending so tutor still needs to approve after reassigning
     cert.status          = 'pending';
+    cert.pointsAwarded   = 0;
     await cert.save();
+
+    // Recalculate total in case cert was previously approved
+    const allCategories = await Category.find();
+    await syncStudentTotalPoints(cert.student, Certificate, Student, allCategories);
 
     res.json({ message: 'Certificate reassigned successfully', potentialPoints });
   } catch (err) {

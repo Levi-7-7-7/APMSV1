@@ -3,6 +3,7 @@ import axiosInstance from '../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 import { Award, Star } from 'lucide-react';
 import '../css/StudentDashboard.css';
+import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -43,39 +44,14 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [navigate]);
 
-  // Capped total — each category capped at its maxPoints (default 40)
-  // Arts/Sports: only highest single award counts (no clubbing)
+  // Capped total using correct SBTE Kerala rules (Rule 3 + Rule 6 + isLateralEntry)
   const cappedTotal = useMemo(() => {
     if (!certificates.length || !categories.length) return 0;
-
     const approved = certificates.filter(c => c.status?.toLowerCase() === 'approved');
+    return calcCappedPoints(approved, categories, user?.isLateralEntry ?? false);
+  }, [certificates, categories, user]);
 
-    const grouped = approved.reduce((acc, cert) => {
-      const catId = cert.category?._id || cert.category;
-      if (!acc[catId]) acc[catId] = [];
-      acc[catId].push(cert);
-      return acc;
-    }, {});
-
-    let total = 0;
-    Object.keys(grouped).forEach(catId => {
-      const catData = categories.find(c => c._id === catId);
-      if (!catData) return;
-
-      const certs = grouped[catId];
-      const name = catData.name.toLowerCase();
-
-      const sum = (name.includes('arts') || name.includes('sports'))
-        ? Math.max(...certs.map(c => c.pointsAwarded || 0), 0)
-        : certs.reduce((s, c) => s + (c.pointsAwarded || 0), 0);
-
-      total += Math.min(sum, catData.maxPoints || 40);
-    });
-
-    return total;
-  }, [certificates, categories]);
-
-  const PASS_POINTS = user?.isLateralEntry ? 40 : 60;
+  const PASS_POINTS = passThreshold(user?.isLateralEntry);
   const hasPassed = cappedTotal >= PASS_POINTS;
 
   return (
