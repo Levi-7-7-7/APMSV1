@@ -19,23 +19,28 @@ exports.uploadCertificate = [
         return res.status(400).json({ message: "Missing required fields (file, categoryId, subcategoryName)" });
       }
 
-      const category = await Category.findById(categoryId);
-      if (!category) return res.status(404).json({ message: "Category not found" });
-
-      // Validate subcategory exists by name
-      const sub = category.subcategories.find(
-        s => s.name.toLowerCase() === subcategoryName.toLowerCase()
-      );
-      if (!sub) return res.status(404).json({ message: "Subcategory not found in category" });
-
-      // Calculate potentialPoints at upload time so student sees an estimate
+      // Handle "Others" — student described a certificate not in the category list
+      const isOthers = categoryId === 'others';
       let potentialPoints = 0;
-      if (sub.fixedPoints != null) {
-        potentialPoints = sub.fixedPoints;
-      } else if (sub.levels?.length && level && prizeType) {
-        const lvl  = sub.levels.find(l => l.name.toLowerCase() === level.toLowerCase());
-        const prize = lvl?.prizes.find(p => p.type === prizeType);
-        potentialPoints = prize?.points ?? 0;
+
+      if (!isOthers) {
+        const category = await Category.findById(categoryId);
+        if (!category) return res.status(404).json({ message: "Category not found" });
+
+        // Validate subcategory exists by name
+        const sub = category.subcategories.find(
+          s => s.name.toLowerCase() === subcategoryName.toLowerCase()
+        );
+        if (!sub) return res.status(404).json({ message: "Subcategory not found in category" });
+
+        // Calculate potentialPoints at upload time so student sees an estimate
+        if (sub.fixedPoints != null) {
+          potentialPoints = sub.fixedPoints;
+        } else if (sub.levels?.length && level && prizeType) {
+          const lvl  = sub.levels.find(l => l.name.toLowerCase() === level.toLowerCase());
+          const prize = lvl?.prizes.find(p => p.type === prizeType);
+          potentialPoints = prize?.points ?? 0;
+        }
       }
 
       // Upload file to ImageKit
@@ -48,8 +53,8 @@ exports.uploadCertificate = [
 
       const cert = await Certificate.create({
         student:         studentId,
-        category:        categoryId,
-        subcategory:     subcategoryName,   // FIX: store name string, not ObjectId
+        category:        isOthers ? null : categoryId,  // FIX: null for others, no invalid ObjectId
+        subcategory:     subcategoryName,
         level:           level   || null,
         prizeType:       prizeType || null,
         eventName:       eventName?.trim() || '',
@@ -60,6 +65,7 @@ exports.uploadCertificate = [
         potentialPoints,
         status:          'pending',
         pointsAwarded:   0,
+        isOthers:        isOthers,  // flag so admin/tutor knows to handle manually
       });
 
       res.json({ message: "Certificate uploaded successfully", certificate: cert });

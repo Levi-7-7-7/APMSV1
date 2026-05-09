@@ -9,7 +9,8 @@ const CertificateSchema = new mongoose.Schema({
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
-    required: true
+    required: false,  // FIX: null for "Others" certificates not in the category list
+    default: null
   },
   // Name of the subcategory at upload time (stored as string so renames don't break history)
   subcategory: {
@@ -65,6 +66,11 @@ const CertificateSchema = new mongoose.Schema({
   rejectionReason: {
     type: String,
     default: ''
+  },
+  // True when student chose "Others" (not in category list); admin/tutor assigns points manually
+  isOthers: {
+    type: Boolean,
+    default: false
   },
   status: {
     type: String,
