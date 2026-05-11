@@ -76,11 +76,54 @@ exports.uploadCertificate = [
   }
 ];
 
+/**
+ * GET /api/certificates/my
+ *
+ * Returns the student's own certificates.
+ *
+ * Optional query param:
+ *   ?since=<ISO-8601 timestamp>
+ *     When provided, returns ONLY certificates whose status was updated
+ *     (updatedAt) after that timestamp AND whose status is either
+ *     'approved' or 'rejected'.
+ *
+ *     This is used by the native app's notification polling so it only
+ *     fetches changed records instead of the full list every 30 s.
+ *
+ *   ?notifyOnly=true
+ *     Must be combined with `since`. Returns a minimal payload:
+ *     { notifications: [{ _id, eventName, subcategory, status, rejectionReason }] }
+ *     — no category population needed, keeps the response tiny.
+ *
+ * Without `since`, behaviour is unchanged (returns all certs, populated).
+ */
 exports.getMyCertificates = async (req, res) => {
   try {
+    const { since, notifyOnly } = req.query;
+
+    // ── Notification-only fast path ──────────────────────────────────────────
+    if (since && notifyOnly === 'true') {
+      const sinceDate = new Date(since);
+      if (isNaN(sinceDate.getTime())) {
+        return res.status(400).json({ error: 'Invalid `since` date' });
+      }
+
+      const changed = await Certificate.find({
+        student:   req.user.id,
+        status:    { $in: ['approved', 'rejected'] },
+        updatedAt: { $gt: sinceDate },
+      })
+        .select('_id eventName subcategory status rejectionReason updatedAt')
+        .lean();
+
+      return res.json({ notifications: changed });
+    }
+
+    // ── Normal full fetch (unchanged behaviour) ───────────────────────────────
     const certs = await Certificate.find({ student: req.user.id })
       .populate('category', 'name maxPoints')
       .sort({ createdAt: -1 });
+
     res.json({ certificates: certs });
   } catch (err) {
     res.status(500).json({ error: err.message });
