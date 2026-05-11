@@ -25,8 +25,11 @@ const StudentSchema = new mongoose.Schema({
   resetPasswordExpires: { type: Date,   default: null },
 
   // Stored total — kept in sync when certificates are approved/rejected
-  // Note: the tutor dashboard recalculates this live with capping rules for display
   totalPoints: { type: Number, default: 0 },
+
+  // Firebase Cloud Messaging device token — updated by the native app on login/launch.
+  // Used to send background push notifications when a certificate is approved/rejected.
+  fcmToken: { type: String, default: null },
 
 }, { timestamps: true });
 

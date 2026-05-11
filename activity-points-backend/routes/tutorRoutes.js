@@ -11,6 +11,9 @@ const Student     = require('../models/Student');
 const Certificate = require('../models/Certificate');
 const Category    = require('../models/Category');
 
+const { sendPushNotification } = require('../utils/fcm');
+
+
 const { calcCappedPoints, syncStudentTotalPoints } = require('../utils/calcPoints');
 
 const router = express.Router();
@@ -178,7 +181,7 @@ router.get('/certificates', tutorAuth, async (req, res) => {
   }
 });
 
-// ─── APPROVE CERTIFICATE ─────────────────────────────────────────────────────
+// ─── APPROVE CERTIFICATE ──────────────────────────────────────────────────────
 router.post('/certificates/:id/approve', tutorAuth, async (req, res) => {
   try {
     const cert = await Certificate.findById(req.params.id);
@@ -187,7 +190,6 @@ router.post('/certificates/:id/approve', tutorAuth, async (req, res) => {
     const category = await Category.findById(cert.category);
     if (!category) return res.status(404).json({ error: 'Category not found' });
 
-    // "Others" subcategory — tutor must reassign before approving
     const isOthers = cert.subcategory?.toLowerCase() === 'others';
     if (isOthers) {
       return res.status(400).json({ error: 'Please reassign this certificate to a proper category/subcategory before approving.' });
@@ -198,7 +200,6 @@ router.post('/certificates/:id/approve', tutorAuth, async (req, res) => {
     );
     if (!sub) return res.status(404).json({ error: 'Subcategory not found in category' });
 
-    // ── Calculate raw points for THIS certificate ────────────────────────────
     let pointsToAward = 0;
 
     if (sub.fixedPoints !== null && sub.fixedPoints !== undefined) {
@@ -214,20 +215,29 @@ router.post('/certificates/:id/approve', tutorAuth, async (req, res) => {
       pointsToAward = prizeObj.points;
     }
 
-    // Sub-level cap if the subcategory itself has a maxPoints
     if (sub.maxPoints !== null && sub.maxPoints !== undefined) {
       pointsToAward = Math.min(pointsToAward, sub.maxPoints);
     }
 
-    // ── Save raw points on the cert, mark approved ───────────────────────────
     cert.status        = 'approved';
     cert.pointsAwarded = pointsToAward;
     await cert.save();
 
-    // ── Recalculate student's capped total from scratch (Rule 6) ─────────────
-    // This is the ONLY correct way — $inc would ignore category caps and isLateralEntry
     const categories = await Category.find();
     const newTotal   = await syncStudentTotalPoints(cert.student, Certificate, Student, categories);
+
+    // ── Push notification (non-blocking) ─────────────────────────────────────
+    const student = await Student.findById(cert.student).select('fcmToken');
+    if (student?.fcmToken) {
+      const certName = cert.eventName || cert.subcategory || 'Your certificate';
+      sendPushNotification(
+        student.fcmToken,
+        '🎉 Certificate Approved!',
+        `"${certName}" has been approved. ${pointsToAward} points have been added to your account.`,
+        { status: 'approved', certId: cert._id.toString() }
+      ); // intentionally NOT awaited — don't block the response
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     res.json({
       message: 'Certificate approved',
@@ -250,15 +260,31 @@ router.post('/certificates/:id/reject', tutorAuth, async (req, res) => {
     cert.rejectionReason = req.body.reason || '';
     await cert.save();
 
-    // Recalculate capped total — a previously approved cert being rejected changes the student total
     const categories = await Category.find();
     await syncStudentTotalPoints(cert.student, Certificate, Student, categories);
+
+    // ── Push notification (non-blocking) ─────────────────────────────────────
+    const student = await Student.findById(cert.student).select('fcmToken');
+    if (student?.fcmToken) {
+      const certName = cert.eventName || cert.subcategory || 'Your certificate';
+      const reason   = cert.rejectionReason
+        ? `: ${cert.rejectionReason}`
+        : '. Please check the app for details.';
+      sendPushNotification(
+        student.fcmToken,
+        '❌ Certificate Rejected',
+        `"${certName}" was rejected${reason}`,
+        { status: 'rejected', certId: cert._id.toString() }
+      ); // intentionally NOT awaited
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     res.json({ message: 'Certificate rejected' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ─── REASSIGN CERTIFICATE (change category / subcategory / level / prizeType) ─
 router.patch('/certificates/:id/reassign', tutorAuth, async (req, res) => {
