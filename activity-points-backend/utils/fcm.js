@@ -41,7 +41,7 @@ if (!admin.apps.length) {
  * @param {object} data      - key/value pairs (all strings) sent as data payload
  */
 async function sendPushNotification(fcmToken, title, body, data = {}) {
-  if (!admin.apps.length) return; // credentials not configured — skip silently
+  if (!admin.apps.length) return;
 
   try {
     await admin.messaging().send({
@@ -53,10 +53,12 @@ async function sendPushNotification(fcmToken, title, body, data = {}) {
       android: {
         priority: 'high',
         notification: {
-          channelId: 'certificate_status', // must match the channel created in notificationService.ts
+          channelId: 'certificate_status',
           color:     data.status === 'approved' ? '#16a34a' : '#dc2626',
           priority:  'max',
           sound:     'default',
+          // ✅ THIS IS WHAT WAS MISSING — tells Android which activity to open on tap
+          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
         },
       },
       apns: {
@@ -69,7 +71,6 @@ async function sendPushNotification(fcmToken, title, body, data = {}) {
       },
     });
   } catch (err) {
-    // Log but never crash the approve/reject flow because of a notification failure
     console.error('[FCM] Failed to send push notification:', err.message);
   }
 }
