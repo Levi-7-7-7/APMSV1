@@ -15,7 +15,7 @@ module.exports = async (req, res, next) => {
       return res.status(404).json({ error: 'Student not found' });
     }
 
-    req.user = { id: student._id, role: 'student' }; // role helps if we add tutor/admin later
+    req.user = { id: student._id.toString(), role: 'student' }; // toString() ensures string comparison in DELETE route works
     next();
   } catch (err) {
     res.status(401).json({ error: 'Invalid or expired token' });

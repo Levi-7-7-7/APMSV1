@@ -24,8 +24,10 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Certificate not found' });
     }
 
-    // Safety: only the owning student can delete
-    if (cert.student.toString() !== req.user.id) {
+    // Safety: only the owning student can delete.
+    // Both sides coerced to string — req.user.id is already a string (see auth.js),
+    // cert.student is a Mongoose ObjectId; .toString() makes comparison safe.
+    if (cert.student.toString() !== req.user.id.toString()) {
       return res.status(403).json({ error: 'Not authorised to delete this certificate' });
     }
 
