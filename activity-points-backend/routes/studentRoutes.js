@@ -1,3 +1,7 @@
+
+
+const Batch = require('../models/Batch');
+const Branch = require('../models/Branch');
 /**
  * routes/studentRoutes.js  (updated)
  *
