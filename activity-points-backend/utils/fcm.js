@@ -58,7 +58,7 @@ async function sendPushNotification(fcmToken, title, body, data = {}) {
           priority:  'max',
           sound:     'default',
           // ✅ THIS IS WHAT WAS MISSING — tells Android which activity to open on tap
-          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+          clickAction: 'android.intent.action.MAIN',
         },
       },
       apns: {
