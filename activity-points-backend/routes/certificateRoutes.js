@@ -1,13 +1,10 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
 
-const authMiddleware = require('../middleware/auth');
-const imagekit = require('../utils/imagekit');
-const Certificate = require('../models/Certificate');
-const {
-  uploadCertificate,
-  getMyCertificates
-} = require('../controllers/uploadController');
+const authMiddleware       = require('../middleware/auth');
+const { deleteFile }       = require('../utils/googledrive');
+const Certificate          = require('../models/Certificate');
+const { uploadCertificate, getMyCertificates } = require('../controllers/uploadController');
 
 // Upload certificate
 router.post('/upload', authMiddleware, uploadCertificate);
@@ -24,24 +21,20 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Certificate not found' });
     }
 
-    // Safety: only the owning student can delete.
-    // Both sides coerced to string — req.user.id is already a string (see auth.js),
-    // cert.student is a Mongoose ObjectId; .toString() makes comparison safe.
     if (cert.student.toString() !== req.user.id.toString()) {
       return res.status(403).json({ error: 'Not authorised to delete this certificate' });
     }
 
-    // Only pending certificates can be cancelled by the student
     if (cert.status !== 'pending') {
       return res.status(400).json({ error: 'Only pending certificates can be cancelled' });
     }
 
-    // Remove file from ImageKit (best-effort — don't fail if it errors)
+    // Remove file from Google Drive (best-effort — don't fail the request if Drive errors)
     if (cert.fileId) {
       try {
-        await imagekit.deleteFile(cert.fileId);
-      } catch (ikErr) {
-        console.warn('ImageKit delete warning:', ikErr.message);
+        await deleteFile(cert.fileId);
+      } catch (driveErr) {
+        console.warn('Google Drive delete warning:', driveErr.message);
       }
     }
 
