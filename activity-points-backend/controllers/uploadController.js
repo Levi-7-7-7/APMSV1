@@ -1,13 +1,19 @@
-const multer    = require('multer');
-const imagekit  = require('../utils/imagekit');
+const multer      = require('multer');
+const imagekit    = require('../utils/imagekit');
 const Certificate = require('../models/Certificate');
 const Category    = require('../models/Category');
+const Student     = require('../models/Student');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
-// FIX: was using base64 body field — now uses multipart/form-data (matches frontend)
-// FIX: was saving subcategoryId (ObjectId) as cert.subcategory — schema expects subcategory NAME (string)
-// FIX: was reading prizeLevel — frontend sends level + prizeType separately
+// Sanitize a string so it's safe to use as an ImageKit folder/file name
+function sanitizeName(str) {
+  return (str || 'unknown')
+    .trim()
+    .replace(/[\/\\:*?"<>|#]/g, '_')  // remove path-unsafe characters
+    .replace(/\s+/g, '_');             // spaces → underscores
+}
+
 exports.uploadCertificate = [
   upload.single('file'),
   async (req, res) => {
@@ -43,12 +49,25 @@ exports.uploadCertificate = [
         }
       }
 
-      // Upload file to ImageKit
+      // Fetch student with branch (department) and batch populated for folder naming
+      const student = await Student.findById(studentId).populate('branch').populate('batch');
+      if (!student) return res.status(404).json({ message: "Student not found" });
+
+      // Build structured ImageKit folder: /certificates/{department}/{batch}/{studentName}
+      const department  = sanitizeName(student.branch?.name);
+      const batch       = sanitizeName(student.batch?.name);
+      const studentName = sanitizeName(student.name);
+      const folderPath  = `/certificates/${department}/${batch}/${studentName}`;
+
+      // Use the original file name (without timestamp prefix) as the certificate name
+      const certFileName = sanitizeName(req.file.originalname);
+
+      // Upload file to ImageKit under the structured folder
       const base64File = req.file.buffer.toString('base64');
       const uploadResult = await imagekit.upload({
-        file: base64File,
-        fileName: `${Date.now()}_${req.file.originalname}`,
-        folder: '/certificates',
+        file:     base64File,
+        fileName: certFileName,
+        folder:   folderPath,
       });
 
       const cert = await Certificate.create({
