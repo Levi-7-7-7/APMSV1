@@ -1,6 +1,15 @@
 const imagekit = require('../utils/imagekit');
 const Certificate = require('../models/Certificate');
 const Category = require('../models/Category');
+const Student = require('../models/Student');
+
+// Helper: sanitize a string so it's safe to use as a folder/file name
+function sanitizeName(str) {
+  return (str || 'unknown')
+    .trim()
+    .replace(/[\/\\:*?"<>|]/g, '_')  // remove characters not allowed in paths
+    .replace(/\s+/g, '_');            // replace spaces with underscores
+}
 
 exports.uploadCertificate = async (req, res) => {
   try {
@@ -18,11 +27,23 @@ exports.uploadCertificate = async (req, res) => {
     const sub = category.subcategories.id(subcategoryId);
     if (!sub) return res.status(404).json({ message: "Subcategory not found" });
 
-    // Upload to ImageKit
+    // Fetch student with their branch (department) populated
+    const student = await Student.findById(studentId).populate('branch');
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    // Build the folder path: /certificates/{department}/{studentName}
+    const department = sanitizeName(student.branch?.name);
+    const studentName = sanitizeName(student.name);
+    const folderPath = `/certificates/${department}/${studentName}`;
+
+    // Use the original fileName (without extension) as the certificate file name
+    const certFileName = sanitizeName(fileName);
+
+    // Upload to ImageKit under the structured folder
     const uploadResult = await imagekit.upload({
       file: fileBase64,
-      fileName,
-      folder: "/certificates"
+      fileName: certFileName,
+      folder: folderPath
     });
 
     // Save certificate
