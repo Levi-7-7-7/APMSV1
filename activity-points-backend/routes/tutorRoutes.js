@@ -355,18 +355,18 @@ router.post('/certificates/:id/revert-to-pending', tutorAuth, async (req, res) =
     const categories = await Category.find();
     await syncStudentTotalPoints(cert.student, Certificate, Student, categories);
 
-    // ── Push notification (non-blocking) ─────────────────────────────────────
-    const student = await Student.findById(cert.student).select('fcmToken');
-    if (student?.fcmToken) {
-      const certName = cert.eventName || cert.subcategory || 'Your certificate';
-      sendPushNotification(
-        student.fcmToken,
-        '🔄 Certificate Under Review',
-        `"${certName}" has been moved back to pending review.`,
-        { status: 'pending', certId: cert._id.toString() }
-      );
-    }
-    // ─────────────────────────────────────────────────────────────────────────
+    // // ── Push notification (non-blocking) ─────────────────────────────────────
+    // const student = await Student.findById(cert.student).select('fcmToken');
+    // if (student?.fcmToken) {
+    //   const certName = cert.eventName || cert.subcategory || 'Your certificate';
+    //   sendPushNotification(
+    //     student.fcmToken,
+    //     '🔄 Certificate Under Review',
+    //     `"${certName}" has been moved back to pending review.`,
+    //     { status: 'pending', certId: cert._id.toString() }
+    //   );
+    // }
+    // // ─────────────────────────────────────────────────────────────────────────
 
     res.json({ message: 'Certificate reverted to pending' });
   } catch (err) {
