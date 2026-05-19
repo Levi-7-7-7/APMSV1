@@ -338,4 +338,40 @@ router.patch('/certificates/:id/reassign', tutorAuth, async (req, res) => {
   }
 });
 
+// ─── REVERT APPROVED CERTIFICATE BACK TO PENDING ─────────────────────────────
+router.post('/certificates/:id/revert-to-pending', tutorAuth, async (req, res) => {
+  try {
+    const cert = await Certificate.findById(req.params.id);
+    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+
+    if (cert.status !== 'approved') {
+      return res.status(400).json({ error: 'Only approved certificates can be reverted to pending' });
+    }
+
+    cert.status        = 'pending';
+    cert.pointsAwarded = 0;
+    await cert.save();
+
+    const categories = await Category.find();
+    await syncStudentTotalPoints(cert.student, Certificate, Student, categories);
+
+    // ── Push notification (non-blocking) ─────────────────────────────────────
+    const student = await Student.findById(cert.student).select('fcmToken');
+    if (student?.fcmToken) {
+      const certName = cert.eventName || cert.subcategory || 'Your certificate';
+      sendPushNotification(
+        student.fcmToken,
+        '🔄 Certificate Under Review',
+        `"${certName}" has been moved back to pending review.`,
+        { status: 'pending', certId: cert._id.toString() }
+      );
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    res.json({ message: 'Certificate reverted to pending' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

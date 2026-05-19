@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, Award, Eye } from 'lucide-react';
+import { Loader2, Award, Eye, RotateCcw } from 'lucide-react';
 import tutorAxios from '../api/tutorAxios';
 import CertModal from '../components/CertModal';
 
@@ -9,6 +9,8 @@ export default function ApprovedCertificates() {
   const [search, setSearch]             = useState('');
   const [modalUrl, setModalUrl]         = useState(null);
   const [modalFile, setModalFile]       = useState('');
+  const [revertingId, setRevertingId]   = useState(null);
+  const [confirmId, setConfirmId]       = useState(null);
 
   useEffect(() => {
     tutorAxios.get('/tutors/certificates')
@@ -34,10 +36,24 @@ export default function ApprovedCertificates() {
     setModalUrl(cert.fileUrl);
   };
 
+  const handleRevert = async (certId) => {
+    setRevertingId(certId);
+    setConfirmId(null);
+    try {
+      await tutorAxios.post(`/tutors/certificates/${certId}/revert-to-pending`);
+      setCertificates(prev => prev.filter(c => c._id !== certId));
+    } catch (err) {
+      console.error('Revert failed:', err);
+      alert(err?.response?.data?.error || 'Failed to revert certificate. Please try again.');
+    } finally {
+      setRevertingId(null);
+    }
+  };
+
   if (loading) return (
     <div style={{ padding: '2rem', textAlign: 'center' }}>
       <Loader2 style={{ animation: 'spin 1s linear infinite' }} />
-      <p>Loading approved certificates…</p>
+      <p>Loading approved certificates...</p>
     </div>
   );
 
@@ -51,16 +67,60 @@ export default function ApprovedCertificates() {
         />
       )}
 
+      {/* Confirm revert overlay */}
+      {confirmId && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: '1rem'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '12px', padding: '1.5rem',
+            maxWidth: '340px', width: '100%', boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', fontWeight: 700 }}>
+              Revert to Pending?
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: '#6b7280', margin: '0 0 1.25rem' }}>
+              This will remove the awarded points and move the certificate back to pending review.
+            </p>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => setConfirmId(null)}
+                style={{
+                  flex: 1, padding: '0.6rem', borderRadius: '8px',
+                  border: '1px solid #d1d5db', background: '#f9fafb',
+                  cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleRevert(confirmId)}
+                style={{
+                  flex: 1, padding: '0.6rem', borderRadius: '8px',
+                  border: 'none', background: '#f59e0b', color: '#fff',
+                  cursor: 'pointer', fontWeight: 600, fontSize: '0.9rem'
+                }}
+              >
+                Yes, Revert
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h2 style={{ marginBottom: '1rem' }}>Approved Certificates</h2>
 
       <input
         type="text"
-        placeholder="Search by student name or reg. number…"
+        placeholder="Search by student name or reg. number..."
         value={search}
         onChange={e => setSearch(e.target.value)}
         style={{
           width: '100%', padding: '0.6rem 1rem', marginBottom: '1rem',
-          border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.95rem'
+          border: '1px solid #d1d5db', borderRadius: '8px', fontSize: '0.95rem',
+          boxSizing: 'border-box'
         }}
       />
 
@@ -100,7 +160,6 @@ export default function ApprovedCertificates() {
                     +{cert.pointsAwarded} pts
                   </div>
                   {cert.fileUrl && (
-                    /* FIX: opens inline modal instead of new tab */
                     <button
                       onClick={() => openModal(cert)}
                       style={{
@@ -113,6 +172,23 @@ export default function ApprovedCertificates() {
                       <Eye size={12}/> View
                     </button>
                   )}
+                  <button
+                    onClick={() => setConfirmId(cert._id)}
+                    disabled={revertingId === cert._id}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '4px',
+                      fontSize: '0.8rem', color: '#b45309',
+                      background: revertingId === cert._id ? '#fef3c7' : '#fffbeb',
+                      border: '1px solid #fcd34d', borderRadius: '6px',
+                      padding: '3px 8px', cursor: revertingId === cert._id ? 'not-allowed' : 'pointer',
+                      opacity: revertingId === cert._id ? 0.7 : 1
+                    }}
+                  >
+                    {revertingId === cert._id
+                      ? <><Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }}/> Reverting...</>
+                      : <><RotateCcw size={12}/> Revert to Pending</>
+                    }
+                  </button>
                 </div>
               </div>
               <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: '6px 0 0' }}>
