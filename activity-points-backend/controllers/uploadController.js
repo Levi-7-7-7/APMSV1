@@ -59,8 +59,11 @@ exports.uploadCertificate = [
       const studentName = sanitizeName(student.name);
       const folderPath  = `/certificates/${department}/${batch}/${studentName}`;
 
-      // Use the original file name (without timestamp prefix) as the certificate name
-      const certFileName = sanitizeName(req.file.originalname);
+      // Use the event name entered by the student as the certificate file name,
+      // preserving the original file extension (e.g. eventName="Hackathon" → "Hackathon.pdf")
+      const ext = req.file.originalname.split(".").pop();
+      const baseName = sanitizeName(eventName?.trim() || req.file.originalname);
+      const certFileName = baseName + "." + ext;
 
       // Upload file to ImageKit under the structured folder
       const base64File = req.file.buffer.toString('base64');
