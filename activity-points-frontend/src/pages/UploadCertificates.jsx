@@ -43,7 +43,9 @@ export default function CertificateUploadScreen() {
   const [isOthers, setIsOthers] = useState(false);
   const [othersDescription, setOthersDescription] = useState('');
 
-  const prizeLevels = ['Participation', 'First', 'Second', 'Third'];
+  // Prevents categoryId useEffect from wiping subcategoryName
+  // when both are set together via selectSearchResult (mirrors RN behaviour)
+  const skipSubcategoryReset = useRef(false);
 
   useEffect(() => {
     axiosInstance
@@ -63,10 +65,16 @@ export default function CertificateUploadScreen() {
     }
     const category = categories.find(c => c._id === categoryId);
     setSubcategories(category?.subcategories || []);
-    setSubcategoryName('');
-    setLevelSelected('');
-    setPrizeType('');
-    setEligiblePoints(null);
+
+    // Skip reset exactly once when search result sets both categoryId + subcategoryName
+    if (skipSubcategoryReset.current) {
+      skipSubcategoryReset.current = false;
+    } else {
+      setSubcategoryName('');
+      setLevelSelected('');
+      setPrizeType('');
+      setEligiblePoints(null);
+    }
   }, [categoryId, categories]);
 
   useEffect(() => {
@@ -79,7 +87,7 @@ export default function CertificateUploadScreen() {
     } else if (sub.levels?.length) {
       if (!levelSelected || !prizeType) return setEligiblePoints(null);
       const levelObj = sub.levels.find(l => l.name === levelSelected);
-      const prizeObj = levelObj?.prizes.find(p => p.type === prizeType);
+      const prizeObj = levelObj?.prizes?.find(p => p.type === prizeType);
       setEligiblePoints(prizeObj?.points ?? null);
     } else {
       setEligiblePoints(null);
@@ -111,6 +119,8 @@ export default function CertificateUploadScreen() {
 
   const selectSearchResult = (item) => {
     const category = categories.find(c => c._id === item.categoryId);
+    // Set flag BEFORE setCategoryId so useEffect skips its reset (mirrors RN)
+    skipSubcategoryReset.current = true;
     setCategoryId(item.categoryId);
     setSubcategories(category?.subcategories || []);
     setSubcategoryName(item.subcategoryName);
@@ -141,6 +151,16 @@ export default function CertificateUploadScreen() {
     const sizeMB = file.size / 1024 / 1024;
     if (sizeMB > MAX_FILE_SIZE_MB) {
       alert(`File must be under ${MAX_FILE_SIZE_MB} MB`);
+      e.target.value = '';
+      setUploadedFile(null);
+      return;
+    }
+    const mime = (file.type || '').toLowerCase();
+    const name = (file.name || '').toLowerCase();
+    const isImage = mime.startsWith('image/');
+    const isPdf = mime === 'application/pdf' || name.endsWith('.pdf');
+    if (!isImage && !isPdf) {
+      alert('Only images (JPG, PNG, etc.) and PDF files are accepted as certificates.');
       e.target.value = '';
       setUploadedFile(null);
       return;
@@ -199,6 +219,12 @@ export default function CertificateUploadScreen() {
     ? subcategories.find(s => s.name === subcategoryName)
     : null;
   const hasLevels = currentSub?.levels?.length > 0;
+
+  // Dynamic prize items from the selected level's actual prizes (mirrors RN)
+  const selectedLevelObj = currentSub?.levels?.find(l => l.name === levelSelected);
+  const prizeItems = selectedLevelObj
+    ? selectedLevelObj.prizes.map(p => ({ label: p.type, value: p.type }))
+    : [];
 
   return (
     <div className="certificate-upload-container">
@@ -274,7 +300,7 @@ export default function CertificateUploadScreen() {
               value={categoryId}
               onChange={e => {
                 if (e.target.value === '__others__') { activateOthers(); }
-                else { setCategoryId(e.target.value); }
+                else { setCategoryId(e.target.value); setIsOthers(false); }
               }}
               className="upload-select"
             >
@@ -289,7 +315,11 @@ export default function CertificateUploadScreen() {
             {subcategories.length > 0 && (
               <select
                 value={subcategoryName}
-                onChange={e => setSubcategoryName(e.target.value)}
+                onChange={e => {
+                  setSubcategoryName(e.target.value);
+                  setLevelSelected('');
+                  setPrizeType('');
+                }}
                 className="upload-select"
               >
                 <option value="">Select subcategory</option>
@@ -303,7 +333,16 @@ export default function CertificateUploadScreen() {
             {hasLevels && (
               <select
                 value={levelSelected}
-                onChange={e => setLevelSelected(e.target.value)}
+                onChange={e => {
+                  const v = e.target.value;
+                  setLevelSelected(v);
+                  setPrizeType('');
+                  // Auto-select prize when the level only has one option (mirrors RN)
+                  const lvl = currentSub?.levels?.find(l => l.name === v);
+                  if (lvl?.prizes?.length === 1) {
+                    setPrizeType(lvl.prizes[0].type);
+                  }
+                }}
                 className="upload-select"
               >
                 <option value="">Select Level</option>
@@ -313,21 +352,21 @@ export default function CertificateUploadScreen() {
               </select>
             )}
 
-            {/* Prize */}
-            {hasLevels && (
+            {/* Prize — dynamic from selected level's actual prizes (mirrors RN) */}
+            {hasLevels && levelSelected && (
               <select
                 value={prizeType}
                 onChange={e => setPrizeType(e.target.value)}
                 className="upload-select"
               >
                 <option value="">Select Prize Type</option>
-                {prizeLevels.map(p => (
-                  <option key={p} value={p}>{p}</option>
+                {prizeItems.map(p => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
                 ))}
               </select>
             )}
 
-            {/* Event Name — always shown once subcategory is selected */}
+            {/* Event Name — shown once subcategory is selected */}
             {subcategoryName && (
               <input
                 type="text"
@@ -358,8 +397,13 @@ export default function CertificateUploadScreen() {
               <input
                 type="date"
                 className="upload-select date-input"
+                max={new Date().toISOString().split('T')[0]}
                 value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
+                onChange={e => {
+                  setDateFrom(e.target.value);
+                  // Reset "to" if it's now before "from" (mirrors RN)
+                  if (dateTo && e.target.value > dateTo) setDateTo('');
+                }}
               />
             </div>
             <div className="date-field">
@@ -368,7 +412,8 @@ export default function CertificateUploadScreen() {
                 type="date"
                 className="upload-select date-input"
                 value={dateTo}
-                min={dateFrom}
+                min={dateFrom || undefined}
+                max={new Date().toISOString().split('T')[0]}
                 onChange={e => setDateTo(e.target.value)}
               />
             </div>
@@ -381,7 +426,7 @@ export default function CertificateUploadScreen() {
             <Paperclip size={16} />
             {uploadedFile
               ? `${uploadedFile.name} (${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)`
-              : `Choose File (Max ${MAX_FILE_SIZE_MB} MB)`}
+              : `Attach Certificate — Image or PDF (Max ${MAX_FILE_SIZE_MB} MB)`}
           </label>
           <input
             id="file-upload"
