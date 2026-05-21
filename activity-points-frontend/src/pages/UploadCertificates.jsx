@@ -5,7 +5,7 @@ import axiosInstance from '../api/axiosInstance';
 import { ArrowLeft, Award, CheckCircle, Paperclip, Search, X, Calendar } from 'lucide-react';
 import '../css/upload.css';
 
-const MAX_FILE_SIZE_MB = 1;
+const MAX_FILE_SIZE_MB = 5;
 
 function buildSearchIndex(categories) {
   const items = [];
