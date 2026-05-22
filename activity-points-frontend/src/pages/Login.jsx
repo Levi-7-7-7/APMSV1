@@ -174,7 +174,7 @@ export default function Login() {
             <button
               type="button"
               className="forgot-password"
-              onClick={() => navigate('/forgot-password')}
+              onClick={() => navigate(role === 'tutor' ? '/tutor/forgot-password' : '/forgot-password')}
               disabled={loading}
             >
               Forgot Password?

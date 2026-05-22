@@ -19,6 +19,7 @@ import StudentDetails from './pages/StudentDetails';
 import UploadCSV from './pages/UploadCSV';
 import PendingCertificates from './pages/PendingCertificates';
 import ApprovedCertificates from './pages/ApprovedCertificates';
+import TutorForgotPassword from './pages/TutorForgotPassword';
 
 /* ===================== ADMIN PAGES ===================== */
 import AdminPanel from './pages/AdminPanel';
@@ -34,6 +35,7 @@ function App() {
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/tutor/forgot-password" element={<TutorForgotPassword />} />
 
         {/* Legacy URL redirects */}
         <Route path="/dashboard" element={<Navigate to="/student" replace />} />

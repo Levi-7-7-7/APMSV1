@@ -5,9 +5,12 @@ const tutorSchema = new mongoose.Schema({
   name:     { type: String, required: true },
   email:    { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  // FIX: added batch & branch so admin can assign them to a tutor
   batch:    { type: mongoose.Schema.Types.ObjectId, ref: 'Batch',  default: null },
   branch:   { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', default: null },
+
+  // Password reset via OTP (mirrors Student model)
+  resetPasswordToken:   { type: String,  default: null },
+  resetPasswordExpires: { type: Number,  default: null },
 }, { timestamps: true });
 
 tutorSchema.pre('save', async function(next) {
