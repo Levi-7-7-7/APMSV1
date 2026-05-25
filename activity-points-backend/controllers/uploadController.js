@@ -3,6 +3,8 @@ const imagekit    = require('../utils/imagekit');
 const Certificate = require('../models/Certificate');
 const Category    = require('../models/Category');
 const Student     = require('../models/Student');
+const Tutor       = require('../models/Tutor');
+const { sendPushNotification } = require('../utils/fcm');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -89,6 +91,29 @@ exports.uploadCertificate = [
         pointsAwarded:   0,
         isOthers:        isOthers,  // flag so admin/tutor knows to handle manually
       });
+
+      // ── Notify the tutor assigned to this student's batch/branch ─────────────
+      try {
+        const tutor = await Tutor.findOne({
+          batch:  student.batch?._id  || student.batch,
+          branch: student.branch?._id || student.branch,
+          fcmToken: { $ne: null },
+        }).select('fcmToken');
+
+        if (tutor?.fcmToken) {
+          const certLabel = eventName?.trim() || subcategoryName || 'a certificate';
+          await sendPushNotification(
+            tutor.fcmToken,
+            '📄 New Certificate Uploaded',
+            `${student.name} submitted ${certLabel} — tap to review.`,
+            { type: 'new_certificate', certId: String(cert._id), status: 'pending' },
+          );
+        }
+      } catch (notifyErr) {
+        // Never fail the upload because of a notification error
+        console.warn('[FCM] Tutor notification failed:', notifyErr.message);
+      }
+      // ─────────────────────────────────────────────────────────────────────────
 
       res.json({ message: "Certificate uploaded successfully", certificate: cert });
     } catch (error) {

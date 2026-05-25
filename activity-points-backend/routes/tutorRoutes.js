@@ -83,6 +83,20 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// ─── REGISTER / UPDATE TUTOR FCM TOKEN ───────────────────────────────────────
+// Called by the native app after the tutor logs in so we can push
+// "new certificate uploaded" alerts to their device.
+router.patch('/fcm-token', tutorAuth, async (req, res) => {
+  try {
+    const { fcmToken } = req.body;
+    if (!fcmToken) return res.status(400).json({ error: 'fcmToken is required' });
+    await Tutor.findByIdAndUpdate(req.tutor.id, { fcmToken });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── GET STUDENTS (filtered to tutor's batch + branch) ───────────────────────
 router.get('/students', tutorAuth, async (req, res) => {
   try {

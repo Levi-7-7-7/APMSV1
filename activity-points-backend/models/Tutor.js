@@ -11,6 +11,9 @@ const tutorSchema = new mongoose.Schema({
   // Password reset via OTP (mirrors Student model)
   resetPasswordToken:   { type: String,  default: null },
   resetPasswordExpires: { type: Number,  default: null },
+
+  // FCM device token for push notifications (new certificate uploaded alerts)
+  fcmToken: { type: String, default: null },
 }, { timestamps: true });
 
 tutorSchema.pre('save', async function(next) {
