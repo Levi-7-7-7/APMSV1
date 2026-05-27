@@ -254,7 +254,7 @@ router.get('/my-tutor', auth, async (req, res) => {
     const tutor = await Tutor.findOne({ batch: student.batch })
       .populate('batch',  'name')
       .populate('branch', 'name')
-      .select('name email batch branch');
+      .select('name email profilePhoto batch branch');
 
     res.json({ tutor: tutor || null });
   } catch (err) {
