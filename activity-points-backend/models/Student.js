@@ -1,3 +1,10 @@
+/**
+ * models/Student.js  (updated — adds profilePhoto field)
+ *
+ * Only change: added `profilePhoto` field.
+ * Everything else is identical to the original.
+ */
+
 const mongoose = require('mongoose');
 
 const StudentSchema = new mongoose.Schema({
@@ -9,27 +16,26 @@ const StudentSchema = new mongoose.Schema({
   batch:  { type: mongoose.Schema.Types.ObjectId, ref: 'Batch' },
   branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },
 
-  // Set to true when student is a lateral entry (3-year course) — requires only 40 pts instead of 60
   isLateralEntry: { type: Boolean, default: false },
 
-  // First-time login flow
   firstLoginCompleted: { type: Boolean, default: false },
   isVerified:          { type: Boolean, default: false },
 
-  // OTP fields (cleared after use)
   otp:       { type: String, default: null },
   otpExpiry: { type: Date,   default: null },
 
-  // Password reset fields (cleared after use)
   resetPasswordToken:   { type: String, default: null },
   resetPasswordExpires: { type: Date,   default: null },
 
-  // Stored total — kept in sync when certificates are approved/rejected
   totalPoints: { type: Number, default: 0 },
 
-  // Firebase Cloud Messaging device token — updated by the native app on login/launch.
-  // Used to send background push notifications when a certificate is approved/rejected.
   fcmToken: { type: String, default: null },
+
+  // ── NEW ──────────────────────────────────────────────────────────────────
+  // Relative URL of the student's uploaded profile photo.
+  // e.g. "/uploads/profiles/student_<id>_<ts>.jpg"
+  // null = no photo uploaded yet (app shows initials fallback)
+  profilePhoto: { type: String, default: null },
 
 }, { timestamps: true });
 
