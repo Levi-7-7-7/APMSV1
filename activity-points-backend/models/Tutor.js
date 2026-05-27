@@ -14,6 +14,10 @@ const tutorSchema = new mongoose.Schema({
 
   // FCM device token for push notifications (new certificate uploaded alerts)
   fcmToken: { type: String, default: null },
+
+  // ── Profile photo (stored on ImageKit) ───────────────────────
+  profilePhoto:       { type: String, default: null },
+  profilePhotoFileId: { type: String, default: null },
 }, { timestamps: true });
 
 tutorSchema.pre('save', async function(next) {

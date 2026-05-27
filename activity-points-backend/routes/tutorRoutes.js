@@ -16,8 +16,28 @@ const { sendPushNotification } = require('../utils/fcm');
 
 const { calcCappedPoints, syncStudentTotalPoints } = require('../utils/calcPoints');
 
+const path    = require('path');
+const ImageKit = require('imagekit');
+
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
+
+// ── Memory-storage upload for profile photos (kept separate) ──────────────────
+const photoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
+
+// ── ImageKit instance ─────────────────────────────────────────────────────────
+const imagekit = new ImageKit({
+  publicKey:   process.env.IMAGEKIT_PUBLIC_KEY,
+  privateKey:  process.env.IMAGEKIT_PRIVATE_KEY,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+});
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 
 // ─── BREVO EMAIL CLIENT ───────────────────────────────────────────────────────
@@ -474,6 +494,52 @@ router.post('/reset-password', async (req, res) => {
     res.status(500).json({ message: 'Server error. Please try again.' });
   }
 });
+// ─── GET TUTOR PROFILE ────────────────────────────────────────────────────────
+router.get('/me', tutorAuth, async (req, res) => {
+  try {
+    const tutor = await Tutor.findById(req.tutor.id)
+      .populate('batch',  'name')
+      .populate('branch', 'name')
+      .select('-password -resetPasswordToken -resetPasswordExpires -fcmToken');
+    if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
+    res.json(tutor);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
+// ─── UPLOAD / UPDATE TUTOR PROFILE PHOTO ─────────────────────────────────────
+router.patch('/profile-photo', tutorAuth, photoUpload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No photo file provided' });
+
+    const tutor = await Tutor.findById(req.tutor.id).select('profilePhoto profilePhotoFileId');
+    if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
+
+    // Delete old image from ImageKit if it exists
+    if (tutor.profilePhotoFileId) {
+      try { await imagekit.deleteFile(tutor.profilePhotoFileId); } catch (_) {}
+    }
+
+    const extension = path.extname(req.file.originalname) || '.jpg';
+    const fileName  = `tutor_${req.tutor.id}_${Date.now()}${extension}`;
+
+    const uploadResponse = await imagekit.upload({
+      file:            req.file.buffer,
+      fileName,
+      folder:          '/tutor-profiles',
+      useUniqueFileName: false,
+    });
+
+    tutor.profilePhoto       = uploadResponse.url;
+    tutor.profilePhotoFileId = uploadResponse.fileId;
+    await tutor.save();
+
+    res.json({ success: true, profilePhoto: uploadResponse.url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || 'Profile photo upload failed' });
+  }
+});
 
 module.exports = router;
