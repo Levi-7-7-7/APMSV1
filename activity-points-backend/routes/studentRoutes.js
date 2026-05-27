@@ -31,6 +31,7 @@ const Branch = require('../models/Branch');
 const Student = require('../models/Student');
 
 const auth = require('../middleware/auth');
+const Tutor = require('../models/Tutor');
 
 const router = express.Router();
 
@@ -239,5 +240,26 @@ router.patch(
     }
   },
 );
+/* ────────────────────────────────────────────────────────────
+ * GET MY TUTOR
+ * Returns the tutor assigned to the student batch.
+ * ──────────────────────────────────────────────────────────── */
+
+router.get('/my-tutor', auth, async (req, res) => {
+  try {
+    const student = await Student.findById(req.user.id).select('batch');
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+    if (!student.batch) return res.json({ tutor: null });
+
+    const tutor = await Tutor.findOne({ batch: student.batch })
+      .populate('batch',  'name')
+      .populate('branch', 'name')
+      .select('name email batch branch');
+
+    res.json({ tutor: tutor || null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
