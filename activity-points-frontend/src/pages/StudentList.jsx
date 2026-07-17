@@ -4,7 +4,6 @@ import tutorAxios from '../api/tutorAxios';
 import {
   Download,
   Search,
-  Trash2,
   Users,
   Loader2,
   ArrowUpDown,
@@ -53,9 +52,6 @@ const StudentList = () => {
 
   const [batchOptions, setBatchOptions] = useState([]);
   const [branchOptions, setBranchOptions] = useState([]);
-
-  const [deleting, setDeleting] = useState(null);
-  const [msg, setMsg] = useState('');
 
   const [pdfLoading, setPdfLoading] = useState(false);
 
@@ -114,41 +110,6 @@ const StudentList = () => {
   useEffect(() => {
     fetchStudents();
   }, []);
-
-  // ======================================================
-  // Delete Student
-  // ======================================================
-
-  const handleDelete = async (id, name) => {
-    const ok = window.confirm(
-      `Delete student "${name}"? This will also remove all their certificates.`
-    );
-
-    if (!ok) return;
-
-    setDeleting(id);
-
-    try {
-      await tutorAxios.delete(`/tutors/students/${id}`);
-
-      setStudents((prev) =>
-        prev.filter((s) => s._id !== id)
-      );
-
-      setMsg(`Student "${name}" deleted.`);
-
-      setTimeout(() => {
-        setMsg('');
-      }, 3500);
-    } catch (err) {
-      alert(
-        err.response?.data?.error ||
-          'Failed to delete student'
-      );
-    } finally {
-      setDeleting(null);
-    }
-  };
 
   // ======================================================
   // Filter + Sort
@@ -333,13 +294,6 @@ const StudentList = () => {
         )}
       </div>
 
-      {/* Message */}
-      {msg && (
-        <div className="sl-msg">
-          {msg}
-        </div>
-      )}
-
       {/* Filters */}
       <div className="sl-filters">
         <div className="sl-search-group">
@@ -512,41 +466,37 @@ const StudentList = () => {
                 <th>Branch</th>
                 <th>Email</th>
                 <th>Points</th>
-                <th>Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {filtered.map((s, idx) => (
-                <tr key={s._id}>
+                <tr
+                  key={s._id}
+                  className="sl-row-clickable"
+                  onClick={() =>
+                    navigate(
+                      `/tutor/dashboard/students/${s._id}`
+                    )
+                  }
+                >
                   <td className="sl-rank">
                     {idx + 1}
                   </td>
 
                   <td>
                     <div className="sl-avatar-cell">
-                      <button
-                        type="button"
-                        className="sl-avatar-btn"
-                        onClick={() =>
-                          navigate(
-                            `/tutor/dashboard/students/${s._id}`
-                          )
-                        }
-                        aria-label={`View ${s.name}'s profile`}
-                      >
-                        {s.profilePhoto ? (
-                          <img
-                            src={s.profilePhoto}
-                            alt={s.name}
-                            className="sl-avatar-img"
-                          />
-                        ) : (
-                          <span className="sl-avatar-fallback">
-                            {getInitials(s.name)}
-                          </span>
-                        )}
-                      </button>
+                      {s.profilePhoto ? (
+                        <img
+                          src={s.profilePhoto}
+                          alt={s.name}
+                          className="sl-avatar-img"
+                        />
+                      ) : (
+                        <span className="sl-avatar-fallback">
+                          {getInitials(s.name)}
+                        </span>
+                      )}
 
                       {s.profilePhoto && (
                         <button
@@ -609,27 +559,6 @@ const StudentList = () => {
                         ? ' ✦'
                         : ''}
                     </span>
-                  </td>
-
-                  <td className="sl-action-cell">
-                    <button
-                      className="sl-btn danger sm"
-                      onClick={() =>
-                        handleDelete(
-                          s._id,
-                          s.name
-                        )
-                      }
-                      disabled={
-                        deleting === s._id
-                      }
-                    >
-                      <Trash2 size={13} />
-
-                      {deleting === s._id
-                        ? '...'
-                        : 'Delete'}
-                    </button>
                   </td>
                 </tr>
               ))}

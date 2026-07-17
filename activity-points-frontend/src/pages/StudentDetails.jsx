@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import tutorAxios from '../api/tutorAxios';
-import { Loader2, Award, Info, ArrowLeft, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, Award, Info, ArrowLeft, Eye, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import CertModal from '../components/CertModal';
 import '../css/StudentDetails.css';
 import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
@@ -17,6 +17,7 @@ const StudentDetails = () => {
   const [filter, setFilter]             = useState('all');
   const [modalUrl, setModalUrl]         = useState(null);
   const [modalFile, setModalFile]       = useState('');
+  const [deleting, setDeleting]         = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,6 +100,22 @@ const StudentDetails = () => {
     setModalUrl(cert.fileUrl);
   };
 
+  const handleDeleteStudent = async () => {
+    const ok = window.confirm(
+      `Delete student "${studentName}"? This will also remove all their certificates.`
+    );
+    if (!ok) return;
+
+    setDeleting(true);
+    try {
+      await tutorAxios.delete(`/tutors/students/${studentId}`);
+      navigate('/tutor/dashboard/students');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete student');
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="student-details-container">
       {modalUrl && (
@@ -109,9 +126,17 @@ const StudentDetails = () => {
         />
       )}
 
-      <button className="back-btn" onClick={() => navigate('/tutor/dashboard/students')}>
-        <ArrowLeft size={18}/> Back to Students
-      </button>
+      <div className="student-details-topbar">
+        <button className="back-btn" onClick={() => navigate('/tutor/dashboard/students')}>
+          <ArrowLeft size={18}/> Back to Students
+        </button>
+
+        {!loading && (
+          <button className="delete-student-btn" onClick={handleDeleteStudent} disabled={deleting}>
+            <Trash2 size={15}/> {deleting ? 'Deleting…' : 'Delete Student'}
+          </button>
+        )}
+      </div>
 
       {loading ? (
         <div className="loading-state">
@@ -123,7 +148,15 @@ const StudentDetails = () => {
           {/* ── Profile card ── */}
           <header className="student-profile-card">
             <div className="profile-main">
-              <div className="avatar-circle">{studentName.charAt(0)}</div>
+              {studentInfo?.profilePhoto ? (
+                <img
+                  src={studentInfo.profilePhoto}
+                  alt={studentName}
+                  className="avatar-photo"
+                />
+              ) : (
+                <div className="avatar-circle">{studentName.charAt(0)}</div>
+              )}
               <div className="profile-info">
                 <h2>{studentName}</h2>
                 <p className="reg-no">{studentReg}</p>

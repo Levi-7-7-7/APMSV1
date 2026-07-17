@@ -172,6 +172,9 @@
 .sl-table tbody tr:hover td { background: #f8fafc; }
 .sl-table tbody tr:last-child td { border-bottom: none; }
 
+.sl-row-clickable { cursor: pointer; }
+.sl-row-clickable:hover td { background: #eff6ff; }
+
 .sl-name  { font-weight: 600; color: #0f172a; }
 .sl-mono  { font-family: monospace; font-size: 0.85rem; color: #475569; }
 .sl-email { color: #64748b; font-size: 0.85rem; }
@@ -188,8 +191,6 @@
 
 .sl-pts.pass { background: #dcfce7; color: #15803d; }
 .sl-pts.mid  { background: #fef9c3; color: #a16207; }
-
-.sl-action-cell { display: flex; gap: 0.4rem; }
 
 .sl-loading, .sl-empty {
   padding: 3rem 1.5rem;
@@ -266,21 +267,6 @@
   position: relative;
   width: 32px;
   height: 32px;
-}
-
-.sl-avatar-btn {
-  border: none;
-  padding: 0;
-  margin: 0;
-  background: transparent;
-  cursor: pointer;
-  display: block;
-  border-radius: 50%;
-  transition: transform 0.15s ease;
-}
-
-.sl-avatar-btn:hover {
-  transform: scale(1.06);
 }
 
 .sl-avatar-img {
@@ -404,8 +390,6 @@
   .sl-table td:nth-child(7) {
     display: none;
   }
-
-  .sl-action-cell { flex-direction: column; gap: 0.25rem; min-width: 80px; }
 
   .sl-scope-badge { padding: 0 0.75rem 0.5rem; }
 }
