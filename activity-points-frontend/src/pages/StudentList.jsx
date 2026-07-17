@@ -6,9 +6,7 @@ import {
   Search,
   Users,
   Loader2,
-  ArrowUpDown,
-  Maximize2,
-  X
+  ArrowUpDown
 } from 'lucide-react';
 
 import * as XLSX from 'xlsx';
@@ -56,9 +54,6 @@ const StudentList = () => {
   const [pdfLoading, setPdfLoading] = useState(false);
 
   const [sortBy, setSortBy] = useState('regNo');
-
-  // Tap-to-enlarge for a student's profile photo
-  const [viewerImage, setViewerImage] = useState(null);
 
   const tutorBatch = JSON.parse(
     localStorage.getItem('tutorBatch') || 'null'
@@ -497,20 +492,6 @@ const StudentList = () => {
                           {getInitials(s.name)}
                         </span>
                       )}
-
-                      {s.profilePhoto && (
-                        <button
-                          type="button"
-                          className="sl-avatar-zoom-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setViewerImage(s.profilePhoto);
-                          }}
-                          aria-label={`Enlarge ${s.name}'s photo`}
-                        >
-                          <Maximize2 size={10} />
-                        </button>
-                      )}
                     </div>
                   </td>
 
@@ -576,29 +557,6 @@ const StudentList = () => {
             ✦
           </span>{' '}
           = Lateral Entry student
-        </div>
-      )}
-
-      {/* Tap-to-enlarge photo viewer */}
-      {viewerImage && (
-        <div
-          className="sl-viewer-backdrop"
-          onClick={() => setViewerImage(null)}
-        >
-          <button
-            className="sl-viewer-close"
-            onClick={() => setViewerImage(null)}
-            aria-label="Close"
-            type="button"
-          >
-            <X size={22} />
-          </button>
-          <img
-            src={viewerImage}
-            alt="Enlarged student photo"
-            className="sl-viewer-img"
-            onClick={(e) => e.stopPropagation()}
-          />
         </div>
       )}
     </div>
