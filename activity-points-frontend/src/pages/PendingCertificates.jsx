@@ -278,47 +278,6 @@ const PendingCertificates = () => {
                 </>
               )}
 
-              {/* Points reference — shows every level/prize combo's points as soon as a
-                  subcategory with levels is picked, so the tutor can see what's
-                  obtainable before choosing. Uses a wrapping chip layout (not a
-                  table) so nothing can ever get clipped or scrolled out of view
-                  on narrow screens — chips just wrap to the next line. */}
-              {editHasLevels && (
-                <div style={{ marginTop: '0.75rem', border: '1.5px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                  <div style={{ padding: '6px 10px', background: '#f8fafc', fontSize: '12px', fontWeight: 700, color: '#475569', borderBottom: '1px solid #e2e8f0' }}>
-                    Points obtainable for "{editSubcat}"
-                  </div>
-                  <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {editCurrentSub.levels.map(l => (
-                      <div key={l.name} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', minWidth: '58px' }}>
-                          {l.name}
-                        </span>
-                        {l.prizes.map(p => {
-                          const isSelected = editLevel === l.name && editPrize === p.type;
-                          return (
-                            <span
-                              key={p.type}
-                              style={{
-                                fontSize: '12px',
-                                fontWeight: isSelected ? 700 : 500,
-                                padding: '3px 8px',
-                                borderRadius: '999px',
-                                background: isSelected ? '#2563eb' : '#f1f5f9',
-                                color: isSelected ? '#fff' : '#334155',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {p.type}: {p.points}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Level */}
               {editHasLevels && (
                 <>
