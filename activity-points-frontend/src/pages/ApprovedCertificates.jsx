@@ -22,6 +22,17 @@ export default function ApprovedCertificates() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Lock the background page scroll whenever a modal is open — otherwise
+  // touch-scrolling inside the modal also scrolls the certificate list behind it.
+  useEffect(() => {
+    const anyModalOpen = !!(modalUrl || confirmId);
+    if (anyModalOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prevOverflow; };
+    }
+  }, [modalUrl, confirmId]);
+
   const filtered = certificates.filter(c =>
     search
       ? c.student?.name?.toLowerCase().includes(search.toLowerCase()) ||

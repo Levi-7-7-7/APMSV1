@@ -27,6 +27,18 @@ const PendingCertificates = () => {
 
   const prizeLevels = ['Participation', 'First', 'Second', 'Third'];
 
+  // Lock the background page scroll whenever any modal is open — otherwise
+  // on touch devices, scrolling inside the modal also scrolls the
+  // certificate list behind it (the overlay doesn't stop scroll by itself).
+  useEffect(() => {
+    const anyModalOpen = !!(modalUrl || rejectingCert || editingCert);
+    if (anyModalOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prevOverflow; };
+    }
+  }, [modalUrl, rejectingCert, editingCert]);
+
   const fetchPending = async () => {
     setLoading(true);
     try {
@@ -127,14 +139,6 @@ const PendingCertificates = () => {
   // Competitions", only ever define a "Participation" prize — not all 4).
   const editLevelObj = editCurrentSub?.levels?.find(l => l.name === editLevel);
   const editPrizeItems = editLevelObj?.prizes || [];
-
-  // Union of every prize type that appears anywhere in this subcategory's
-  // levels, in the standard display order — used to decide which columns
-  // to render in the points table (so we don't show empty "First/Second/
-  // Third" columns for subcategories that never define them).
-  const editVisiblePrizeTypes = editHasLevels
-    ? prizeLevels.filter(p => editCurrentSub.levels.some(l => l.prizes.some(pr => pr.type === p)))
-    : [];
 
   const getEditPoints = () => {
     if (!editCurrentSub) return null;
@@ -274,53 +278,43 @@ const PendingCertificates = () => {
                 </>
               )}
 
-              {/* Points reference table — shows every level/prize combo's points as soon as a subcategory with levels is picked, so the tutor can see what's obtainable before choosing */}
+              {/* Points reference — shows every level/prize combo's points as soon as a
+                  subcategory with levels is picked, so the tutor can see what's
+                  obtainable before choosing. Uses a wrapping chip layout (not a
+                  table) so nothing can ever get clipped or scrolled out of view
+                  on narrow screens — chips just wrap to the next line. */}
               {editHasLevels && (
                 <div style={{ marginTop: '0.75rem', border: '1.5px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
                   <div style={{ padding: '6px 10px', background: '#f8fafc', fontSize: '12px', fontWeight: 700, color: '#475569', borderBottom: '1px solid #e2e8f0' }}>
                     Points obtainable for "{editSubcat}"
                   </div>
-                  {/* Horizontally scrollable so columns are never clipped/hidden on
-                      narrow screens — the outer box above stays overflow:hidden
-                      only for its rounded corners, this inner div does the scrolling */}
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', minWidth: 320, borderCollapse: 'collapse', fontSize: '13px' }}>
-                      <thead>
-                        <tr style={{ background: '#f8fafc' }}>
-                          <th style={{ textAlign: 'left', padding: '6px 10px', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>Level</th>
-                          {editVisiblePrizeTypes.map(p => (
-                            <th key={p} style={{ textAlign: 'center', padding: '6px 8px', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>{p}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {editCurrentSub.levels.map(l => (
-                          <tr key={l.name} style={{ borderTop: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '6px 10px', fontWeight: 600, color: '#334155', whiteSpace: 'nowrap' }}>{l.name}</td>
-                            {editVisiblePrizeTypes.map(p => {
-                              const prize = l.prizes.find(pr => pr.type === p);
-                              const isSelected = editLevel === l.name && editPrize === p;
-                              return (
-                                <td
-                                  key={p}
-                                  style={{
-                                    textAlign: 'center',
-                                    padding: '6px 8px',
-                                    whiteSpace: 'nowrap',
-                                    color: prize ? '#0f172a' : '#cbd5e1',
-                                    background: isSelected ? '#dbeafe' : 'transparent',
-                                    fontWeight: isSelected ? 700 : 400,
-                                    borderRadius: isSelected ? '6px' : 0,
-                                  }}
-                                >
-                                  {prize ? prize.points : '—'}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {editCurrentSub.levels.map(l => (
+                      <div key={l.name} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#334155', minWidth: '58px' }}>
+                          {l.name}
+                        </span>
+                        {l.prizes.map(p => {
+                          const isSelected = editLevel === l.name && editPrize === p.type;
+                          return (
+                            <span
+                              key={p.type}
+                              style={{
+                                fontSize: '12px',
+                                fontWeight: isSelected ? 700 : 500,
+                                padding: '3px 8px',
+                                borderRadius: '999px',
+                                background: isSelected ? '#2563eb' : '#f1f5f9',
+                                color: isSelected ? '#fff' : '#334155',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {p.type}: {p.points}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

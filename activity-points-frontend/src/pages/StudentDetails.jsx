@@ -46,6 +46,16 @@ const StudentDetails = () => {
     fetchData();
   }, [studentId]);
 
+  // Lock the background page scroll whenever the modal is open — otherwise
+  // touch-scrolling inside the modal also scrolls the certificate grid behind it.
+  useEffect(() => {
+    if (modalUrl) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prevOverflow; };
+    }
+  }, [modalUrl]);
+
   const isLateralEntry = studentInfo?.isLateralEntry ?? false;
   const requiredPoints = passThreshold(isLateralEntry);
 
