@@ -724,6 +724,129 @@ textarea:focus {
   flex-shrink: 0;
 }
 
+/* ── Subcategory inline edit row ── */
+.ap-sub-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.ap-sub-edit-input {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+/* ── Levels management panel ── */
+.ap-levels-panel {
+  margin: 0.75rem 1.25rem 1rem;
+  padding: 1rem;
+
+  background: var(--ap-light);
+  border: 1.5px solid var(--ap-border);
+  border-radius: var(--ap-radius-sm);
+}
+
+.ap-levels-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  font-size: 0.85rem;
+  color: var(--ap-text);
+
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.6rem;
+
+  border-bottom: 1px solid var(--ap-border);
+}
+
+.ap-levels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  margin-bottom: 1rem;
+}
+
+.ap-levels-empty {
+  font-size: 0.85rem;
+  color: var(--ap-muted);
+  margin: 0 0 1rem;
+}
+
+.ap-level-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+
+  padding: 0.5rem 0.65rem;
+
+  background: var(--ap-surface);
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius-sm);
+}
+
+.ap-level-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ap-text);
+
+  min-width: 80px;
+}
+
+.ap-level-prizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+
+  flex: 1 1 auto;
+}
+
+.ap-prize-badge {
+  background: var(--ap-success-lt);
+  color: var(--ap-success);
+
+  font-size: 0.72rem;
+  font-weight: 600;
+
+  padding: 2px 8px;
+  border-radius: 20px;
+
+  white-space: nowrap;
+}
+
+/* ── Add / edit level form ── */
+.ap-add-level-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--ap-border);
+}
+
+.ap-prizes-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.ap-prize-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ap-prize-input label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ap-muted);
+}
+
 /* ── Stats ── */
 .ap-stats-row {
   display: grid;

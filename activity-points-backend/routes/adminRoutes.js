@@ -210,6 +210,30 @@ router.post("/categories/:categoryId/subcategory/:subId/level", adminAuth, async
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+// Edit an existing level's name and/or prizes
+router.put("/categories/:categoryId/subcategory/:subId/level/:levelName", adminAuth, async (req, res) => {
+  try {
+    const { name, prizes } = req.body;
+    const cat = await Category.findById(req.params.categoryId);
+    if (!cat) return res.status(404).json({ error: "Category not found" });
+    const sub = cat.subcategories.id(req.params.subId);
+    if (!sub) return res.status(404).json({ error: "Subcategory not found" });
+    const levelName = decodeURIComponent(req.params.levelName);
+    const level = sub.levels.find(l => l.name === levelName);
+    if (!level) return res.status(404).json({ error: "Level not found" });
+
+    // If renaming, make sure the new name doesn't clash with a different level
+    if (name && name !== levelName && sub.levels.some(l => l.name === name)) {
+      return res.status(400).json({ error: "A level with that name already exists" });
+    }
+
+    if (name) level.name = name;
+    if (prizes) level.prizes = prizes;
+    await cat.save();
+    res.json({ success: true, category: cat });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
 // Delete a level from a subcategory
 router.delete("/categories/:categoryId/subcategory/:subId/level/:levelName", adminAuth, async (req, res) => {
   try {

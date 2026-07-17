@@ -55,6 +55,11 @@ export default function AdminPanel() {
     { type: "Third", points: "" },
   ]});
 
+  // Level editing state — lets the admin fix an existing level's name/points
+  // instead of having to delete and recreate it from scratch
+  const [editingLevelName, setEditingLevelName] = useState(null); // original name of the level being edited
+  const [editLevelForm, setEditLevelForm] = useState({ name: "", prizes: [] });
+
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
@@ -232,6 +237,36 @@ export default function AdminPanel() {
       setCategories(p => p.map(c => c._id === catId ? res.data.category : c));
       flash("Level removed");
     } catch (err) { flash(err.response?.data?.error || "Failed to remove level", "error"); }
+  };
+
+  const handleEditLevelOpen = (level) => {
+    setEditingLevelName(level.name);
+    // Always show all 4 prize slots so the admin can add a missing one
+    // (e.g. a level that only has "Participation" can have First/Second/Third added here too)
+    const allTypes = ["Participation", "First", "Second", "Third"];
+    setEditLevelForm({
+      name: level.name,
+      prizes: allTypes.map(type => {
+        const existing = level.prizes.find(p => p.type === type);
+        return { type, points: existing ? String(existing.points) : "" };
+      }),
+    });
+  };
+
+  const handleEditLevelSave = async (catId, subId) => {
+    if (!editingLevelName) return;
+    if (!editLevelForm.name.trim()) return flash("Level name required", "error");
+    const prizes = editLevelForm.prizes.filter(p => p.points !== "").map(p => ({ type: p.type, points: Number(p.points) }));
+    if (!prizes.length) return flash("At least one prize with points is required", "error");
+    try {
+      const res = await adminAxios.put(
+        `/admin/categories/${catId}/subcategory/${subId}/level/${encodeURIComponent(editingLevelName)}`,
+        { name: editLevelForm.name.trim(), prizes }
+      );
+      setCategories(p => p.map(c => c._id === catId ? res.data.category : c));
+      setEditingLevelName(null);
+      flash("Level updated");
+    } catch (err) { flash(err.response?.data?.error || "Failed to update level", "error"); }
   };
 
   const exportExcel = () => {
@@ -606,15 +641,50 @@ export default function AdminPanel() {
                           {subForLevels?.levels?.length > 0 ? (
                             <div className="ap-levels-list">
                               {subForLevels.levels.map(lvl => (
-                                <div key={lvl.name} className="ap-level-row">
-                                  <span className="ap-level-name">{lvl.name}</span>
-                                  <div className="ap-level-prizes">
-                                    {lvl.prizes.map(p => (
-                                      <span key={p.type} className="ap-prize-badge">{p.type}: {p.points}pts</span>
-                                    ))}
+                                editingLevelName === lvl.name ? (
+                                  <div key={lvl.name} className="ap-add-level-form" style={{ marginBottom: "0.5rem" }}>
+                                    <strong style={{ fontSize: "0.82rem" }}>Edit Level</strong>
+                                    <input
+                                      className="ap-input"
+                                      placeholder="Level name"
+                                      value={editLevelForm.name}
+                                      onChange={e => setEditLevelForm({ ...editLevelForm, name: e.target.value })}
+                                    />
+                                    <div className="ap-prizes-grid">
+                                      {editLevelForm.prizes.map((p, i) => (
+                                        <div key={p.type} className="ap-prize-input">
+                                          <label>{p.type}</label>
+                                          <input
+                                            className="ap-input"
+                                            type="number"
+                                            placeholder="pts"
+                                            value={p.points}
+                                            onChange={e => {
+                                              const updated = [...editLevelForm.prizes];
+                                              updated[i] = { ...updated[i], points: e.target.value };
+                                              setEditLevelForm({ ...editLevelForm, prizes: updated });
+                                            }}
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.5rem" }}>
+                                      <button className="btn-primary ap-btn sm" onClick={() => handleEditLevelSave(cat._id, managingLevelsSub)}><Edit2 size={12}/> Save</button>
+                                      <button className="btn ap-btn sm" onClick={() => setEditingLevelName(null)}>Cancel</button>
+                                    </div>
                                   </div>
-                                  <button className="btn ap-btn sm danger" onClick={() => handleDeleteLevel(cat._id, managingLevelsSub, lvl.name)}><Trash2 size={11}/></button>
-                                </div>
+                                ) : (
+                                  <div key={lvl.name} className="ap-level-row">
+                                    <span className="ap-level-name">{lvl.name}</span>
+                                    <div className="ap-level-prizes">
+                                      {lvl.prizes.map(p => (
+                                        <span key={p.type} className="ap-prize-badge">{p.type}: {p.points}pts</span>
+                                      ))}
+                                    </div>
+                                    <button className="btn ap-btn sm" onClick={() => handleEditLevelOpen(lvl)} title="Edit level"><Edit2 size={11}/></button>
+                                    <button className="btn ap-btn sm danger" onClick={() => handleDeleteLevel(cat._id, managingLevelsSub, lvl.name)}><Trash2 size={11}/></button>
+                                  </div>
+                                )
                               ))}
                             </div>
                           ) : <p className="ap-levels-empty">No levels yet.</p>}
