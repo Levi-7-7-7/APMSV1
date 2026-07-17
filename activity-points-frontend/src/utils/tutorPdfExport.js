@@ -9,8 +9,24 @@
  * Since the browser can't hand HTML off to a native WebKit PDF renderer the
  * way react-native-html-to-pdf does, we render the exact same markup/CSS to
  * an off-screen DOM node, rasterize each page with html2canvas, and paste
- * the images into a jsPDF document — paginating on student-group boundaries
- * so a student's row block is never sliced across a page break.
+ * the images into a jsPDF document.
+ *
+ * Pagination note
+ * ----------------
+ * A student can legitimately have dozens of approved activities (one row
+ * each). Earlier versions of this file treated a whole student "block" as an
+ * atomic unit that always had to land on a single page — if that block was
+ * taller than a printable A4 page, the rasterized image simply ran off the
+ * bottom edge of the page and everything past that point was silently lost.
+ * That's why long activity lists used to get cut off mid-list with no
+ * warning.
+ *
+ * This version paginates at the *row* level instead. A student's name/reg/
+ * total header is measured and placed first; their activity rows are then
+ * packed onto the page one at a time. If the list runs past the bottom of a
+ * page, it simply continues onto the next page under a small "(continued)"
+ * marker — nothing is ever dropped, and every activity always appears
+ * exactly once, in full.
  */
 
 import html2canvas from 'html2canvas';
@@ -23,16 +39,24 @@ import { calcCappedPoints, passThreshold } from './calcPoints';
 // Rendered at this pixel width off-screen, then scaled down to fit the
 // printable width of an A4 jsPDF page (210mm - margins).
 const RENDER_WIDTH_PX = 900;
-// Max height (px, at RENDER_WIDTH_PX) of content allowed on one page
-// before we start a new page. Leaves room for the footer strip jsPDF
-// draws on top afterwards.
-const PAGE_CONTENT_MAX_PX = 1220;
 
 const A4_WIDTH_MM = 210;
 const A4_HEIGHT_MM = 297;
 const MARGIN_X_MM = 10;
 const MARGIN_TOP_MM = 10;
 const FOOTER_RESERVE_MM = 12;
+
+const CONTENT_WIDTH_MM = A4_WIDTH_MM - MARGIN_X_MM * 2;
+// px-per-mm at the scale we render/rasterize at, used to convert the real
+// printable page height into a px budget for the packing algorithm below.
+const PX_PER_MM = RENDER_WIDTH_PX / CONTENT_WIDTH_MM;
+// Max height (px, at RENDER_WIDTH_PX) of content allowed on one page before
+// a new page is started. Derived from the actual A4 printable area (rather
+// than a hand-picked magic number) so the budget always matches what will
+// really fit, with a small safety margin.
+const PAGE_CONTENT_MAX_PX = Math.floor(
+  (A4_HEIGHT_MM - MARGIN_TOP_MM - FOOTER_RESERVE_MM) * PX_PER_MM * 0.97
+);
 
 function getBatchName(b) {
   return typeof b === 'object' ? b?.name ?? '' : b ?? '';
@@ -42,7 +66,10 @@ function getBranchName(b) {
 }
 
 // ---------------------------------------------------------------------
-// Shared CSS — a near-verbatim port of the RN report's stylesheet.
+// Shared CSS — a near-verbatim port of the RN report's stylesheet, with a
+// larger crest and a few professional-polish tweaks (zebra striping on
+// long activity lists, a card-style shadow around the ledger, a clearer
+// "continued" marker for split activity lists).
 // ---------------------------------------------------------------------
 const REPORT_CSS = `
 .mti-pdf-doc, .mti-pdf-doc * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -52,20 +79,20 @@ const REPORT_CSS = `
   background: #ffffff;
   font-size: 13px;
   width: ${RENDER_WIDTH_PX}px;
-  padding: 18px 20px 10px 20px;
+  padding: 18px 22px 10px 22px;
 }
 .mti-pdf-doc .header {
   display: table;
   width: 100%;
-  padding-bottom: 14px;
+  padding-bottom: 16px;
   border-bottom: 3px solid #0f2864;
   margin-bottom: 12px;
 }
-.mti-pdf-doc .header-logo-cell { display: table-cell; vertical-align: middle; width: 92px; }
-.mti-pdf-doc .header-logo-cell img { width: 72px; height: auto; display: block; }
+.mti-pdf-doc .header-logo-cell { display: table-cell; vertical-align: middle; width: 132px; }
+.mti-pdf-doc .header-logo-cell img { width: 108px; height: auto; display: block; }
 .mti-pdf-doc .header-text { display: table-cell; vertical-align: middle; text-align: center; }
-.mti-pdf-doc .dept-name { font-size: 17px; font-weight: 800; color: #0f2864; letter-spacing: 0.6px; margin-bottom: 3px; }
-.mti-pdf-doc .inst-name { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 2px; }
+.mti-pdf-doc .dept-name { font-size: 18px; font-weight: 800; color: #0f2864; letter-spacing: 0.6px; margin-bottom: 4px; }
+.mti-pdf-doc .inst-name { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
 .mti-pdf-doc .inst-sub { font-size: 10px; color: #64748b; margin-top: 1px; font-weight: 500; }
 .mti-pdf-doc .title-band {
   background: linear-gradient(135deg, #0f2864 0%, #1e40af 100%);
@@ -77,6 +104,12 @@ const REPORT_CSS = `
   border-radius: 5px;
   margin: 14px 0 18px 0;
   letter-spacing: 1px;
+  box-shadow: 0 2px 6px rgba(15, 40, 100, 0.25);
+}
+.mti-pdf-doc .ledger-wrap {
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
 }
 .mti-pdf-doc .ledger-table {
   width: 100%;
@@ -98,6 +131,9 @@ const REPORT_CSS = `
   border: 1.5px solid #94a3b8;
   background-color: #f0f4ff;
 }
+.mti-pdf-doc .student-profile-row.continuation td {
+  background-color: #e8edfb;
+}
 .mti-pdf-doc .sl-cell {
   text-align: center;
   font-weight: 800;
@@ -107,6 +143,7 @@ const REPORT_CSS = `
   width: 42px;
   border-right: 2px solid #0f2864 !important;
 }
+.mti-pdf-doc .sl-cell.muted { color: #6b83b8; }
 .mti-pdf-doc .student-name-meta { padding: 10px 14px; }
 .mti-pdf-doc .name-text {
   font-size: 14px;
@@ -115,6 +152,14 @@ const REPORT_CSS = `
   text-transform: uppercase;
   letter-spacing: 0.3px;
   margin-bottom: 4px;
+}
+.mti-pdf-doc .continued-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: none;
+  letter-spacing: 0.2px;
+  margin-left: 6px;
 }
 .mti-pdf-doc .reg-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .mti-pdf-doc .reg-text { font-size: 10px; color: #475569; }
@@ -137,11 +182,23 @@ const REPORT_CSS = `
   border: 1px solid #7dd3fc;
 }
 .mti-pdf-doc .pt-blank { background-color: #f0f4ff !important; }
+.mti-pdf-doc .continuation-note-cell {
+  text-align: center;
+  vertical-align: middle;
+  background: #e8edfb !important;
+  border: 1.5px solid #94a3b8 !important;
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 4px;
+}
 .mti-pdf-doc .cert-item-row td {
   border: 1px solid #e2e8f0;
   padding: 6px 12px;
   background: #ffffff;
 }
+.mti-pdf-doc .cert-item-row.alt td { background: #f8fafc; }
 .mti-pdf-doc .cert-name-cell { color: #334155; font-size: 11px; font-weight: 500; padding-left: 20px !important; }
 .mti-pdf-doc .cert-index { color: #94a3b8; font-size: 10px; margin-right: 4px; font-weight: 600; }
 .mti-pdf-doc .cert-pts { color: #0f2864; font-weight: 700 !important; text-align: center; }
@@ -186,74 +243,97 @@ const TROPHY_SVG = `<svg viewBox="0 0 24 24" fill="#d97706" xmlns="http://www.w3
   <path d="M18 3h-1V1H7v2H6C4.9 3 4 3.9 4 5v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.95V17H9v2H6v2h12v-2h-3v-2h-3v-3.11c1.63-.32 2.98-1.45 3.61-2.95C18.08 10.63 20 8.55 20 6V5c0-1.1-.9-2-2-2zM6 6V5h1v3.82C6.4 8.4 6 7.74 6 6zm12 0c0 1.74-.4 2.4-1 2.82V5h1v1z"/>
 </svg>`;
 
-function buildTbodyHtml(student, certsByStudent) {
-  const certs = certsByStudent[student._id] || [];
-  const approved = certs.filter((c) => c.status === 'approved');
-  const computedTotal = calcCappedPoints(approved, [], student.isLateralEntry);
-  const threshold = passThreshold(student.isLateralEntry);
-  const isPassing = computedTotal >= threshold;
-  const totalRowsCount = approved.length > 0 ? approved.length + 1 : 2;
-  const certCount = approved.length;
-
-  let rowGroupHtml = `
-    <tr class="student-profile-row">
-      <td rowspan="${totalRowsCount}" class="sl-cell">${student.__idx}</td>
-      <td class="student-name-meta">
-        <div class="name-text">${esc(student.name) || '—'}</div>
-        <div class="reg-meta-row">
-          <span class="reg-text">Reg No: <b>${esc(student.registerNumber) || '—'}</b></span>
-          ${student.isLateralEntry ? '<span class="lat-label">Lateral Entry</span>' : ''}
-          <span class="cert-count-badge">${certCount} activit${certCount !== 1 ? 'ies' : 'y'}</span>
-        </div>
-      </td>
-      <td class="points-cell pt-blank"></td>
-      <td rowspan="${totalRowsCount}" class="total-score-cell">
-        <div class="total-score-num">${computedTotal}</div>
-        <div class="total-score-label">pts</div>
-      </td>
-      <td rowspan="${totalRowsCount}" class="status-trophy-cell">
-        ${
-          isPassing
-            ? `<div class="trophy-wrapper">${TROPHY_SVG}<div class="pass-label">PASS</div></div>`
-            : '<div class="fail-wrapper"><div class="fail-label">PENDING</div></div>'
-        }
-      </td>
-    </tr>
-  `;
-
-  if (approved.length === 0) {
-    rowGroupHtml += `
-      <tr class="cert-item-row">
-        <td class="cert-name-cell empty-certs-text">No approved activities logged</td>
-        <td class="points-cell">—</td>
-      </tr>`;
-  } else {
-    approved.forEach((cert, ci) => {
-      rowGroupHtml += `
-        <tr class="cert-item-row">
-          <td class="cert-name-cell">
-            <span class="cert-index">${ci + 1}.</span>
-            ${esc(cert.eventName || cert.subcategory || '—')}
-          </td>
-          <td class="points-cell cert-pts">${cert.pointsAwarded ?? 0}</td>
-        </tr>`;
-    });
-  }
-
-  rowGroupHtml += `
-    <tr class="spacer-row">
-      <td colspan="5"></td>
-    </tr>`;
-
-  return `<tbody class="student-ledger-group">${rowGroupHtml}</tbody>`;
-}
-
 function esc(str) {
   if (str === null || str === undefined) return '';
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+// ---------------------------------------------------------------------
+// Per-student data prep
+// ---------------------------------------------------------------------
+function prepStudent(student, certsByStudent) {
+  const certs = certsByStudent[student._id] || [];
+  const approved = certs.filter((c) => c.status === 'approved');
+  const computedTotal = calcCappedPoints(approved, [], student.isLateralEntry);
+  const threshold = passThreshold(student.isLateralEntry);
+  const isPassing = computedTotal >= threshold;
+  // Every student always has at least one "sub-row": either their activity
+  // list, or a single "no approved activities" placeholder row. This list
+  // is what actually gets paginated — never the block as a whole.
+  const subRows =
+    approved.length > 0
+      ? approved.map((cert, ci) => ({ type: 'cert', cert, ci }))
+      : [{ type: 'empty' }];
+
+  return { student, approved, computedTotal, isPassing, subRows };
+}
+
+// ---------------------------------------------------------------------
+// Row HTML builders (each function renders exactly one <tr>)
+// ---------------------------------------------------------------------
+function profileRowHtml({ student, computedTotal, isPassing, slIndex, rowSpan, continuation }) {
+  const certCount = student.__certCount ?? 0;
+  return `
+    <tr class="student-profile-row${continuation ? ' continuation' : ''}">
+      <td rowspan="${rowSpan}" class="sl-cell${continuation ? ' muted' : ''}">${slIndex}</td>
+      <td class="student-name-meta">
+        <div class="name-text">${esc(student.name) || '—'}${
+          continuation ? '<span class="continued-tag">(continued)</span>' : ''
+        }</div>
+        ${
+          continuation
+            ? ''
+            : `<div class="reg-meta-row">
+                <span class="reg-text">Reg No: <b>${esc(student.registerNumber) || '—'}</b></span>
+                ${student.isLateralEntry ? '<span class="lat-label">Lateral Entry</span>' : ''}
+                <span class="cert-count-badge">${certCount} activit${certCount !== 1 ? 'ies' : 'y'}</span>
+              </div>`
+        }
+      </td>
+      <td class="points-cell pt-blank"></td>
+      ${
+        continuation
+          ? `<td rowspan="${rowSpan}" colspan="2" class="continuation-note-cell">Continued from<br/>previous page</td>`
+          : `<td rowspan="${rowSpan}" class="total-score-cell">
+              <div class="total-score-num">${computedTotal}</div>
+              <div class="total-score-label">pts</div>
+            </td>
+            <td rowspan="${rowSpan}" class="status-trophy-cell">
+              ${
+                isPassing
+                  ? `<div class="trophy-wrapper">${TROPHY_SVG}<div class="pass-label">PASS</div></div>`
+                  : '<div class="fail-wrapper"><div class="fail-label">PENDING</div></div>'
+              }
+            </td>`
+      }
+    </tr>`;
+}
+
+function subRowHtml(subRow, altShade) {
+  const altClass = altShade ? ' alt' : '';
+  if (subRow.type === 'empty') {
+    return `
+      <tr class="cert-item-row${altClass}">
+        <td class="cert-name-cell empty-certs-text">No approved activities logged</td>
+        <td class="points-cell">—</td>
+      </tr>`;
+  }
+  const { cert, ci } = subRow;
+  return `
+    <tr class="cert-item-row${altClass}">
+      <td class="cert-name-cell">
+        <span class="cert-index">${ci + 1}.</span>
+        ${esc(cert.eventName || cert.subcategory || '—')}
+      </td>
+      <td class="points-cell cert-pts">${cert.pointsAwarded ?? 0}</td>
+    </tr>`;
+}
+
+function spacerRowHtml() {
+  return `<tr class="spacer-row"><td colspan="5"></td></tr>`;
 }
 
 function tableHeadHtml() {
@@ -312,94 +392,177 @@ async function waitForImages(root) {
   );
 }
 
+function makeHiddenRoot() {
+  const root = document.createElement('div');
+  root.style.position = 'fixed';
+  root.style.left = '-99999px';
+  root.style.top = '0';
+  root.style.zIndex = '-1';
+  document.body.appendChild(root);
+  return root;
+}
+
 /**
  * Generates and downloads the tutor "Student Activity Points Report" PDF,
  * visually matching the report produced by the React Native tutor app.
+ *
+ * Pagination is done row-by-row so a student's activity list can never be
+ * truncated: if it doesn't fit on the current page it simply continues,
+ * clearly marked, on the next one.
  */
 export async function exportStudentsPdf({ students, certsByStudent, tutorBranch, tutorBatch, logoUrl }) {
   const deptName = tutorBranch ? `DEPARTMENT OF ${tutorBranch.toUpperCase()}` : 'DEPARTMENT';
   const batchLabel = tutorBatch ? ` — BATCH ${tutorBatch}` : '';
   const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
-  const numbered = students.map((s, i) => ({ ...s, __idx: i + 1 }));
-  const tbodyHtmlList = numbered.map((s) => buildTbodyHtml(s, certsByStudent));
-
-  // --- Measure phase: render everything off-screen once to get real heights ---
-  const measureRoot = document.createElement('div');
-  measureRoot.style.position = 'fixed';
-  measureRoot.style.left = '-99999px';
-  measureRoot.style.top = '0';
-  measureRoot.style.zIndex = '-1';
-  document.body.appendChild(measureRoot);
-
   const styleTag = `<style>${REPORT_CSS}</style>`;
-  measureRoot.innerHTML = `${styleTag}<div class="mti-pdf-doc">
-    ${headerBlockHtml(logoUrl, deptName)}
-    ${titleBandHtml(batchLabel)}
-    <table class="ledger-table">${tableHeadHtml()}${tbodyHtmlList.join('')}</table>
-  </div>`;
 
+  const prepared = students.map((s, i) => {
+    const p = prepStudent(s, certsByStudent);
+    p.slIndex = i + 1;
+    p.student = { ...p.student, __certCount: p.approved.length };
+    return p;
+  });
+
+  // --- Measure phase: render every row once (flat, rowspan-free) off-screen
+  // to get its real rendered height, including any text-wrap effects on
+  // long activity names. ---
+  const measureRoot = makeHiddenRoot();
+  const measureRowsHtml = [];
+  prepared.forEach((p, pi) => {
+    measureRowsHtml.push(
+      `<tr data-key="profile-${pi}" class="student-profile-row"><td class="sl-cell">${p.slIndex}</td><td class="student-name-meta"><div class="name-text">${esc(
+        p.student.name
+      )}</div><div class="reg-meta-row"><span class="reg-text">Reg No: <b>${esc(
+        p.student.registerNumber
+      )}</b></span><span class="cert-count-badge">${p.approved.length} activities</span></div></td><td class="points-cell pt-blank"></td><td class="total-score-cell"><div class="total-score-num">${
+        p.computedTotal
+      }</div><div class="total-score-label">pts</div></td><td class="status-trophy-cell"></td></tr>`
+    );
+    p.subRows.forEach((sr, si) => {
+      measureRowsHtml.push(`<tr data-key="sub-${pi}-${si}">${subRowHtml(sr, false).replace(/^<tr[^>]*>/, '')}`);
+    });
+  });
+  measureRoot.innerHTML = `${styleTag}<div class="mti-pdf-doc"><div class="ledger-wrap"><table class="ledger-table">${tableHeadHtml()}<tbody>${measureRowsHtml.join(
+    ''
+  )}</tbody></table></div></div>`;
   await waitForImages(measureRoot);
 
-  const docEl = measureRoot.querySelector('.mti-pdf-doc');
-  const headerEl = docEl.querySelector('.header');
-  const titleBandEl = docEl.querySelector('.title-band');
-  const theadEl = docEl.querySelector('thead');
-  const tbodyEls = Array.from(docEl.querySelectorAll('tbody.student-ledger-group'));
-
-  const headerHeight = headerEl.offsetHeight + titleBandEl.offsetHeight;
-  const theadHeight = theadEl.offsetHeight;
-  const tbodyHeights = tbodyEls.map((el) => el.offsetHeight);
-
+  const rowHeights = {};
+  measureRoot.querySelectorAll('tr[data-key]').forEach((tr) => {
+    rowHeights[tr.getAttribute('data-key')] = tr.offsetHeight;
+  });
+  const headerEl = measureRoot.querySelector('.header') || (() => {
+    // header isn't in the measure DOM above; measure it separately below
+    return null;
+  })();
   document.body.removeChild(measureRoot);
 
-  // --- Paginate on student-group boundaries ---
-  const pages = [];
-  let idx = 0;
-  let firstPage = true;
-  while (idx < tbodyHtmlList.length) {
-    let used = (firstPage ? headerHeight : 0) + theadHeight;
-    const indices = [];
-    while (idx < tbodyHtmlList.length && (indices.length === 0 || used + tbodyHeights[idx] <= PAGE_CONTENT_MAX_PX)) {
-      used += tbodyHeights[idx];
-      indices.push(idx);
-      idx++;
+  // Measure header/title-band height and thead height separately.
+  const measureRoot2 = makeHiddenRoot();
+  measureRoot2.innerHTML = `${styleTag}<div class="mti-pdf-doc">
+    ${headerBlockHtml(logoUrl, deptName)}
+    ${titleBandHtml(batchLabel)}
+    <div class="ledger-wrap"><table class="ledger-table">${tableHeadHtml()}<tbody></tbody></table></div>
+  </div>`;
+  await waitForImages(measureRoot2);
+  const hEl = measureRoot2.querySelector('.header');
+  const tEl = measureRoot2.querySelector('.title-band');
+  const theadEl = measureRoot2.querySelector('thead');
+  const headerHeight = hEl.offsetHeight + tEl.offsetHeight;
+  const theadHeight = theadEl.offsetHeight;
+  const spacerHeight = 14; // fixed, from CSS
+  document.body.removeChild(measureRoot2);
+
+  // --- Packing phase: walk every student's sub-rows and assign them to
+  // pages, splitting a student's activity list across a page boundary
+  // (rather than ever discarding rows) when it doesn't fit on one page. ---
+  const pages = []; // { includeHeader, chunks: [...] }
+  let cur = null;
+  let used = 0;
+
+  function startPage(includeHeader) {
+    cur = { includeHeader, chunks: [] };
+    pages.push(cur);
+    used = (includeHeader ? headerHeight : 0) + theadHeight;
+  }
+  startPage(true);
+
+  prepared.forEach((p, pi) => {
+    let si = 0;
+    let isFirstChunk = true;
+    while (si < p.subRows.length) {
+      const headerRowH = rowHeights[`profile-${pi}`];
+      const firstSubH = rowHeights[`sub-${pi}-${si}`];
+      // Need room for this chunk's own header row + at least one sub-row;
+      // otherwise start a fresh page before committing to this chunk.
+      if (used + headerRowH + firstSubH > PAGE_CONTENT_MAX_PX) {
+        startPage(false);
+      }
+      used += headerRowH;
+      const chunkSubIndices = [];
+      while (si < p.subRows.length && used + rowHeights[`sub-${pi}-${si}`] <= PAGE_CONTENT_MAX_PX) {
+        used += rowHeights[`sub-${pi}-${si}`];
+        chunkSubIndices.push(si);
+        si++;
+      }
+      // Guarantee forward progress even in a pathological case where a
+      // single row is taller than a whole page.
+      if (chunkSubIndices.length === 0) {
+        used += rowHeights[`sub-${pi}-${si}`];
+        chunkSubIndices.push(si);
+        si++;
+      }
+      const isLastChunk = si >= p.subRows.length;
+      let includeSpacer = false;
+      if (isLastChunk && used + spacerHeight <= PAGE_CONTENT_MAX_PX) {
+        used += spacerHeight;
+        includeSpacer = true;
+      }
+      cur.chunks.push({
+        studentIndex: pi,
+        isFirstChunk,
+        isLastChunk,
+        subIndices: chunkSubIndices,
+        includeSpacer
+      });
+      isFirstChunk = false;
     }
-    pages.push({ includeHeader: firstPage, indices });
-    firstPage = false;
-  }
-  if (pages.length === 0) {
-    pages.push({ includeHeader: true, indices: [] });
-  }
+  });
 
   // If the footer doesn't fit after the last page's content, give it its own page.
-  const lastPage = pages[pages.length - 1];
-  const lastUsed =
-    (lastPage.includeHeader ? headerHeight : 0) +
-    theadHeight +
-    lastPage.indices.reduce((s, i) => s + tbodyHeights[i], 0);
-  const footerNeedsOwnPage = lastUsed > PAGE_CONTENT_MAX_PX - 60;
+  const footerNeedsOwnPage = used + spacerHeight > PAGE_CONTENT_MAX_PX - 40;
 
-  // --- Render + capture each page ---
+  // --- Render phase: build the real HTML for each page from the chunk plan. ---
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const contentWmm = A4_WIDTH_MM - MARGIN_X_MM * 2;
 
-  for (let p = 0; p < pages.length; p++) {
-    const page = pages[p];
-    const isLastContentPage = p === pages.length - 1;
+  for (let pg = 0; pg < pages.length; pg++) {
+    const page = pages[pg];
+    const isLastContentPage = pg === pages.length - 1;
     const showFooterHere = isLastContentPage && !footerNeedsOwnPage;
 
-    const pageRoot = document.createElement('div');
-    pageRoot.style.position = 'fixed';
-    pageRoot.style.left = '-99999px';
-    pageRoot.style.top = '0';
-    pageRoot.style.zIndex = '-1';
-    document.body.appendChild(pageRoot);
+    let bodyHtml = '';
+    page.chunks.forEach((chunk) => {
+      const p = prepared[chunk.studentIndex];
+      const rowSpan = 1 + chunk.subIndices.length;
+      bodyHtml += profileRowHtml({
+        student: p.student,
+        computedTotal: p.computedTotal,
+        isPassing: p.isPassing,
+        slIndex: p.slIndex,
+        rowSpan,
+        continuation: !chunk.isFirstChunk
+      });
+      chunk.subIndices.forEach((si, k) => {
+        bodyHtml += subRowHtml(p.subRows[si], k % 2 === 1);
+      });
+      if (chunk.includeSpacer) bodyHtml += spacerRowHtml();
+    });
 
-    const bodyHtml = page.indices.map((i) => tbodyHtmlList[i]).join('');
+    const pageRoot = makeHiddenRoot();
     pageRoot.innerHTML = `${styleTag}<div class="mti-pdf-doc">
       ${page.includeHeader ? headerBlockHtml(logoUrl, deptName) + titleBandHtml(batchLabel) : ''}
-      <table class="ledger-table">${tableHeadHtml()}${bodyHtml}</table>
+      <div class="ledger-wrap"><table class="ledger-table">${tableHeadHtml()}<tbody>${bodyHtml}</tbody></table></div>
       ${showFooterHere ? footerRowHtml(today, students.length) : ''}
     </div>`;
 
@@ -409,23 +572,18 @@ export async function exportStudentsPdf({ students, certsByStudent, tutorBranch,
       scale: 2,
       backgroundColor: '#ffffff',
       useCORS: true,
-      logging: false,
+      logging: false
     });
     document.body.removeChild(pageRoot);
 
-    if (p > 0) doc.addPage();
+    if (pg > 0) doc.addPage();
     const imgData = canvas.toDataURL('image/png');
-    const imgHmm = (canvas.height / canvas.width) * contentWmm;
-    doc.addImage(imgData, 'PNG', MARGIN_X_MM, MARGIN_TOP_MM, contentWmm, imgHmm);
+    const imgHmm = (canvas.height / canvas.width) * CONTENT_WIDTH_MM;
+    doc.addImage(imgData, 'PNG', MARGIN_X_MM, MARGIN_TOP_MM, CONTENT_WIDTH_MM, imgHmm);
   }
 
   if (footerNeedsOwnPage) {
-    const pageRoot = document.createElement('div');
-    pageRoot.style.position = 'fixed';
-    pageRoot.style.left = '-99999px';
-    pageRoot.style.top = '0';
-    pageRoot.style.zIndex = '-1';
-    document.body.appendChild(pageRoot);
+    const pageRoot = makeHiddenRoot();
     pageRoot.innerHTML = `${styleTag}<div class="mti-pdf-doc">${footerRowHtml(today, students.length)}</div>`;
     await waitForImages(pageRoot);
     const target = pageRoot.querySelector('.mti-pdf-doc');
@@ -434,8 +592,8 @@ export async function exportStudentsPdf({ students, certsByStudent, tutorBranch,
 
     doc.addPage();
     const imgData = canvas.toDataURL('image/png');
-    const imgHmm = (canvas.height / canvas.width) * contentWmm;
-    doc.addImage(imgData, 'PNG', MARGIN_X_MM, MARGIN_TOP_MM, contentWmm, imgHmm);
+    const imgHmm = (canvas.height / canvas.width) * CONTENT_WIDTH_MM;
+    doc.addImage(imgData, 'PNG', MARGIN_X_MM, MARGIN_TOP_MM, CONTENT_WIDTH_MM, imgHmm);
   }
 
   // --- Page numbers (drawn directly by jsPDF, same as before) ---
