@@ -590,9 +590,13 @@ export async function exportStudentsPdf({ students, certsByStudent, tutorBranch,
     document.body.removeChild(pageRoot);
 
     if (pg > 0) doc.addPage();
-    const imgData = canvas.toDataURL('image/png');
+    // JPEG at high quality instead of lossless PNG — a raster screenshot of
+    // mostly text/tables compresses far better as JPEG (typically 5-10x
+    // smaller) with no visible quality loss, and PDF file size scales
+    // directly with page count here since every page is a full-page image.
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
     const imgHmm = (canvas.height / canvas.width) * CONTENT_WIDTH_MM;
-    doc.addImage(imgData, 'PNG', MARGIN_X_MM, MARGIN_TOP_MM, CONTENT_WIDTH_MM, imgHmm);
+    doc.addImage(imgData, 'JPEG', MARGIN_X_MM, MARGIN_TOP_MM, CONTENT_WIDTH_MM, imgHmm);
   }
 
   if (footerNeedsOwnPage) {
@@ -604,9 +608,9 @@ export async function exportStudentsPdf({ students, certsByStudent, tutorBranch,
     document.body.removeChild(pageRoot);
 
     doc.addPage();
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
     const imgHmm = (canvas.height / canvas.width) * CONTENT_WIDTH_MM;
-    doc.addImage(imgData, 'PNG', MARGIN_X_MM, MARGIN_TOP_MM, CONTENT_WIDTH_MM, imgHmm);
+    doc.addImage(imgData, 'JPEG', MARGIN_X_MM, MARGIN_TOP_MM, CONTENT_WIDTH_MM, imgHmm);
   }
 
   // --- Page numbers (drawn directly by jsPDF, same as before) ---
