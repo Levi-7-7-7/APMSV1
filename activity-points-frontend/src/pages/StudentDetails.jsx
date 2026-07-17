@@ -18,6 +18,7 @@ const StudentDetails = () => {
   const [modalUrl, setModalUrl]         = useState(null);
   const [modalFile, setModalFile]       = useState('');
   const [deleting, setDeleting]         = useState(false);
+  const [avatarExpanded, setAvatarExpanded] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,6 +57,15 @@ const StudentDetails = () => {
       return () => { document.body.style.overflow = prevOverflow; };
     }
   }, [modalUrl]);
+
+  // Lock the background page scroll whenever the avatar preview is open.
+  useEffect(() => {
+    if (avatarExpanded) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prevOverflow; };
+    }
+  }, [avatarExpanded]);
 
   const isLateralEntry = studentInfo?.isLateralEntry ?? false;
   const requiredPoints = passThreshold(isLateralEntry);
@@ -126,6 +136,16 @@ const StudentDetails = () => {
         />
       )}
 
+      {avatarExpanded && studentInfo?.profilePhoto && (
+        <div className="avatar-overlay" onClick={() => setAvatarExpanded(false)}>
+          <img
+            src={studentInfo.profilePhoto}
+            alt={studentName}
+            className="avatar-overlay-img"
+          />
+        </div>
+      )}
+
       <div className="student-details-topbar">
         <button className="back-btn" onClick={() => navigate('/tutor/dashboard/students')}>
           <ArrowLeft size={18}/> Back to Students
@@ -152,7 +172,8 @@ const StudentDetails = () => {
                 <img
                   src={studentInfo.profilePhoto}
                   alt={studentName}
-                  className="avatar-photo"
+                  className="avatar-photo avatar-photo-clickable"
+                  onClick={() => setAvatarExpanded(true)}
                 />
               ) : (
                 <div className="avatar-circle">{studentName.charAt(0)}</div>
