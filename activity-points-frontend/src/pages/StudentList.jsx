@@ -12,8 +12,6 @@ import {
 } from 'lucide-react';
 
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 import '../css/StudentList.css';
 import logo from '../assets/mti-logo.png';
@@ -22,6 +20,7 @@ import {
   calcCappedPoints,
   passThreshold
 } from '../utils/calcPoints';
+import { exportStudentsPdf } from '../utils/tutorPdfExport';
 
 // ======================================================
 // Helpers
