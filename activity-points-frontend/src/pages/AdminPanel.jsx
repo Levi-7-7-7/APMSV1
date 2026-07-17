@@ -33,6 +33,7 @@ export default function AdminPanel() {
   const [assignTutorId,  setAssignTutorId]  = useState("");
   const [assignBatchId,  setAssignBatchId]  = useState("");
   const [assignBranchId, setAssignBranchId] = useState("");
+  const [assignRole,     setAssignRole]     = useState("");
 
   const [batchName,  setBatchName]  = useState("");
   const [branchName, setBranchName] = useState("");
@@ -118,11 +119,12 @@ export default function AdminPanel() {
     const payload = {};
     if (assignBatchId)  payload.batchId  = assignBatchId;
     if (assignBranchId) payload.branchId = assignBranchId;
-    if (!payload.batchId && !payload.branchId) return flash("Select at least a batch or branch", "error");
+    if (assignRole)      payload.role     = assignRole;
+    if (!payload.batchId && !payload.branchId && !payload.role) return flash("Select a batch, branch, or role", "error");
     try {
       await adminAxios.patch(`/admin/tutors/${assignTutorId}/assign`, payload);
-      flash("Batch/Branch assigned to tutor");
-      setAssignTutorId(""); setAssignBatchId(""); setAssignBranchId("");
+      flash("Tutor updated");
+      setAssignTutorId(""); setAssignBatchId(""); setAssignBranchId(""); setAssignRole("");
       fetchAll();
     } catch (err) { flash(err.response?.data?.error || "Failed to assign", "error"); }
   };
@@ -380,9 +382,9 @@ export default function AdminPanel() {
               </div>
             </div>
 
-            {/* Assign batch/branch */}
+            {/* Assign batch/branch/role */}
             <div className="ap-assign-panel">
-              <h3><Link2 size={16}/> Assign Batch &amp; Branch to Tutor</h3>
+              <h3><Link2 size={16}/> Assign Batch, Branch &amp; Role to Tutor</h3>
               <form onSubmit={handleAssign} className="ap-form-row">
                 <div className="ap-field">
                   <label>Tutor *</label>
@@ -392,15 +394,24 @@ export default function AdminPanel() {
                   </select>
                 </div>
                 <div className="ap-field">
+                  <label>Role</label>
+                  <select className="ap-select" value={assignRole} onChange={e => setAssignRole(e.target.value)}>
+                    <option value="">No change</option>
+                    <option value="tutor">Tutor (own batch + branch)</option>
+                    <option value="hod">HOD (whole department)</option>
+                    <option value="principal">Principal (everything)</option>
+                  </select>
+                </div>
+                <div className="ap-field">
                   <label>Batch</label>
-                  <select className="ap-select" value={assignBatchId} onChange={e => setAssignBatchId(e.target.value)}>
+                  <select className="ap-select" value={assignBatchId} onChange={e => setAssignBatchId(e.target.value)} disabled={assignRole === "hod" || assignRole === "principal"}>
                     <option value="">No change</option>
                     {batches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                   </select>
                 </div>
                 <div className="ap-field">
                   <label>Branch</label>
-                  <select className="ap-select" value={assignBranchId} onChange={e => setAssignBranchId(e.target.value)}>
+                  <select className="ap-select" value={assignBranchId} onChange={e => setAssignBranchId(e.target.value)} disabled={assignRole === "principal"}>
                     <option value="">No change</option>
                     {branches.map(br => <option key={br._id} value={br._id}>{br.name}</option>)}
                   </select>
@@ -410,6 +421,13 @@ export default function AdminPanel() {
                   <button className="btn-primary ap-btn" type="submit">Assign</button>
                 </div>
               </form>
+              {(assignRole === "hod" || assignRole === "principal") && (
+                <p style={{ fontSize: "0.8rem", color: "var(--ap-muted)", marginTop: "0.5rem" }}>
+                  {assignRole === "hod"
+                    ? "HOD sees every batch within the branch you pick above — batch is cleared automatically."
+                    : "Principal sees every batch and branch — both are cleared automatically."}
+                </p>
+              )}
             </div>
 
             {/* Tutor table */}
@@ -422,13 +440,18 @@ export default function AdminPanel() {
                 {tutors.length === 0 ? <div className="ap-empty">No tutors yet. Add one above.</div> : (
                   <table className="ap-table">
                     <thead><tr>
-                      <th>Name</th><th>Email</th><th>Batch</th><th>Branch</th><th>Actions</th>
+                      <th>Name</th><th>Email</th><th>Role</th><th>Batch</th><th>Branch</th><th>Actions</th>
                     </tr></thead>
                     <tbody>
                       {tutors.map(t => (
                         <tr key={t._id}>
                           <td style={{ fontWeight: 600 }}>{t.name}</td>
                           <td style={{ color: "var(--ap-muted)" }}>{t.email}</td>
+                          <td>
+                            {t.role === "principal" ? <span className="ap-badge assigned" style={{ background: "#fdf2f8", color: "#be185d" }}>Principal</span>
+                              : t.role === "hod" ? <span className="ap-badge assigned" style={{ background: "#fff7ed", color: "#ea580c" }}>HOD</span>
+                              : <span className="ap-badge none">Tutor</span>}
+                          </td>
                           <td>{t.batch?.name  ? <span className="ap-badge assigned">{t.batch.name}</span>  : <span className="ap-badge none">—</span>}</td>
                           <td>{t.branch?.name ? <span className="ap-badge assigned">{t.branch.name}</span> : <span className="ap-badge none">—</span>}</td>
                           <td>

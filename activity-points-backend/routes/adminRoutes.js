@@ -17,8 +17,8 @@ const upload = multer({ dest: "uploads/" });
 
 router.post("/tutors", adminAuth, async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    const tutor = await Tutor.create({ name, email, password });
+    const { name, email, password, role } = req.body;
+    const tutor = await Tutor.create({ name, email, password, role: role || 'tutor' });
     res.json({ success: true, tutor });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -27,7 +27,7 @@ router.post("/tutors", adminAuth, async (req, res) => {
 router.get("/tutors", adminAuth, async (req, res) => {
   try {
     const tutors = await Tutor.find()
-      .select("name email createdAt batch branch")
+      .select("name email createdAt batch branch role")
       .populate("batch",   "name")
       .populate("branch",  "name");
     res.json({ success: true, tutors });
@@ -44,12 +44,21 @@ router.delete("/tutors/:id", adminAuth, async (req, res) => {
 // FIX: new endpoint — assign batch and/or branch to a tutor
 router.patch("/tutors/:id/assign", adminAuth, async (req, res) => {
   try {
-    const { batchId, branchId } = req.body;
+    const { batchId, branchId, role } = req.body;
     const update = {};
     if (batchId)  update.batch  = batchId;
     if (branchId) update.branch = branchId;
+    if (role)     update.role   = role;
+
     if (!Object.keys(update).length)
-      return res.status(400).json({ error: "Provide batchId or branchId" });
+      return res.status(400).json({ error: "Provide batchId, branchId, or role" });
+
+    // HOD: sees every batch in their branch — no batch should be set.
+    // Principal: sees every batch and branch — neither should be set.
+    // (The /tutor/students query already only filters by whichever of
+    // batch/branch is set, so clearing these is all that's needed.)
+    if (role === 'hod')       update.batch = null;
+    if (role === 'principal') { update.batch = null; update.branch = null; }
 
     const tutor = await Tutor.findByIdAndUpdate(req.params.id, update, { new: true })
       .populate("batch", "name").populate("branch", "name");

@@ -94,6 +94,7 @@ router.post('/login', async (req, res) => {
         id:     tutor._id,
         name:   tutor.name,
         email:  tutor.email,
+        role:   tutor.role || 'tutor',
         batch:  tutor.batch  ? { _id: tutor.batch._id,  name: tutor.batch.name  } : null,
         branch: tutor.branch ? { _id: tutor.branch._id, name: tutor.branch.name } : null,
       },

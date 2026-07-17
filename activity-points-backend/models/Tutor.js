@@ -8,6 +8,11 @@ const tutorSchema = new mongoose.Schema({
   batch:    { type: mongoose.Schema.Types.ObjectId, ref: 'Batch',  default: null },
   branch:   { type: mongoose.Schema.Types.ObjectId, ref: 'Branch', default: null },
 
+  // 'tutor' = normal tutor, scoped to their assigned batch + branch
+  // 'hod'   = sees every batch within their assigned branch (no batch set)
+  // 'principal' = sees every batch and every branch (no batch, no branch set)
+  role: { type: String, enum: ['tutor', 'hod', 'principal'], default: 'tutor' },
+
   // Password reset via OTP (mirrors Student model)
   resetPasswordToken:   { type: String,  default: null },
   resetPasswordExpires: { type: Number,  default: null },
