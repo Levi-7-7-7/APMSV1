@@ -5,10 +5,11 @@ import {
   Download,
   Search,
   Trash2,
-  Eye,
   Users,
   Loader2,
-  ArrowUpDown
+  ArrowUpDown,
+  Maximize2,
+  X
 } from 'lucide-react';
 
 import * as XLSX from 'xlsx';
@@ -24,6 +25,15 @@ import { exportStudentsPdf } from '../utils/tutorPdfExport';
 // ======================================================
 
 const PASS_THRESHOLD = (isLateral) => passThreshold(isLateral);
+
+const getInitials = (name) =>
+  (name || '')
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
 // ======================================================
 // Component
@@ -50,6 +60,9 @@ const StudentList = () => {
   const [pdfLoading, setPdfLoading] = useState(false);
 
   const [sortBy, setSortBy] = useState('regNo');
+
+  // Tap-to-enlarge for a student's profile photo
+  const [viewerImage, setViewerImage] = useState(null);
 
   const tutorBatch = JSON.parse(
     localStorage.getItem('tutorBatch') || 'null'
@@ -492,6 +505,7 @@ const StudentList = () => {
             <thead>
               <tr>
                 <th>#</th>
+                <th>Photo</th>
                 <th>Name</th>
                 <th>Reg No</th>
                 <th>Batch</th>
@@ -507,6 +521,47 @@ const StudentList = () => {
                 <tr key={s._id}>
                   <td className="sl-rank">
                     {idx + 1}
+                  </td>
+
+                  <td>
+                    <div className="sl-avatar-cell">
+                      <button
+                        type="button"
+                        className="sl-avatar-btn"
+                        onClick={() =>
+                          navigate(
+                            `/tutor/dashboard/students/${s._id}`
+                          )
+                        }
+                        aria-label={`View ${s.name}'s profile`}
+                      >
+                        {s.profilePhoto ? (
+                          <img
+                            src={s.profilePhoto}
+                            alt={s.name}
+                            className="sl-avatar-img"
+                          />
+                        ) : (
+                          <span className="sl-avatar-fallback">
+                            {getInitials(s.name)}
+                          </span>
+                        )}
+                      </button>
+
+                      {s.profilePhoto && (
+                        <button
+                          type="button"
+                          className="sl-avatar-zoom-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewerImage(s.profilePhoto);
+                          }}
+                          aria-label={`Enlarge ${s.name}'s photo`}
+                        >
+                          <Maximize2 size={10} />
+                        </button>
+                      )}
+                    </div>
                   </td>
 
                   <td className="sl-name">
@@ -558,18 +613,6 @@ const StudentList = () => {
 
                   <td className="sl-action-cell">
                     <button
-                      className="sl-btn primary sm"
-                      onClick={() =>
-                        navigate(
-                          `/tutor/dashboard/students/${s._id}`
-                        )
-                      }
-                    >
-                      <Eye size={13} />
-                      View
-                    </button>
-
-                    <button
                       className="sl-btn danger sm"
                       onClick={() =>
                         handleDelete(
@@ -604,6 +647,29 @@ const StudentList = () => {
             ✦
           </span>{' '}
           = Lateral Entry student
+        </div>
+      )}
+
+      {/* Tap-to-enlarge photo viewer */}
+      {viewerImage && (
+        <div
+          className="sl-viewer-backdrop"
+          onClick={() => setViewerImage(null)}
+        >
+          <button
+            className="sl-viewer-close"
+            onClick={() => setViewerImage(null)}
+            aria-label="Close"
+            type="button"
+          >
+            <X size={22} />
+          </button>
+          <img
+            src={viewerImage}
+            alt="Enlarged student photo"
+            className="sl-viewer-img"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>
