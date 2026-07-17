@@ -219,6 +219,8 @@ button.view-link:hover { background: #eff6ff; }
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .reject-cert-info {

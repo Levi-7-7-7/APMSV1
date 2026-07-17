@@ -260,6 +260,51 @@ const PendingCertificates = () => {
                 </>
               )}
 
+              {/* Points reference table — shows every level/prize combo's points as soon as a subcategory with levels is picked, so the tutor can see what's obtainable before choosing */}
+              {editHasLevels && (
+                <div style={{ marginTop: '0.75rem', border: '1.5px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
+                  <div style={{ padding: '6px 10px', background: '#f8fafc', fontSize: '12px', fontWeight: 700, color: '#475569', borderBottom: '1px solid #e2e8f0' }}>
+                    Points obtainable for "{editSubcat}"
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc' }}>
+                        <th style={{ textAlign: 'left', padding: '6px 10px', color: '#64748b', fontWeight: 600 }}>Level</th>
+                        {prizeLevels.map(p => (
+                          <th key={p} style={{ textAlign: 'center', padding: '6px 8px', color: '#64748b', fontWeight: 600 }}>{p}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {editCurrentSub.levels.map(l => (
+                        <tr key={l.name} style={{ borderTop: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '6px 10px', fontWeight: 600, color: '#334155' }}>{l.name}</td>
+                          {prizeLevels.map(p => {
+                            const prize = l.prizes.find(pr => pr.type === p);
+                            const isSelected = editLevel === l.name && editPrize === p;
+                            return (
+                              <td
+                                key={p}
+                                style={{
+                                  textAlign: 'center',
+                                  padding: '6px 8px',
+                                  color: prize ? '#0f172a' : '#cbd5e1',
+                                  background: isSelected ? '#dbeafe' : 'transparent',
+                                  fontWeight: isSelected ? 700 : 400,
+                                  borderRadius: isSelected ? '6px' : 0,
+                                }}
+                              >
+                                {prize ? prize.points : '—'}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
               {/* Level */}
               {editHasLevels && (
                 <>
