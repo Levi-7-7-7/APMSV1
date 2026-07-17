@@ -41,6 +41,9 @@ export default function AdminPanel() {
   const [editingCat, setEditingCat] = useState(null);
   const [newSub, setNewSub]         = useState({ name: "", points: "" });
 
+  // Which category currently has its "add subcategory" inline form open
+  const [addingSubCatId, setAddingSubCatId] = useState(null);
+
   // Subcategory editing state
   const [editingSub, setEditingSub]   = useState(null); // { catId, sub }
   const [editSubForm, setEditSubForm] = useState({ name: "", points: "" });
@@ -188,8 +191,15 @@ export default function AdminPanel() {
     try {
       const res = await adminAxios.post(`/admin/categories/${catId}/subcategory`, { name: newSub.name, points: Number(newSub.points) });
       setCategories(p => p.map(c => c._id === catId ? res.data.category : c));
-      setNewSub({ name: "", points: "" }); flash("Subcategory added");
+      setNewSub({ name: "", points: "" });
+      setAddingSubCatId(null);
+      flash("Subcategory added");
     } catch (err) { flash(err.response?.data?.error || "Failed", "error"); }
+  };
+
+  const handleOpenAddSub = (catId) => {
+    setNewSub({ name: "", points: "" });
+    setAddingSubCatId(prev => (prev === catId ? null : catId));
   };
 
   const handleDeleteSub = async (catId, subId) => {
@@ -547,20 +557,17 @@ export default function AdminPanel() {
                 </div>
               </div>
 
-              {/* Subcategory input */}
+              {/* Subcategory hint */}
               <div className="ap-card">
                 <div className="ap-card-header">
                   <div className="ap-card-icon purple"><Plus size={16}/></div>
                   <h3>Add Subcategory</h3>
                 </div>
                 <div className="ap-card-body">
-                  <p style={{ fontSize: "0.85rem", color: "var(--ap-muted)", marginBottom: "1rem" }}>
-                    Fill in the fields below, then click <strong>"+ Sub"</strong> on any category row.
+                  <p style={{ fontSize: "0.85rem", color: "var(--ap-muted)" }}>
+                    To add a subcategory, click <strong>"+ Sub"</strong> on the category you want it added to, below.
+                    A small form will open right there for the name and points.
                   </p>
-                  <div className="ap-form">
-                    <div className="ap-field"><label>Subcategory Name</label><input placeholder="e.g. NPTEL Course" className="ap-input" value={newSub.name} onChange={e => setNewSub({ ...newSub, name: e.target.value })}/></div>
-                    <div className="ap-field"><label>Points</label><input placeholder="e.g. 10" type="number" className="ap-input" value={newSub.points} onChange={e => setNewSub({ ...newSub, points: e.target.value })}/></div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -582,7 +589,7 @@ export default function AdminPanel() {
                       <button className="btn ap-btn sm" onClick={() => { setEditingCat(cat); setCategoryForm({ name: cat.name, description: cat.description || "", maxPoints: cat.maxPoints || "", minDuration: cat.minDuration || "" }); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
                         <Edit2 size={13}/> Edit
                       </button>
-                      <button className="btn ap-btn sm" onClick={() => handleAddSub(cat._id)}>
+                      <button className="btn ap-btn sm" onClick={() => handleOpenAddSub(cat._id)}>
                         <Plus size={13}/> Sub
                       </button>
                       <button className="btn ap-btn sm danger" onClick={() => handleDeleteCategory(cat._id)}>
@@ -590,6 +597,30 @@ export default function AdminPanel() {
                       </button>
                     </div>
                   </div>
+
+                  {addingSubCatId === cat._id && (
+                    <div className="ap-add-level-form" style={{ margin: "0 1.25rem 0.75rem" }}>
+                      <strong style={{ fontSize: "0.82rem" }}>Add Subcategory to "{cat.name}"</strong>
+                      <div className="ap-sub-edit-row" style={{ marginTop: "0.5rem" }}>
+                        <input
+                          className="ap-input ap-sub-edit-input"
+                          placeholder="e.g. NPTEL Course"
+                          value={newSub.name}
+                          onChange={e => setNewSub({ ...newSub, name: e.target.value })}
+                          autoFocus
+                        />
+                        <input
+                          className="ap-input ap-sub-edit-input"
+                          type="number"
+                          placeholder="Points e.g. 10"
+                          value={newSub.points}
+                          onChange={e => setNewSub({ ...newSub, points: e.target.value })}
+                        />
+                        <button className="btn-primary ap-btn sm" onClick={() => handleAddSub(cat._id)}><Plus size={12}/> Add</button>
+                        <button className="btn ap-btn sm" onClick={() => { setAddingSubCatId(null); setNewSub({ name: "", points: "" }); }}>Cancel</button>
+                      </div>
+                    </div>
+                  )}
 
                   {cat.subcategories?.length > 0 && (
                     <div className="ap-sub-list">
