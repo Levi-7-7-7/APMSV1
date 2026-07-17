@@ -88,9 +88,10 @@ const REPORT_CSS = `
   border-bottom: 3px solid #0f2864;
   margin-bottom: 12px;
 }
-.mti-pdf-doc .header-logo-cell { display: table-cell; vertical-align: middle; width: 132px; }
-.mti-pdf-doc .header-logo-cell img { width: 108px; height: auto; display: block; }
+.mti-pdf-doc .header-logo-cell { display: table-cell; vertical-align: middle; width: 150px; }
+.mti-pdf-doc .header-logo-cell img { width: 128px; height: auto; display: block; }
 .mti-pdf-doc .header-text { display: table-cell; vertical-align: middle; text-align: center; }
+.mti-pdf-doc .header-spacer-cell { display: table-cell; width: 150px; }
 .mti-pdf-doc .dept-name { font-size: 18px; font-weight: 800; color: #0f2864; letter-spacing: 0.6px; margin-bottom: 4px; }
 .mti-pdf-doc .inst-name { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
 .mti-pdf-doc .inst-sub { font-size: 10px; color: #64748b; margin-top: 1px; font-weight: 500; }
@@ -358,6 +359,7 @@ function headerBlockHtml(logoUrl, deptName) {
         <div class="inst-sub">Affiliated to SBTE Kerala &nbsp;|&nbsp; AICTE Approved &nbsp;|&nbsp; Estd. 1946</div>
         <div class="inst-sub">Phone: 0487-2333290 &nbsp;|&nbsp; E-Mail: mtithrsr@mtithrissur.ac.in</div>
       </div>
+      <div class="header-spacer-cell"></div>
     </div>`;
 }
 
