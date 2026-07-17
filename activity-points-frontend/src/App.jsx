@@ -21,6 +21,7 @@ import UploadCSV from './pages/UploadCSV';
 import PendingCertificates from './pages/PendingCertificates';
 import ApprovedCertificates from './pages/ApprovedCertificates';
 import TutorForgotPassword from './pages/TutorForgotPassword';
+import TutorProfile from './pages/TutorProfile';
 
 /* ===================== ADMIN PAGES ===================== */
 import AdminPanel from './pages/AdminPanel';
@@ -61,6 +62,7 @@ function App() {
           <Route path="upload" element={<UploadCSV />} />
           <Route path="pending" element={<PendingCertificates />} />
           <Route path="approved" element={<ApprovedCertificates />} />
+          <Route path="profile" element={<TutorProfile />} />
         </Route>
 
         {/* ===== ADMIN ===== */}

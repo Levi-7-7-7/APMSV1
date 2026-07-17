@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import TutorBottomNav from '../components/TutorBottomNav';
+import tutorAxios from '../api/tutorAxios';
 import '../css/TutorDashboard.css';
 
 const TutorDashboard = () => {
@@ -15,8 +16,32 @@ const TutorDashboard = () => {
       : 'students';
   }, [path]);
 
-  // Get tutor name from localStorage
-  const tutorName = localStorage.getItem('tutorName') || 'Tutor';
+  // Get tutor name from localStorage (instant paint; refined below once /tutors/me resolves)
+  const [tutorName, setTutorName] = useState(localStorage.getItem('tutorName') || 'Tutor');
+  const [tutorPhoto, setTutorPhoto] = useState(null);
+
+  // Fetch the tutor's real profile (name + photo) so the header avatar matches
+  // what's shown on the full Profile page, instead of always falling back to
+  // initials like before.
+  useEffect(() => {
+    let cancelled = false;
+
+    tutorAxios
+      .get('/tutors/me')
+      .then(res => {
+        if (cancelled) return;
+        if (res.data?.name) {
+          setTutorName(res.data.name);
+          localStorage.setItem('tutorName', res.data.name);
+        }
+        setTutorPhoto(res.data?.profilePhoto ?? null);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Logout handler with confirmation
   const handleLogout = () => {
@@ -27,7 +52,7 @@ const TutorDashboard = () => {
     }
   };
 
-  // Avatar initials
+  // Avatar initials (fallback when no photo is set)
   const avatarInitials = tutorName
     .split(' ')
     .map((n) => n[0])
@@ -39,9 +64,18 @@ const TutorDashboard = () => {
       {/* Header */}
       <header className="dashboard-header flex flex-wrap justify-between items-center gap-4 mb-4">
         <div className="header-left flex items-center gap-3">
-          <div className="tutor-avatar">
-            <span>{avatarInitials}</span>
-          </div>
+          <button
+            className="tutor-avatar tutor-avatar-btn"
+            onClick={() => navigate('/tutor/dashboard/profile')}
+            aria-label="View profile"
+            type="button"
+          >
+            {tutorPhoto ? (
+              <img src={tutorPhoto} alt={tutorName} className="tutor-avatar-img" />
+            ) : (
+              <span>{avatarInitials}</span>
+            )}
+          </button>
           <div className="header-greeting">
             <h1>Welcome, {tutorName}!</h1>
             <p>Manage students, CSV uploads, and certificates below.</p>

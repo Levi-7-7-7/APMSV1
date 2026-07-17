@@ -1,0 +1,362 @@
+/* ===================== TUTOR PROFILE PAGE ===================== */
+
+.tprofile-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+  font-family: 'Inter', sans-serif;
+  color: #334155;
+}
+
+/* Hero */
+.tprofile-hero {
+  position: relative;
+  background: linear-gradient(135deg, #1e3a8a, #2d52b0);
+  border-radius: 16px;
+  padding: 20px 16px 72px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: visible;
+}
+
+.tprofile-back-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.tprofile-back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.tprofile-hero-title {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  margin: 4px 0 0 0;
+}
+
+.tprofile-role-badge {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.tprofile-avatar-wrapper {
+  position: absolute;
+  bottom: -48px;
+  width: 96px;
+  height: 96px;
+  z-index: 10;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tprofile-avatar-img,
+.tprofile-avatar-fallback {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  object-fit: cover;
+}
+
+.tprofile-avatar-fallback {
+  background: #2d52b0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.tprofile-camera-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #2563eb;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.tprofile-camera-badge:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.spin {
+  animation: tprofile-spin 1s linear infinite;
+}
+
+@keyframes tprofile-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tprofile-error {
+  margin: 60px 16px 0 16px;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Name block */
+.tprofile-name-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 88px 20px 24px 20px;
+  margin: -40px 16px 24px 16px;
+  box-shadow: 0 5px 15px rgb(219 234 254 / 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.tprofile-name {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #1e293b;
+  text-align: center;
+}
+
+.tprofile-email-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #dbeafe;
+  color: #2563eb;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  max-width: 90%;
+  overflow: hidden;
+}
+
+.tprofile-email-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Stats row */
+.tprofile-stats-row {
+  display: flex;
+  gap: 10px;
+  margin: 0 16px 24px 16px;
+}
+
+.tprofile-stat-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 14px 8px;
+  box-shadow: 0 5px 15px rgb(219 234 254 / 0.4);
+}
+
+.tprofile-stat-icon-bg {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #dbeafe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tprofile-stat-value {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1e293b;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tprofile-stat-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* Section label */
+.tprofile-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  margin: 0 0 8px 20px;
+  text-transform: uppercase;
+}
+
+/* Card */
+.tprofile-card {
+  background: #fff;
+  border-radius: 16px;
+  margin: 0 16px 24px 16px;
+  box-shadow: 0 5px 15px rgb(219 234 254 / 0.4);
+  overflow: hidden;
+}
+
+.tprofile-info-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.tprofile-icon-bubble {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #dbeafe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tprofile-info-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tprofile-info-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.tprofile-info-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tprofile-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin-left: 66px;
+}
+
+.tprofile-avatar-clickable {
+  cursor: pointer;
+}
+
+/* Tap-to-enlarge photo viewer */
+.tprofile-viewer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+  animation: tprofile-fade-in 0.15s ease;
+}
+
+@keyframes tprofile-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tprofile-viewer-img {
+  max-width: 90vw;
+  max-height: 85vh;
+  border-radius: 8px;
+  object-fit: contain;
+  cursor: default;
+}
+
+.tprofile-viewer-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.tprofile-viewer-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Mobile tightening */
+@media (max-width: 480px) {
+  .tprofile-hero {
+    border-radius: 12px;
+  }
+
+  .tprofile-name-block,
+  .tprofile-card,
+  .tprofile-stats-row {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+}
