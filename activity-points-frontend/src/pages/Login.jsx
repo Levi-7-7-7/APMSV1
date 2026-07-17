@@ -71,6 +71,7 @@ export default function Login() {
         localStorage.setItem('tutorToken', res.data.token);
         localStorage.setItem('role', 'tutor');
         localStorage.setItem('tutorName', res.data.tutor?.name || 'Tutor');
+        localStorage.setItem('tutorRole', res.data.tutor?.role || 'tutor');
         // Store assigned batch/branch so frontend can show it in header
         localStorage.setItem('tutorBatch',  JSON.stringify(res.data.tutor?.batch  || null));
         localStorage.setItem('tutorBranch', JSON.stringify(res.data.tutor?.branch || null));

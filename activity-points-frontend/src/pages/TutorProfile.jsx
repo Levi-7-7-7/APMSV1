@@ -25,6 +25,14 @@ function getInitials(name) {
     .slice(0, 2);
 }
 
+const ROLE_BADGE_LABELS = { tutor: 'Tutor', hod: 'HOD', principal: 'Principal' };
+const ROLE_TITLES       = { tutor: 'Class Tutor', hod: 'Head of Department', principal: 'Principal' };
+const ROLE_ACCESS       = {
+  tutor:     'Certificate Review · Student Management (own batch & branch)',
+  hod:       'Certificate Review · Student Management (entire department)',
+  principal: 'Certificate Review · Student Management (all batches & branches)',
+};
+
 // Resize/compress client-side before upload (matches native app: 600x600
 // JPEG @ 80% quality) so behavior is consistent across platforms.
 function resizeImage(file, maxSize = 600, quality = 0.8) {
@@ -163,8 +171,9 @@ export default function TutorProfile() {
 
   const tutorName = profile?.name || localStorage.getItem('tutorName') || 'Tutor';
   const tutorEmail = profile?.email ?? '—';
-  const batchName = profile?.batch?.name ?? '—';
-  const branchName = profile?.branch?.name ?? '—';
+  const tutorRole = profile?.role || localStorage.getItem('tutorRole') || 'tutor';
+  const batchName = profile?.batch?.name ?? (tutorRole === 'tutor' ? '—' : 'All Batches');
+  const branchName = profile?.branch?.name ?? (tutorRole === 'principal' ? 'All Branches' : '—');
   const initials = getInitials(tutorName);
   const hasPhoto = Boolean(localPhoto);
 
@@ -180,7 +189,7 @@ export default function TutorProfile() {
 
         <div className="tprofile-role-badge">
           <ShieldCheck size={13} />
-          <span>Tutor</span>
+          <span>{ROLE_BADGE_LABELS[tutorRole] || 'Tutor'}</span>
         </div>
 
         <div className="tprofile-avatar-wrapper">
@@ -260,12 +269,12 @@ export default function TutorProfile() {
       {/* Role info */}
       <p className="tprofile-section-label">ROLE</p>
       <div className="tprofile-card">
-        <InfoRow icon={<ShieldCheck size={18} />} label="Role" value="Class Tutor" />
+        <InfoRow icon={<ShieldCheck size={18} />} label="Role" value={ROLE_TITLES[tutorRole] || 'Class Tutor'} />
         <div className="tprofile-divider" />
         <InfoRow
           icon={<CheckCircle2 size={18} />}
           label="Access"
-          value="Certificate Review · Student Management"
+          value={ROLE_ACCESS[tutorRole] || ROLE_ACCESS.tutor}
         />
       </div>
 

@@ -4,6 +4,8 @@ import TutorBottomNav from '../components/TutorBottomNav';
 import tutorAxios from '../api/tutorAxios';
 import '../css/TutorDashboard.css';
 
+const ROLE_LABELS = { tutor: 'Tutor', hod: 'HOD', principal: 'Principal' };
+
 const TutorDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -19,10 +21,11 @@ const TutorDashboard = () => {
   // Get tutor name from localStorage (instant paint; refined below once /tutors/me resolves)
   const [tutorName, setTutorName] = useState(localStorage.getItem('tutorName') || 'Tutor');
   const [tutorPhoto, setTutorPhoto] = useState(null);
+  const [tutorRole, setTutorRole] = useState(localStorage.getItem('tutorRole') || 'tutor');
 
-  // Fetch the tutor's real profile (name + photo) so the header avatar matches
-  // what's shown on the full Profile page, instead of always falling back to
-  // initials like before.
+  // Fetch the tutor's real profile (name + photo + role) so the header
+  // matches what's shown on the full Profile page, instead of always
+  // falling back to initials/stale role like before.
   useEffect(() => {
     let cancelled = false;
 
@@ -35,6 +38,9 @@ const TutorDashboard = () => {
           localStorage.setItem('tutorName', res.data.name);
         }
         setTutorPhoto(res.data?.profilePhoto ?? null);
+        const role = res.data?.role || 'tutor';
+        setTutorRole(role);
+        localStorage.setItem('tutorRole', role);
       })
       .catch(() => {});
 
@@ -77,7 +83,10 @@ const TutorDashboard = () => {
             )}
           </button>
           <div className="header-greeting">
-            <h1>Welcome, {tutorName}!</h1>
+            <h1>
+              Welcome, {tutorName}!{' '}
+              <span className={`tutor-role-badge role-${tutorRole}`}>{ROLE_LABELS[tutorRole] || 'Tutor'}</span>
+            </h1>
             <p>Manage students, CSV uploads, and certificates below.</p>
           </div>
         </div>

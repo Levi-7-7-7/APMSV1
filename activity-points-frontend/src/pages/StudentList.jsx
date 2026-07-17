@@ -59,6 +59,13 @@ const StudentList = () => {
     localStorage.getItem('tutorBranch') || 'null'
   );
 
+  // 'tutor' = scoped to one batch + branch, no filters needed
+  // 'hod'   = scoped to one branch, sees every batch in it -> batch filter only
+  // 'principal' = sees everything -> both filters
+  const tutorRole = localStorage.getItem('tutorRole') || 'tutor';
+  const showBatchFilter = tutorRole === 'hod' || tutorRole === 'principal';
+  const showBranchFilter = tutorRole === 'principal';
+
   // ======================================================
   // Fetch Students
   // ======================================================
@@ -358,51 +365,55 @@ const StudentList = () => {
           />
         </div>
 
-        <select
-          className="sl-select"
-          value={batchFilter}
-          onChange={(e) =>
-            setBatchFilter(
-              e.target.value
-            )
-          }
-        >
-          <option value="">
-            All Batches
-          </option>
-
-          {batchOptions.map((b) => (
-            <option
-              key={b}
-              value={b}
-            >
-              {b}
+        {showBatchFilter && (
+          <select
+            className="sl-select"
+            value={batchFilter}
+            onChange={(e) =>
+              setBatchFilter(
+                e.target.value
+              )
+            }
+          >
+            <option value="">
+              All Batches
             </option>
-          ))}
-        </select>
 
-        <select
-          className="sl-select"
-          value={branchFilter}
-          onChange={(e) =>
-            setBranchFilter(
-              e.target.value
-            )
-          }
-        >
-          <option value="">
-            All Branches
-          </option>
+            {batchOptions.map((b) => (
+              <option
+                key={b}
+                value={b}
+              >
+                {b}
+              </option>
+            ))}
+          </select>
+        )}
 
-          {branchOptions.map((b) => (
-            <option
-              key={b}
-              value={b}
-            >
-              {b}
+        {showBranchFilter && (
+          <select
+            className="sl-select"
+            value={branchFilter}
+            onChange={(e) =>
+              setBranchFilter(
+                e.target.value
+              )
+            }
+          >
+            <option value="">
+              All Branches
             </option>
-          ))}
-        </select>
+
+            {branchOptions.map((b) => (
+              <option
+                key={b}
+                value={b}
+              >
+                {b}
+              </option>
+            ))}
+          </select>
+        )}
 
         <div className="sl-sort-group">
           <ArrowUpDown
