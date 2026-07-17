@@ -15,7 +15,16 @@ const StudentLayout = () => {
     return localStorage.getItem('userName') || 'Student';
   });
 
-  // Re-read from localStorage whenever userData changes (e.g. after Dashboard fetch)
+  const [profilePhoto, setProfilePhoto] = useState(() => {
+    const ud = localStorage.getItem('userData');
+    if (ud) {
+      try { return JSON.parse(ud).profilePhoto || null; } catch (_) {}
+    }
+    return null;
+  });
+
+  // Re-read from localStorage whenever userData changes (e.g. after Dashboard fetch,
+  // or after uploading a new photo on the Profile page)
   useEffect(() => {
     const sync = () => {
       const ud = localStorage.getItem('userData');
@@ -23,6 +32,7 @@ const StudentLayout = () => {
         try {
           const parsed = JSON.parse(ud);
           if (parsed?.name) setUserName(parsed.name);
+          setProfilePhoto(parsed?.profilePhoto || null);
         } catch (_) {}
       }
     };
@@ -53,9 +63,18 @@ const StudentLayout = () => {
       <header className="dashboard-header">
                     <div className="header-top">
                     <div className="avatar-group">
-                        <div className="avatar">
-                        <span className="avatar-fallback">{avatarInitials}</span>
-                        </div>
+                        <button
+                          className="avatar avatar-btn"
+                          onClick={() => navigate('/student/profile')}
+                          aria-label="View profile"
+                          type="button"
+                        >
+                        {profilePhoto ? (
+                          <img src={profilePhoto} alt={userName} />
+                        ) : (
+                          <span className="avatar-fallback">{avatarInitials}</span>
+                        )}
+                        </button>
                         <div className="greeting">
                         <h1>Hello, {userName}</h1>
                         <p>Welcome back!</p>

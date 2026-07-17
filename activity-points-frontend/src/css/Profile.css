@@ -1,0 +1,325 @@
+/* ===================== PROFILE PAGE ===================== */
+
+.profile-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding-bottom: 40px;
+  font-family: 'Inter', sans-serif;
+  color: #334155;
+}
+
+/* Hero */
+.profile-hero {
+  position: relative;
+  background: linear-gradient(135deg, #1e3a8a, #2d52b0);
+  border-radius: 16px;
+  padding: 20px 16px 56px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.profile-back-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.profile-back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.profile-hero-title {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  margin: 4px 0 0 0;
+}
+
+.profile-avatar-wrapper {
+  position: absolute;
+  bottom: -48px;
+  width: 96px;
+  height: 96px;
+}
+
+.profile-avatar-img,
+.profile-avatar-fallback {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  object-fit: cover;
+}
+
+.profile-avatar-fallback {
+  background: #2d52b0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.profile-camera-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #2563eb;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.profile-camera-badge:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.spin {
+  animation: profile-spin 1s linear infinite;
+}
+
+@keyframes profile-spin {
+  to { transform: rotate(360deg); }
+}
+
+.profile-error {
+  margin: 60px 16px 0 16px;
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Name block */
+.profile-name-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 56px 20px 24px 20px;
+  margin: -40px 16px 24px 16px;
+  box-shadow: 0 5px 15px rgb(219 234 254 / 0.5);
+  position: relative;
+}
+
+.profile-name {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #1e293b;
+  text-align: center;
+}
+
+.profile-reg-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #dbeafe;
+  color: #2563eb;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.profile-entry-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.profile-entry-badge.success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.profile-entry-badge.warn {
+  background: #fed7aa;
+  color: #c2410c;
+}
+
+/* Section label */
+.profile-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  margin: 0 0 8px 20px;
+  text-transform: uppercase;
+}
+
+/* Card */
+.profile-card {
+  background: #fff;
+  border-radius: 16px;
+  margin: 0 16px 24px 16px;
+  box-shadow: 0 5px 15px rgb(219 234 254 / 0.4);
+  overflow: hidden;
+}
+
+.profile-info-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.profile-icon-bubble {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #dbeafe;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-info-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.profile-info-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.profile-info-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin-left: 66px;
+}
+
+/* Tutor */
+.profile-tutor-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.profile-tutor-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+}
+
+.profile-tutor-avatar-img,
+.profile-tutor-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.profile-tutor-avatar {
+  background: #2d52b0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.profile-tutor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.profile-tutor-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.profile-tutor-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.profile-meta-chip {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.profile-tutor-email {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.profile-no-tutor {
+  padding: 18px 16px;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Reuse skeleton styles already defined globally in StudentDashboard.css */
+
+/* Mobile tightening */
+@media (max-width: 480px) {
+  .profile-hero {
+    border-radius: 12px;
+  }
+
+  .profile-name-block,
+  .profile-card {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+}

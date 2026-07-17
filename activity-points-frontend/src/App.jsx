@@ -6,6 +6,7 @@ import VerifyOtp from './pages/VerifyOtp';
 import Dashboard from './pages/Dashboard';
 import UploadCertificates from './pages/UploadCertificates';
 import CertificatesPage from './pages/CertificatesPage';
+import Profile from './pages/Profile';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import PrivateRoute from './components/PrivateRoute';
@@ -49,6 +50,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="upload-certificate" element={<UploadCertificates />} />
           <Route path="certificates" element={<CertificatesPage />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         {/* ===== TUTOR ===== */}
