@@ -8,6 +8,8 @@ import {
   CalendarDays,
   Hash,
   Loader2,
+  X,
+  HelpCircle,
 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import '../css/Profile.css';
@@ -22,6 +24,52 @@ function getInitials(name) {
     .slice(0, 2);
 }
 
+// Resize/compress an image client-side before upload (matches native app:
+// 600x600 JPEG @ 80% quality) so behavior is consistent across platforms.
+function resizeImage(file, maxSize = 600, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = e => {
+      img.onload = () => {
+        let { width, height } = img;
+
+        if (width > height) {
+          if (width > maxSize) {
+            height = Math.round((height * maxSize) / width);
+            width = maxSize;
+          }
+        } else if (height > maxSize) {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          blob => {
+            if (!blob) {
+              reject(new Error('Could not process image.'));
+              return;
+            }
+            resolve(new File([blob], file.name || 'profile.jpg', { type: 'image/jpeg' }));
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error('Could not read image.'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('Could not read image.'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function Profile() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -34,6 +82,9 @@ export default function Profile() {
 
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+
+  // Full-screen tap-to-enlarge viewer (matches native app's photo viewer)
+  const [viewerImage, setViewerImage] = useState(null);
 
   // Fetch student profile
   useEffect(() => {
@@ -90,8 +141,10 @@ export default function Profile() {
     setUploading(true);
 
     try {
+      const resized = await resizeImage(file);
+
       const formData = new FormData();
-      formData.append('photo', file);
+      formData.append('photo', resized);
 
       const res = await axiosInstance.patch('/students/profile-photo', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -130,9 +183,17 @@ export default function Profile() {
 
         <div className="profile-avatar-wrapper">
           {user?.profilePhoto ? (
-            <img src={user.profilePhoto} alt={userName} className="profile-avatar-img" />
+            <img
+              src={user.profilePhoto}
+              alt={userName}
+              className="profile-avatar-img profile-avatar-clickable"
+              onClick={() => setViewerImage(user.profilePhoto)}
+            />
           ) : (
-            <div className="profile-avatar-fallback">
+            <div
+              className="profile-avatar-fallback profile-avatar-clickable"
+              onClick={handlePhotoClick}
+            >
               <span>{initials || 'S'}</span>
             </div>
           )}
@@ -198,7 +259,12 @@ export default function Profile() {
         ) : tutor ? (
           <div className="profile-tutor-row">
             {tutor.profilePhoto ? (
-              <img src={tutor.profilePhoto} alt={tutor.name} className="profile-tutor-avatar-img" />
+              <img
+                src={tutor.profilePhoto}
+                alt={tutor.name}
+                className="profile-tutor-avatar-img profile-avatar-clickable"
+                onClick={() => setViewerImage(tutor.profilePhoto)}
+              />
             ) : (
               <div className="profile-tutor-avatar">
                 <span>{getInitials(tutor.name)}</span>
@@ -215,9 +281,32 @@ export default function Profile() {
             </div>
           </div>
         ) : (
-          <p className="profile-no-tutor">No tutor assigned yet.</p>
+          <div className="profile-tutor-loading">
+            <HelpCircle size={22} />
+            <span>No tutor assigned to your batch yet</span>
+          </div>
         )}
       </div>
+
+      {/* Tap-to-enlarge photo viewer */}
+      {viewerImage && (
+        <div className="profile-viewer-backdrop" onClick={() => setViewerImage(null)}>
+          <button
+            className="profile-viewer-close"
+            onClick={() => setViewerImage(null)}
+            aria-label="Close"
+            type="button"
+          >
+            <X size={22} />
+          </button>
+          <img
+            src={viewerImage}
+            alt="Enlarged profile"
+            className="profile-viewer-img"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
