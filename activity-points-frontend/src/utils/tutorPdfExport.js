@@ -440,7 +440,20 @@ export async function exportStudentsPdf({ students, certsByStudent, tutorBranch,
       }</div><div class="total-score-label">pts</div></td><td class="status-trophy-cell"></td></tr>`
     );
     p.subRows.forEach((sr, si) => {
-      measureRowsHtml.push(`<tr data-key="sub-${pi}-${si}">${subRowHtml(sr, false).replace(/^<tr[^>]*>/, '')}`);
+      // Inject the data-key into the row's own <tr> tag instead of wrapping
+      // it in a second one — subRowHtml()'s output starts with whitespace,
+      // so a regex anchored at the very start of the string never matches,
+      // silently leaving the original <tr> in place and nesting a second
+      // <tr> inside it. Browsers can't nest <tr> inside <tr>: the parser
+      // auto-closes the outer (data-key-bearing, cell-less) row as soon as
+      // it hits the inner one, so every activity row ends up split into an
+      // empty 0px-tall row that keeps the data-key and a separate content
+      // row that loses it — meaning every measured sub-row height comes
+      // back as ~0, the packing algorithm thinks 50+ activities take no
+      // space, and everything gets crammed onto page 1 where it silently
+      // overflows the printable page when rasterized.
+      const rowHtml = subRowHtml(sr, false).trim();
+      measureRowsHtml.push(rowHtml.replace(/^<tr/, `<tr data-key="sub-${pi}-${si}"`));
     });
   });
   measureRoot.innerHTML = `${styleTag}<div class="mti-pdf-doc"><div class="ledger-wrap"><table class="ledger-table">${tableHeadHtml()}<tbody>${measureRowsHtml.join(
