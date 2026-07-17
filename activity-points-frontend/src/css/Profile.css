@@ -53,6 +53,7 @@
   bottom: -48px;
   width: 96px;
   height: 96px;
+  z-index: 10;
 }
 
 .profile-avatar-img,
@@ -126,6 +127,7 @@
   margin: -40px 16px 24px 16px;
   box-shadow: 0 5px 15px rgb(219 234 254 / 0.5);
   position: relative;
+  z-index: 1;
 }
 
 .profile-name {
