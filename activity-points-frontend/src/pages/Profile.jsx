@@ -80,6 +80,10 @@ export default function Profile() {
   const [tutor, setTutor] = useState(null);
   const [tutorLoading, setTutorLoading] = useState(true);
 
+  const [hod, setHod] = useState(null);
+  const [principal, setPrincipal] = useState(null);
+  const [staffLoading, setStaffLoading] = useState(true);
+
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
@@ -122,6 +126,33 @@ export default function Profile() {
       })
       .finally(() => {
         if (!cancelled) setTutorLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Fetch HOD (branch-scoped) and Principal (global)
+  useEffect(() => {
+    let cancelled = false;
+
+    axiosInstance
+      .get('/students/my-staff')
+      .then(res => {
+        if (!cancelled) {
+          setHod(res.data.hod ?? null);
+          setPrincipal(res.data.principal ?? null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setHod(null);
+          setPrincipal(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setStaffLoading(false);
       });
 
     return () => {
@@ -257,33 +288,47 @@ export default function Profile() {
             <span>Finding your tutor…</span>
           </div>
         ) : tutor ? (
-          <div className="profile-tutor-row">
-            {tutor.profilePhoto ? (
-              <img
-                src={tutor.profilePhoto}
-                alt={tutor.name}
-                className="profile-tutor-avatar-img profile-avatar-clickable"
-                onClick={() => setViewerImage(tutor.profilePhoto)}
-              />
-            ) : (
-              <div className="profile-tutor-avatar">
-                <span>{getInitials(tutor.name)}</span>
-              </div>
-            )}
-
-            <div className="profile-tutor-info">
-              <span className="profile-tutor-name">{tutor.name}</span>
-              <div className="profile-tutor-meta">
-                {tutor.branch?.name && <span className="profile-meta-chip">{tutor.branch.name}</span>}
-                {tutor.batch?.name && <span className="profile-meta-chip">{tutor.batch.name}</span>}
-              </div>
-              <span className="profile-tutor-email">{tutor.email}</span>
-            </div>
-          </div>
+          <StaffRow person={tutor} onEnlarge={setViewerImage} showBatch />
         ) : (
           <div className="profile-tutor-loading">
             <HelpCircle size={22} />
             <span>No tutor assigned to your batch yet</span>
+          </div>
+        )}
+      </div>
+
+      {/* HOD */}
+      <p className="profile-section-label">YOUR HOD</p>
+      <div className="profile-card">
+        {staffLoading ? (
+          <div className="profile-tutor-loading">
+            <Loader2 size={18} className="spin" />
+            <span>Finding your HOD…</span>
+          </div>
+        ) : hod ? (
+          <StaffRow person={hod} onEnlarge={setViewerImage} />
+        ) : (
+          <div className="profile-tutor-loading">
+            <HelpCircle size={22} />
+            <span>No HOD assigned to your branch yet</span>
+          </div>
+        )}
+      </div>
+
+      {/* Principal */}
+      <p className="profile-section-label">PRINCIPAL</p>
+      <div className="profile-card">
+        {staffLoading ? (
+          <div className="profile-tutor-loading">
+            <Loader2 size={18} className="spin" />
+            <span>Finding the principal…</span>
+          </div>
+        ) : principal ? (
+          <StaffRow person={principal} onEnlarge={setViewerImage} />
+        ) : (
+          <div className="profile-tutor-loading">
+            <HelpCircle size={22} />
+            <span>No principal added yet</span>
           </div>
         )}
       </div>
@@ -318,6 +363,34 @@ function InfoRow({ icon, label, value }) {
       <div className="profile-info-texts">
         <span className="profile-info-label">{label}</span>
         <span className="profile-info-value">{value}</span>
+      </div>
+    </div>
+  );
+}
+
+function StaffRow({ person, onEnlarge, showBatch = false }) {
+  return (
+    <div className="profile-tutor-row">
+      {person.profilePhoto ? (
+        <img
+          src={person.profilePhoto}
+          alt={person.name}
+          className="profile-tutor-avatar-img profile-avatar-clickable"
+          onClick={() => onEnlarge(person.profilePhoto)}
+        />
+      ) : (
+        <div className="profile-tutor-avatar">
+          <span>{getInitials(person.name)}</span>
+        </div>
+      )}
+
+      <div className="profile-tutor-info">
+        <span className="profile-tutor-name">{person.name}</span>
+        <div className="profile-tutor-meta">
+          {person.branch?.name && <span className="profile-meta-chip">{person.branch.name}</span>}
+          {showBatch && person.batch?.name && <span className="profile-meta-chip">{person.batch.name}</span>}
+        </div>
+        <span className="profile-tutor-email">{person.email}</span>
       </div>
     </div>
   );

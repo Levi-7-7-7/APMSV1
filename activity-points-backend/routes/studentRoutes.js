@@ -262,4 +262,30 @@ router.get('/my-tutor', auth, async (req, res) => {
   }
 });
 
+/* ────────────────────────────────────────────────────────────
+ * GET MY HOD + PRINCIPAL
+ * HOD is scoped to the student's branch (role: 'hod', no batch set).
+ * Principal is global (role: 'principal', no branch/batch set).
+ * ──────────────────────────────────────────────────────────── */
+
+router.get('/my-staff', auth, async (req, res) => {
+  try {
+    const student = await Student.findById(req.user.id).select('branch');
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+
+    const [hod, principal] = await Promise.all([
+      student.branch
+        ? Tutor.findOne({ role: 'hod', branch: student.branch })
+            .populate('branch', 'name')
+            .select('name email profilePhoto branch')
+        : null,
+      Tutor.findOne({ role: 'principal' }).select('name email profilePhoto'),
+    ]);
+
+    res.json({ hod: hod || null, principal: principal || null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
