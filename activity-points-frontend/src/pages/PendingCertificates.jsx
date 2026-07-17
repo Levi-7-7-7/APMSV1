@@ -122,6 +122,20 @@ const PendingCertificates = () => {
   const editCurrentSub = editSubcats.find(s => s.name === editSubcat);
   const editHasLevels = editCurrentSub?.levels?.length > 0;
 
+  // The specific level object currently selected, and the *actual* prize
+  // options it defines (some subcategories, e.g. "Professional Body
+  // Competitions", only ever define a "Participation" prize — not all 4).
+  const editLevelObj = editCurrentSub?.levels?.find(l => l.name === editLevel);
+  const editPrizeItems = editLevelObj?.prizes || [];
+
+  // Union of every prize type that appears anywhere in this subcategory's
+  // levels, in the standard display order — used to decide which columns
+  // to render in the points table (so we don't show empty "First/Second/
+  // Third" columns for subcategories that never define them).
+  const editVisiblePrizeTypes = editHasLevels
+    ? prizeLevels.filter(p => editCurrentSub.levels.some(l => l.prizes.some(pr => pr.type === p)))
+    : [];
+
   const getEditPoints = () => {
     if (!editCurrentSub) return null;
     if (editCurrentSub.fixedPoints != null) return editCurrentSub.fixedPoints;
@@ -270,7 +284,7 @@ const PendingCertificates = () => {
                     <thead>
                       <tr style={{ background: '#f8fafc' }}>
                         <th style={{ textAlign: 'left', padding: '6px 10px', color: '#64748b', fontWeight: 600 }}>Level</th>
-                        {prizeLevels.map(p => (
+                        {editVisiblePrizeTypes.map(p => (
                           <th key={p} style={{ textAlign: 'center', padding: '6px 8px', color: '#64748b', fontWeight: 600 }}>{p}</th>
                         ))}
                       </tr>
@@ -279,7 +293,7 @@ const PendingCertificates = () => {
                       {editCurrentSub.levels.map(l => (
                         <tr key={l.name} style={{ borderTop: '1px solid #f1f5f9' }}>
                           <td style={{ padding: '6px 10px', fontWeight: 600, color: '#334155' }}>{l.name}</td>
-                          {prizeLevels.map(p => {
+                          {editVisiblePrizeTypes.map(p => {
                             const prize = l.prizes.find(pr => pr.type === p);
                             const isSelected = editLevel === l.name && editPrize === p;
                             return (
@@ -313,7 +327,15 @@ const PendingCertificates = () => {
                     className="reject-textarea"
                     style={{ fontFamily: 'inherit', fontSize: '14px', padding: '8px', borderRadius: '8px', border: '1.5px solid #cbd5e1', resize: 'none' }}
                     value={editLevel}
-                    onChange={e => { setEditLevel(e.target.value); setEditPrize(''); }}
+                    onChange={e => {
+                      const v = e.target.value;
+                      setEditLevel(v);
+                      const lvl = editCurrentSub?.levels?.find(l => l.name === v);
+                      // Auto-select the prize when the level only has one option
+                      // (e.g. subcategories like "Professional Body Competitions"
+                      // that only ever award "Participation" points)
+                      setEditPrize(lvl?.prizes?.length === 1 ? lvl.prizes[0].type : '');
+                    }}
                   >
                     <option value="">Select Level</option>
                     {editCurrentSub.levels.map(l => <option key={l.name} value={l.name}>{l.name}</option>)}
@@ -325,9 +347,10 @@ const PendingCertificates = () => {
                     style={{ fontFamily: 'inherit', fontSize: '14px', padding: '8px', borderRadius: '8px', border: '1.5px solid #cbd5e1', resize: 'none' }}
                     value={editPrize}
                     onChange={e => setEditPrize(e.target.value)}
+                    disabled={!editLevel}
                   >
                     <option value="">Select Prize</option>
-                    {prizeLevels.map(p => <option key={p} value={p}>{p}</option>)}
+                    {editPrizeItems.map(p => <option key={p.type} value={p.type}>{p.type}</option>)}
                   </select>
                 </>
               )}
