@@ -415,6 +415,32 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(37,99,235,.1);
 }
 
+/* Inline "add one thing" forms (Add Batch, Add Branch): label+input next to
+   a submit button on desktop. On mobile this stacks vertically instead —
+   without this, the button (which never shrinks) squeezes the input down
+   to a sliver, and the card's `overflow: hidden` clips whatever you type
+   past that sliver out of view. */
+.ap-inline-add-form {
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+.ap-inline-add-field {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .ap-inline-add-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ap-inline-add-form > .btn-primary.ap-btn {
+    width: 100%;
+  }
+}
+
 /* ── Buttons ── */
 .btn,
 .ap-btn {
@@ -1049,6 +1075,14 @@ textarea:focus {
 
   .ap-assign-panel {
     padding: 1rem;
+  }
+
+  /* 16px avoids iOS/Android auto-zoom on focus, which can shift the
+     viewport and make the field you're typing in scroll out of view */
+  .ap-input,
+  .ap-select,
+  textarea {
+    font-size: 16px;
   }
 }
 

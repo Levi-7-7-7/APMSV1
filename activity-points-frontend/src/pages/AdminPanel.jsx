@@ -705,8 +705,8 @@ export default function AdminPanel() {
                 <h3>Add New Batch</h3>
               </div>
               <div className="ap-card-body">
-                <form onSubmit={handleAddBatch} className="ap-form" style={{ flexDirection: "row", alignItems: "flex-end" }}>
-                  <div className="ap-field" style={{ flex: 1 }}>
+                <form onSubmit={handleAddBatch} className="ap-form ap-inline-add-form">
+                  <div className="ap-field ap-inline-add-field">
                     <label>Batch Name</label>
                     <input value={batchName} onChange={e => setBatchName(e.target.value)} className="ap-input" placeholder="e.g. 2022-2026" required/>
                   </div>
@@ -748,8 +748,8 @@ export default function AdminPanel() {
                 <h3>Add New Branch</h3>
               </div>
               <div className="ap-card-body">
-                <form onSubmit={handleAddBranch} className="ap-form" style={{ flexDirection: "row", alignItems: "flex-end" }}>
-                  <div className="ap-field" style={{ flex: 1 }}>
+                <form onSubmit={handleAddBranch} className="ap-form ap-inline-add-form">
+                  <div className="ap-field ap-inline-add-field">
                     <label>Branch Name</label>
                     <input value={branchName} onChange={e => setBranchName(e.target.value)} className="ap-input" placeholder="e.g. Computer Science" required/>
                   </div>
