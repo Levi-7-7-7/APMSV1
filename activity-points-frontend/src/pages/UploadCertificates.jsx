@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import axiosInstance from '../api/axiosInstance';
-import { ArrowLeft, Award, CheckCircle, Paperclip, Search, X, Calendar } from 'lucide-react';
+import { ArrowLeft, Award, Paperclip, Search, X, Calendar } from 'lucide-react';
 import '../css/upload.css';
 
 const MAX_FILE_SIZE_MB = 5;
@@ -210,7 +210,20 @@ export default function CertificateUploadScreen() {
   if (submitted) {
     return (
       <div className="certificate-upload-container success-screen">
-        <CheckCircle size={64} color="#22c55e" />
+        <div className="success-anim">
+          <div className="success-confetti">
+            {Array.from({ length: 14 }).map((_, i) => (
+              <span key={i} className={`confetti-piece piece-${i % 7}`} />
+            ))}
+          </div>
+          <svg className="success-circle" viewBox="0 0 130 130">
+            <circle className="success-circle-bg" cx="65" cy="65" r="58" />
+            <circle className="success-circle-ring" cx="65" cy="65" r="58" />
+            <path className="success-check" d="M40 68 L57 85 L92 45" />
+          </svg>
+          <h2 className="success-title">Certificate Uploaded!</h2>
+          <p className="success-subtitle">Your certificate has been submitted for tutor approval.</p>
+        </div>
       </div>
     );
   }

@@ -134,10 +134,161 @@
 
 /* Success screen */
 .certificate-upload-container .success-screen {
+  min-height: 100dvh;
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.success-anim {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  max-width: 340px;
+  width: 100%;
+}
+
+/* Animated ring + checkmark */
+.success-circle {
+  width: clamp(96px, 28vw, 130px);
+  height: clamp(96px, 28vw, 130px);
+  margin-bottom: 8px;
+  overflow: visible;
+}
+
+.success-circle-bg {
+  fill: rgba(34, 197, 94, 0.12);
+  transform-origin: center;
+  animation: success-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.success-circle-ring {
+  fill: none;
+  stroke: #22c55e;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 365;
+  stroke-dashoffset: 365;
+  transform-origin: center;
+  transform: rotate(-90deg);
+  animation: success-ring-draw 0.6s ease-out 0.05s both;
+}
+
+.success-check {
+  fill: none;
+  stroke: #22c55e;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 80;
+  stroke-dashoffset: 80;
+  animation: success-check-draw 0.4s ease-out 0.55s both;
+}
+
+.success-title {
+  font-size: clamp(1.1rem, 4.5vw, 1.5rem);
+  font-weight: 700;
+  color: #14532d;
+  margin: 4px 0 0;
+  opacity: 0;
+  animation: success-fade-up 0.45s ease-out 0.75s both;
+}
+
+.success-subtitle {
+  font-size: clamp(0.8rem, 3.4vw, 0.95rem);
+  color: #4b5563;
+  margin: 0;
+  line-height: 1.4;
+  opacity: 0;
+  animation: success-fade-up 0.45s ease-out 0.9s both;
+}
+
+/* Confetti */
+.success-confetti {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confetti-burst 1s ease-out 0.25s both;
+}
+
+.piece-0 { background: #22c55e; --tx: -70px; --ty: -40px; --rot: 140deg; animation-delay: 0.25s; }
+.piece-1 { background: #3b82f6; --tx: 60px; --ty: -60px; --rot: -120deg; animation-delay: 0.3s; }
+.piece-2 { background: #f59e0b; --tx: -90px; --ty: 10px; --rot: 200deg; animation-delay: 0.22s; }
+.piece-3 { background: #ec4899; --tx: 80px; --ty: 0px; --rot: -180deg; animation-delay: 0.32s; }
+.piece-4 { background: #a855f7; --tx: -40px; --ty: -80px; --rot: 90deg; animation-delay: 0.28s; }
+.piece-5 { background: #06b6d4; --tx: 40px; --ty: -90px; --rot: -90deg; animation-delay: 0.35s; }
+.piece-6 { background: #eab308; --tx: 0px; --ty: -100px; --rot: 160deg; animation-delay: 0.4s; }
+
+.confetti-piece:nth-child(7)  { transform: translate(-8px, -4px); }
+.confetti-piece:nth-child(8)  { transform: translate(6px, 8px); }
+.confetti-piece:nth-child(9)  { transform: translate(-14px, 6px); }
+.confetti-piece:nth-child(10) { transform: translate(10px, -6px); }
+.confetti-piece:nth-child(11) { transform: translate(-4px, 10px); }
+.confetti-piece:nth-child(12) { transform: translate(2px, -10px); }
+.confetti-piece:nth-child(13) { transform: translate(-10px, -2px); }
+
+@keyframes success-pop {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes success-ring-draw {
+  0% { stroke-dashoffset: 365; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes success-check-draw {
+  0% { stroke-dashoffset: 80; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes success-fade-up {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes confetti-burst {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.4);
+  }
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .success-circle-bg,
+  .success-circle-ring,
+  .success-check,
+  .success-title,
+  .success-subtitle,
+  .confetti-piece {
+    animation: none !important;
+  }
+  .success-circle-ring,
+  .success-check { stroke-dashoffset: 0; }
+  .success-title,
+  .success-subtitle { opacity: 1; }
+  .confetti-piece { opacity: 0; }
 }
 
 /* ========================
