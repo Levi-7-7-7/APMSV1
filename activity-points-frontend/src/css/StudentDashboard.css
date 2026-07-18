@@ -37,7 +37,7 @@
   height: 64px;
   border-radius: 50%;
   background-color: var(--blue-500);
-  color: var(--white);
+  color: var(--on-color);
   font-weight: 700;
   font-size: 1.5rem;
   display: flex;
@@ -102,7 +102,7 @@
 .logout-btn-header {
   background-color: var(--red-500);
   border: none;
-  color: var(--white);
+  color: var(--on-color);
   padding: 0.5rem 1rem;
   border-radius: 12px;
   font-weight: 600;
@@ -120,7 +120,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--white);
+  background: var(--surface);
   border-radius: 12px;
   padding: 1.5rem 2rem;
   box-shadow: 0 5px 15px rgb(219 234 254 / 0.4);
@@ -179,7 +179,7 @@
 }
 
 .activities-card {
-  background: var(--white);
+  background: var(--surface);
   border-radius: 12px;
   box-shadow: 0 5px 15px rgb(219 234 254 / 0.4);
   padding: 1rem;
@@ -258,7 +258,7 @@
   right: 0;
 
   display: flex;
-  background: var(--white);
+  background: var(--surface);
   border-top: 1px solid var(--slate-200);
   box-shadow: 0 -1px 5px rgb(0 0 0 / 0.05);
   z-index: 100;
@@ -409,7 +409,7 @@
 
 .pass-badge {
   background: var(--green-600);
-  color: var(--white);
+  color: var(--on-color);
   font-weight: 800;
   font-size: 0.75rem;
   padding: 0.4rem 0.75rem;

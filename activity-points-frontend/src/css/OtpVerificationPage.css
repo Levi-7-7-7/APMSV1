@@ -24,7 +24,7 @@
 
 /* Form card with glassy, soft shadow */
 .otp-form {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--glass-surface-strong);
   backdrop-filter: saturate(180%) blur(12px);
   padding: 2.5rem 3rem;
   border-radius: 24px;
@@ -46,7 +46,7 @@
   font-weight: 500;
   border-radius: 16px;
   border: 2px solid #c7d2fe; /* light indigo */
-  background: var(--white);
+  background: var(--surface);
   color: var(--slate-700); /* slate-700 */
   box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.06);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -67,7 +67,7 @@
 /* Button with gradient, rounded and subtle hover */
 .otp-button {
   background: linear-gradient(90deg, #6366f1, #4f46e5);
-  color: var(--white);
+  color: var(--on-color);
   font-weight: 700;
   font-size: 1.125rem;
   padding: 1rem 0;

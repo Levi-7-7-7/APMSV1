@@ -47,8 +47,8 @@ button,
 
 /* ── Variables ── */
 :root {
-  --ap-bg:         #f0f4f8;
-  --ap-surface:    var(--white);
+  --ap-bg:         var(--blue-tint-25);
+  --ap-surface:    var(--surface);
   --ap-border:     var(--slate-200);
 
   --ap-primary:    var(--blue-600);
@@ -121,7 +121,7 @@ button,
   align-items: center;
   justify-content: center;
 
-  color: var(--white);
+  color: var(--on-color);
   font-weight: 800;
   font-size: 1rem;
 
@@ -558,7 +558,7 @@ textarea:focus {
 .btn-primary,
 .ap-btn.primary {
   background: var(--ap-primary);
-  color: var(--white);
+  color: var(--on-color);
   border-color: var(--ap-primary);
 }
 

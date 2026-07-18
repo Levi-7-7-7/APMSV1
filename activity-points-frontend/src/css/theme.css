@@ -11,7 +11,8 @@
   color-scheme: light;
 
   /* Neutral / slate scale (page backgrounds, cards, borders, text) */
-  --white: #ffffff;
+  --surface: #ffffff;      /* card / input backgrounds — inverts in dark mode */
+  --on-color: #ffffff;     /* text/icons/borders on colored buttons & banners — always white */
   --slate-50: #f8fafc;
   --slate-100: #f1f5f9;
   --slate-200: #e2e8f0;
@@ -24,6 +25,7 @@
   --slate-900: #0f172a;
 
   /* Page-level tinted gradient stops */
+  --blue-tint-25: #f0f4f8;
   --blue-tint-50: #eff6ff;
   --blue-tint-75: #f0f9ff;
   --blue-tint-100: #dbeafe;
@@ -44,9 +46,18 @@
   --red-700: #b91c1c;
   --red-800: #991b1b;
 
+  /* Translucent "frosted glass" card backgrounds */
+  --glass-surface-strong: rgba(255, 255, 255, 0.94);
+  --glass-surface: rgba(255, 255, 255, 0.85);
+  --glass-overlay: rgba(255, 255, 255, 0.7);
+
   /* Shadows */
   --shadow-color: rgba(0, 0, 0, 0.1);
   --shadow-color-strong: rgba(0, 0, 0, 0.15);
+}
+
+html, body {
+  background-color: var(--slate-50);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -55,7 +66,8 @@
 
     /* Neutral scale inverted: what was a light background/border/faint
        text now becomes a dark one, and vice versa. */
-    --white: #1e293b;        /* card / input surfaces */
+    --surface: #1e293b;     /* card / input surfaces */
+    --on-color: #ffffff;    /* stays white — it sits on colored buttons/banners, not the page surface */
     --slate-50: #0f172a;     /* page background (was lightest, now darkest) */
     --slate-100: #16213a;    /* subtle surface */
     --slate-200: #334155;    /* borders */
@@ -69,10 +81,17 @@
 
     /* Page-level tinted gradients become subtle dark tints instead of
        bright pastels, so backgrounds stay calm in dark mode. */
+    --blue-tint-25: rgba(59, 130, 246, 0.05);
     --blue-tint-50: rgba(59, 130, 246, 0.08);
     --blue-tint-75: rgba(59, 130, 246, 0.06);
     --blue-tint-100: rgba(59, 130, 246, 0.12);
     --green-tint-100: rgba(34, 197, 94, 0.12);
+
+    /* Translucent "frosted glass" cards become dark translucent instead
+       of staying bright white */
+    --glass-surface-strong: rgba(30, 41, 59, 0.94);
+    --glass-surface: rgba(30, 41, 59, 0.85);
+    --glass-overlay: rgba(255, 255, 255, 0.08);
 
     /* Shadows need to be stronger to read against a dark surface */
     --shadow-color: rgba(0, 0, 0, 0.4);

@@ -18,7 +18,7 @@
 }
 
 .cert-modal-box {
-  background: var(--white);
+  background: var(--surface);
   border-radius: 14px;
   width: 100%;
   max-width: 860px;
@@ -72,7 +72,7 @@
   font-weight: 600;
   cursor: pointer;
   border: 1.5px solid var(--slate-200);
-  background: var(--white);
+  background: var(--surface);
   color: var(--slate-700);
   transition: all .15s;
 }
@@ -81,7 +81,7 @@
 
 .cert-modal-btn.download {
   background: var(--blue-600);
-  color: var(--white);
+  color: var(--on-color);
   border-color: var(--blue-600);
 }
 

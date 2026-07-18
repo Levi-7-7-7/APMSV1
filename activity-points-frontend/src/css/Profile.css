@@ -29,7 +29,7 @@
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.18);
-  color: var(--white);
+  color: var(--on-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,7 +42,7 @@
 }
 
 .profile-hero-title {
-  color: var(--white);
+  color: var(--on-color);
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -64,7 +64,7 @@
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  border: 3px solid var(--white);
+  border: 3px solid var(--on-color);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   object-fit: cover;
 }
@@ -74,7 +74,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--white);
+  color: var(--on-color);
   font-size: 2rem;
   font-weight: 800;
 }
@@ -86,9 +86,9 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 2px solid var(--white);
+  border: 2px solid var(--on-color);
   background: var(--blue-600);
-  color: var(--white);
+  color: var(--on-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,7 +124,7 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  background: var(--white);
+  background: var(--surface);
   border-radius: 16px;
   padding: 88px 20px 24px 20px;
   margin: -40px 16px 24px 16px;
@@ -182,7 +182,7 @@
 
 /* Card */
 .profile-card {
-  background: var(--white);
+  background: var(--surface);
   border-radius: 16px;
   margin: 0 16px 24px 16px;
   box-shadow: 0 5px 15px rgb(219 234 254 / 0.4);
@@ -268,7 +268,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--white);
+  color: var(--on-color);
   font-weight: 800;
   font-size: 1.1rem;
 }
@@ -352,7 +352,7 @@
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.18);
-  color: var(--white);
+  color: var(--on-color);
   display: flex;
   align-items: center;
   justify-content: center;

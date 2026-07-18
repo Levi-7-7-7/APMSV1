@@ -8,7 +8,7 @@
 :root {
   --primary: var(--blue-600);
   --bg-main: var(--slate-50);
-  --card-bg: var(--white);
+  --card-bg: var(--surface);
   --text-main: var(--slate-800);
   --text-muted: var(--slate-500);
   --approved: #10b981;
@@ -113,7 +113,7 @@ body {
   width: 64px;
   height: 64px;
   background: var(--primary);
-  color: var(--white);
+  color: var(--on-color);
   border-radius: 50%;
   font-size: 1.6rem;
   font-weight: 700;
@@ -276,7 +276,7 @@ body {
 
 .pill.active {
   background: var(--primary);
-  color: var(--white);
+  color: var(--on-color);
 }
 
 /* ================= CERT GRID ================= */
@@ -287,7 +287,7 @@ body {
 }
 
 .cert-card {
-  background: var(--white);
+  background: var(--surface);
   border-radius: 12px;
   padding: 1.25rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.04);

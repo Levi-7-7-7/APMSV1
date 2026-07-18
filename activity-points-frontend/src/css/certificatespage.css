@@ -19,7 +19,7 @@
 .back-button {
   padding: 8px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--glass-surface);
   border: none;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -42,7 +42,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--white);
+  background: var(--surface);
   border-radius: 1rem;
   padding: 24px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
@@ -78,7 +78,7 @@
   padding: 8px 20px;
   border-radius: 9999px;
   border: none;
-  background: var(--white);
+  background: var(--surface);
   color: var(--slate-500);
   font-weight: 600;
   font-size: 0.875rem;
@@ -93,7 +93,7 @@
 .filter-btn.active,
 .filter-btn:hover {
   background-color: var(--blue-600);
-  color: var(--white);
+  color: var(--on-color);
 }
 
 .filter-count {
@@ -122,7 +122,7 @@
 
 /* ===================== CERTIFICATE CARD ===================== */
 .certificate-card {
-  background: var(--white);
+  background: var(--surface);
   border-radius: 1rem;
   padding: 20px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
@@ -270,7 +270,7 @@
   border-radius: 8px;
   padding: 6px 14px;
   cursor: pointer;
-  background: var(--white);
+  background: var(--surface);
   font-size: 0.875rem;
   text-decoration: none;
 }
@@ -312,7 +312,7 @@
 
 .upload-first-btn {
   background: var(--blue-600);
-  color: var(--white);
+  color: var(--on-color);
   border: none;
   padding: 12px 32px;
   font-weight: 600;
@@ -392,7 +392,7 @@
 
 .rejected-reason-header {
   background: var(--red-600);
-  color: var(--white);
+  color: var(--on-color);
   font-size: 0.8rem;
   font-weight: 700;
   padding: 6px 12px;

@@ -5,7 +5,7 @@
 }
 
 .pending-card {
-  background: var(--white);
+  background: var(--surface);
   border-radius: 14px;
   padding: 20px;
   display: flex;
@@ -46,7 +46,7 @@
   margin-top: 14px;
   padding: 10px 14px;
   background-color: var(--blue-600);
-  color: var(--white);
+  color: var(--on-color);
   text-decoration: none;
   border-radius: 8px;
   font-weight: 600;
@@ -71,12 +71,12 @@
 
 .btn-approve {
   background-color: var(--green-600);
-  color: var(--white);
+  color: var(--on-color);
 }
 
 .btn-reject {
   background-color: var(--red-600);
-  color: var(--white);
+  color: var(--on-color);
 }
 
 .btn-approve:hover,
@@ -167,7 +167,7 @@ button.view-link:hover { background: var(--blue-tint-50); }
 }
 
 .reject-modal {
-  background: var(--white);
+  background: var(--surface);
   border-radius: 14px;
   width: 100%;
   max-width: 480px;
@@ -290,7 +290,7 @@ button.view-link:hover { background: var(--blue-tint-50); }
 .reject-cancel-btn {
   padding: 0.55rem 1.1rem;
   border: 1.5px solid var(--slate-200);
-  background: var(--white);
+  background: var(--surface);
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -303,7 +303,7 @@ button.view-link:hover { background: var(--blue-tint-50); }
 .reject-confirm-btn {
   padding: 0.55rem 1.25rem;
   background: var(--red-600);
-  color: var(--white);
+  color: var(--on-color);
   border: none;
   border-radius: 8px;
   font-size: 0.875rem;

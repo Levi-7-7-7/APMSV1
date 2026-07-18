@@ -1,5 +1,5 @@
 .upload-csv-card {
-  background: var(--white);
+  background: var(--surface);
   border-radius: 12px;
   border: 1px solid var(--slate-200);
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
@@ -56,7 +56,7 @@
   gap: 0.4rem;
   padding: 0.55rem 1.1rem;
   background: var(--blue-600);
-  color: var(--white);
+  color: var(--on-color);
   border: none;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -151,7 +151,7 @@
 .upload-btn {
   padding: 0.6rem 1.25rem;
   background: var(--blue-600);
-  color: var(--white);
+  color: var(--on-color);
   border: none;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -208,7 +208,7 @@
   justify-content: center;
   gap: 0.4rem;
   padding: 0.65rem 0.75rem;
-  background: var(--white);
+  background: var(--surface);
   color: var(--slate-600);
   border: 1.5px solid var(--slate-200);
   border-radius: 8px;
@@ -221,7 +221,7 @@
 
 .mode-btn.active {
   background: var(--blue-600);
-  color: var(--white);
+  color: var(--on-color);
   border-color: var(--blue-600);
 }
 
@@ -248,7 +248,7 @@
   border-radius: 8px;
   font-size: 1rem; /* 16px avoids iOS auto-zoom on focus */
   color: var(--slate-900);
-  background: var(--white);
+  background: var(--surface);
   box-sizing: border-box;
   transition: border-color .15s;
 }
@@ -316,7 +316,7 @@
   left: 3px;
   width: 20px;
   height: 20px;
-  background: var(--white);
+  background: var(--surface);
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0,0,0,.25);
   transition: transform .15s;
