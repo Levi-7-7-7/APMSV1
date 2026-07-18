@@ -27,6 +27,25 @@ const UploadCSV = () => {
   const [msg, setMsg]         = useState('');
   const [isError, setIsError] = useState(false);
 
+  const handleFileChange = (e) => {
+    const selected = e.target.files[0];
+    setMsg('');
+    if (!selected) return;
+
+    // Android file pickers report inconsistent MIME types for .csv (text/csv,
+    // text/comma-separated-values, application/vnd.ms-excel, text/plain, or
+    // sometimes none at all), so we deliberately accept broadly above and
+    // validate by extension here instead of relying on `accept` alone.
+    if (!selected.name.toLowerCase().endsWith('.csv')) {
+      setIsError(true);
+      setMsg('Please select a .csv file.');
+      setFile(null);
+      return;
+    }
+
+    setFile(selected);
+  };
+
   const upload = async () => {
     if (!file) return alert('Select a CSV file first!');
     setLoading(true);
@@ -156,8 +175,9 @@ const UploadCSV = () => {
               <FileUp size={16}/>
               <span>{file ? file.name : 'Choose CSV file…'}</span>
               <input
-                type="file" accept=".csv"
-                onChange={e => { setFile(e.target.files[0]); setMsg(''); }}
+                type="file"
+                accept=".csv,text/csv,text/comma-separated-values,application/csv,application/vnd.ms-excel,text/plain"
+                onChange={handleFileChange}
               />
             </label>
             <button className="upload-btn" onClick={upload} disabled={loading || !file}>
