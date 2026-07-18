@@ -134,12 +134,13 @@
 
 /* Success screen */
 .certificate-upload-container .success-screen {
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 60vh;
+  min-height: 60dvh;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 24px;
+  padding-top: 48px;
   box-sizing: border-box;
   overflow-x: hidden;
   width: 100%;
