@@ -501,34 +501,35 @@ export default function AdminPanel() {
               </div>
             </div>
 
-            {/* Move student panel */}
+            {/* Move student modal — overlay so it's visible regardless of scroll position */}
             {movingStudentId && (
-              <div className="ap-assign-panel">
-                <h3><ArrowRightLeft size={16}/> Move Student to a Different Batch / Branch</h3>
-                <form onSubmit={handleMoveStudent} className="ap-form-row">
-                  <div className="ap-field">
-                    <label>Batch</label>
-                    <select className="ap-select" value={moveBatchId} onChange={e => setMoveBatchId(e.target.value)}>
-                      <option value="">No change</option>
-                      {batches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="ap-field">
-                    <label>Branch</label>
-                    <select className="ap-select" value={moveBranchId} onChange={e => setMoveBranchId(e.target.value)}>
-                      <option value="">No change</option>
-                      {branches.map(br => <option key={br._id} value={br._id}>{br.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="ap-field">
-                    <label>&nbsp;</label>
-                    <button className="btn-primary ap-btn" type="submit">Move</button>
-                  </div>
-                  <div className="ap-field">
-                    <label>&nbsp;</label>
-                    <button type="button" className="btn ap-btn" onClick={() => setMovingStudentId(null)}>Cancel</button>
-                  </div>
-                </form>
+              <div className="ap-modal-overlay" onClick={() => setMovingStudentId(null)}>
+                <div className="ap-modal-panel" onClick={e => e.stopPropagation()}>
+                  <h3><ArrowRightLeft size={16}/> Move {students.find(s => s._id === movingStudentId)?.name || "Student"}</h3>
+                  <p style={{ fontSize: "0.82rem", color: "var(--ap-muted)", margin: "0.25rem 0 1rem" }}>
+                    Choose a new batch and/or branch. Leave either as "No change" to keep it as-is.
+                  </p>
+                  <form onSubmit={handleMoveStudent} className="ap-form">
+                    <div className="ap-field">
+                      <label>Batch</label>
+                      <select className="ap-select" value={moveBatchId} onChange={e => setMoveBatchId(e.target.value)}>
+                        <option value="">No change</option>
+                        {batches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="ap-field">
+                      <label>Branch</label>
+                      <select className="ap-select" value={moveBranchId} onChange={e => setMoveBranchId(e.target.value)}>
+                        <option value="">No change</option>
+                        {branches.map(br => <option key={br._id} value={br._id}>{br.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="ap-modal-actions">
+                      <button type="button" className="btn ap-btn" onClick={() => setMovingStudentId(null)}>Cancel</button>
+                      <button className="btn-primary ap-btn" type="submit">Move Student</button>
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
 

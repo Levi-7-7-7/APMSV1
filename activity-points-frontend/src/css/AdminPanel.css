@@ -213,6 +213,76 @@ button,
   font-weight: 600;
 }
 
+/* ── Modal (e.g. Move Student) — bottom sheet on mobile, centered dialog on desktop ── */
+.ap-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  z-index: 1000;
+  padding: 0;
+}
+
+.ap-modal-panel {
+  background: var(--ap-surface);
+  width: 100%;
+  max-width: 480px;
+
+  border-radius: 16px 16px 0 0;
+  padding: 1.25rem;
+
+  box-shadow: 0 -4px 24px rgba(0,0,0,.15);
+
+  animation: ap-modal-slide-up .2s ease-out;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.ap-modal-panel h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  font-size: 1rem;
+  margin: 0;
+}
+
+.ap-modal-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.ap-modal-actions .ap-btn {
+  flex: 1;
+}
+
+@keyframes ap-modal-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@media (min-width: 641px) {
+  .ap-modal-overlay {
+    align-items: center;
+    padding: 1rem;
+  }
+
+  .ap-modal-panel {
+    border-radius: 16px;
+    animation: ap-modal-fade-in .15s ease-out;
+  }
+
+  @keyframes ap-modal-fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
+
 /* ── Content Area ── */
 .ap-content {
   max-width: 1200px;
@@ -1001,6 +1071,37 @@ textarea:focus {
   .ap-tab {
     padding: 0.8rem 0.9rem;
     font-size: 0.8rem;
+  }
+
+  /* All 5 tabs visible at once as an equal-width strip, instead of a
+     horizontally-scrolling row where only 2-3 fit in view at a time */
+  .ap-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    overflow-x: visible;
+    padding: 0.35rem 0.35rem 0;
+    gap: 2px;
+  }
+
+  .ap-tab {
+    flex-direction: column;
+    gap: 0.2rem;
+
+    padding: 0.55rem 0.2rem;
+    font-size: 0.62rem;
+    font-weight: 600;
+
+    min-height: 52px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+
+    border-bottom-width: 2px;
+    border-radius: 6px 6px 0 0;
+  }
+
+  .ap-tab svg {
+    flex-shrink: 0;
   }
 
   .ap-content {
