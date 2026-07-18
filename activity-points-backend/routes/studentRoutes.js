@@ -95,7 +95,7 @@ router.get('/me', auth, async (req, res) => {
       .populate('batch', 'name')
       .populate('branch', 'name')
       .select(
-        '-password -otp -otpExpiry -resetPasswordToken -resetPasswordExpires',
+        '-password -resetPasswordToken -resetPasswordExpires',
       );
 
     if (!student) {

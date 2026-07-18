@@ -4,6 +4,12 @@
  * Added fields:
  *   profilePhoto       — full ImageKit URL of the student's profile photo
  *   profilePhotoFileId — ImageKit fileId used to delete the old photo on re-upload
+ *
+ * Account creation model (no more OTP-based first-time login):
+ *   Students are created by a tutor (single-add or CSV) with a default
+ *   password of firstName + birthYear (derived from dateOfBirth). They log
+ *   in immediately with registerNumber + that password, and can change it
+ *   any time via the "Reset / Forgot Password" flow.
  */
 
 const mongoose = require('mongoose');
@@ -12,18 +18,16 @@ const StudentSchema = new mongoose.Schema({
   name:           { type: String, required: true },
   registerNumber: { type: String, required: true, unique: true },
   email:          { type: String, required: true, unique: true },
-  password:       { type: String },
+  password:       { type: String, required: true },
+
+  // Used to derive the default password (firstName + birth year) at creation time
+  dateOfBirth: { type: Date, required: true },
 
   batch:  { type: mongoose.Schema.Types.ObjectId, ref: 'Batch' },
   branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },
 
+  // Set explicitly by the tutor when adding the student (single-add or CSV)
   isLateralEntry: { type: Boolean, default: false },
-
-  firstLoginCompleted: { type: Boolean, default: false },
-  isVerified:          { type: Boolean, default: false },
-
-  otp:       { type: String, default: null },
-  otpExpiry: { type: Date,   default: null },
 
   resetPasswordToken:   { type: String, default: null },
   resetPasswordExpires: { type: Date,   default: null },

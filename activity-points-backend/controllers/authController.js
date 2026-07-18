@@ -39,7 +39,6 @@ exports.requestPasswordReset = async (req, res) => {
 
     const student = await Student.findOne({ registerNumber });
     if (!student) return res.status(404).json({ message: 'No account found with that register number' });
-    if (!student.isVerified) return res.status(400).json({ message: 'Account not yet verified. Please complete first-time setup.' });
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     student.resetPasswordToken = otp;

@@ -63,7 +63,7 @@ Pick one:
 
 ## 4. Setting up Brevo (for OTP / password-reset emails)
 
-Students normally log in with **register number + password**. Brevo is used for the two OTP-based flows: **first-time account setup** (one-time, per student) and **password reset** — both go through Brevo's transactional email API.
+Students and tutors get a working password the moment their account is created (see §9), so there's no OTP at login time. Brevo is used only for the **Reset / Forgot Password** flow — verifying a password change by emailing an OTP to the registered address.
 
 1. Go to https://www.brevo.com and create a free account (the free tier includes 300 emails/day, plenty for local dev/testing).
 2. Verify your email address to activate the account.
@@ -217,8 +217,8 @@ This outputs static files to `dist/`, which can be served by any static host (or
 7. ✅ Open `http://localhost:5173` in your browser
 8. ✅ Log in as admin at `/admin/login` using the credentials from step 4
 9. ✅ As admin, create tutors and set up batches/branches so students can be assigned
-10. ✅ Test the student flow: check "First-time user", enter a registered student's register number → OTP should arrive at their registered email via Brevo within a few seconds (check spam folder if not)
-11. ✅ Complete first-time setup once, then try it again with the same register number — you should now get the "already completed" message instead of a new OTP
+10. ✅ Log in as tutor, go to "Add Students", and add a test student (single add) — note the default password shown on screen
+11. ✅ Log in as that student using their register number and the default password (`firstname` + birth year)
 
 ---
 
@@ -227,21 +227,21 @@ This outputs static files to `dist/`, which can be served by any static host (or
 | Role | Login Method | What they can do |
 |---|---|---|
 | **Student** | Register number + password | View dashboard, upload certificates, track points |
-| **Tutor** | Email + password | Review assigned students, approve/reject certificates, bulk-upload students via CSV |
+| **Tutor** | Email + password | Add students (single or CSV), review assigned students, approve/reject certificates |
 | **Admin** | Email + password | Manage tutors, batches, branches, categories — full system oversight |
 
 All protected routes use a JWT to authenticate requests.
 
-### Student first-time setup vs. normal login
+### How student accounts are created
 
-A student's account is created by an admin/tutor without a password. The **first time** a student accesses the system, they check "First-time user" on the login screen and go through a short setup instead of a normal login:
+There is no student self-registration and no OTP-based first-time setup. A **tutor** creates each student account — either one at a time or via CSV bulk upload — from the "Add Students" tab of the tutor dashboard:
 
-1. Enter **register number** → an OTP is emailed to the student's registered email (`POST /api/auth/start-login`).
-2. Enter the **OTP**, choose a **password**, and pick batch/branch/lateral-entry status → this verifies the account and sets `firstLoginCompleted = true` on the student's record (`POST /api/auth/verify-otp`).
+- **Single add** (`POST /api/tutors/students`): the tutor enters the student's name, register number, email, date of birth, and whether they're a lateral-entry student.
+- **CSV bulk upload** (`POST /api/tutors/students/upload`): a CSV with columns `name, registerNumber, email, dateOfBirth, isLateralEntry`.
 
-After that, the student logs in normally with **register number + password** (`POST /api/auth/login`) every time — no OTP involved.
+Either way, the student is automatically assigned to **that tutor's batch and branch**, and given a **default password of `firstname` (lowercase) + `birth year`** — e.g. a student named "Arjun Menon" born in 2004 gets the password `arjun2004`. The tutor sees this password on-screen after adding the student (for single add) and should pass it on.
 
-**Guard against repeating first-time setup:** once `firstLoginCompleted` is `true` in the database, both `/start-login` and `/verify-otp` refuse to run again — they return a 400 with the message *"First-time login has already been completed for this account. Please sign in with your register number and password. If you need further changes, contact your tutor."* This stops the OTP flow from being used later as a backdoor to silently reset a student's password or change their batch/branch (that's what `/forgot-password` + `/reset-password` are for instead, which go through a separate OTP explicitly for password resets).
+The student then logs in immediately with **register number + that password** — no OTP, no separate setup step. They can change their password at any time via **"Reset / Forgot Password"** on the login screen, which emails an OTP to their registered address (via Brevo) to confirm the change.
 
 ---
 

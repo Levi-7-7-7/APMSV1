@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 /* ===================== STUDENT PAGES ===================== */
 import Login from './pages/Login';
-import VerifyOtp from './pages/VerifyOtp';
 import Dashboard from './pages/Dashboard';
 import UploadCertificates from './pages/UploadCertificates';
 import CertificatesPage from './pages/CertificatesPage';
@@ -34,7 +33,6 @@ function App() {
 
         {/* Public — single login page handles student, tutor, and admin */}
         <Route path="/" element={<Login />} />
-        <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/tutor/forgot-password" element={<TutorForgotPassword />} />

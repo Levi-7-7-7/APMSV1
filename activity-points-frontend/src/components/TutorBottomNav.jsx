@@ -4,7 +4,7 @@ import { Users, FileUp, ListChecks, BookOpen } from 'lucide-react';
 
 const navItems = [
   { id: 'students', icon: Users, label: 'Students', path: '/tutor/dashboard/students' },
-  { id: 'upload', icon: FileUp, label: 'Upload CSV', path: '/tutor/dashboard/upload' },
+  { id: 'upload', icon: FileUp, label: 'Add Students', path: '/tutor/dashboard/upload' },
   { id: 'pending', icon: ListChecks, label: 'Pending Certificates', path: '/tutor/dashboard/pending' },
   { id: 'approved', icon: BookOpen, label: 'Approved Certificates', path: '/tutor/dashboard/approved' },
 ];

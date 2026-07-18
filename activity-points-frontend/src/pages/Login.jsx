@@ -11,7 +11,6 @@ export default function Login() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -25,24 +24,6 @@ export default function Login() {
     setPassword('');
     setError('');
     setSuccess('');
-    setIsFirstTimeUser(false);
-  };
-
-  // Request OTP for first-time students
-  const handleRequestOTP = async () => {
-    setError('');
-    setSuccess('');
-    if (!identifier.trim()) { setError('Register number is required'); return; }
-    setLoading(true);
-    try {
-      const res = await axiosInstance.post('/auth/start-login', { registerNumber: identifier });
-      setSuccess(res.data.message || 'OTP sent');
-      setTimeout(() => navigate(`/verify-otp?registerNumber=${encodeURIComponent(identifier)}`), 1000);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Failed to send OTP.');
-    } finally {
-      setLoading(false);
-    }
   };
 
   // Login for student, tutor, or admin
@@ -138,74 +119,49 @@ export default function Login() {
           />
         </div>
 
-        {!isFirstTimeUser && (
-          <div className="form-group password-wrapper">
-            <label className="form-label">
-              <Lock size={16} /> Password
-            </label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
-              className="form-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-            />
-            <button type="button" className="show-password-btn" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
-          </div>
-        )}
+        <div className="form-group password-wrapper">
+          <label className="form-label">
+            <Lock size={16} /> Password
+          </label>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder={role === 'student' ? 'Default: firstname + birth year (e.g. arjun2004)' : 'Enter your password'}
+            className="form-input"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
+            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+          />
+          <button type="button" className="show-password-btn" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
 
-        <div className="form-footer">
-          {role === 'student' && (
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={isFirstTimeUser}
-                onChange={(e) => setIsFirstTimeUser(e.target.checked)}
-                disabled={loading}
-              />
-              <span style={{ marginLeft: 6 }}>First-time user</span>
-            </label>
-          )}
-
-          {role !== 'admin' && (
+        {role !== 'admin' && (
+          <div className="form-footer">
             <button
               type="button"
               className="forgot-password"
               onClick={() => navigate(role === 'tutor' ? '/tutor/forgot-password' : '/forgot-password')}
               disabled={loading}
             >
-              Forgot Password?
+              Reset / Forgot Password?
             </button>
-          )}
-        </div>
-
-        {!isFirstTimeUser || role !== 'student' ? (
-          <button
-            className={`btn-primary ${isAdmin ? 'btn-admin' : ''}`}
-            onClick={handleLogin}
-            disabled={!identifier || !password || loading}
-            style={{ marginTop: '1rem' }}
-          >
-            {loading ? (
-              <><Loader2 size={20} className="spinner" /> Signing In...</>
-            ) : (
-              isAdmin ? '🛡️ Sign In as Admin' : 'Sign In'
-            )}
-          </button>
-        ) : (
-          <button
-            className="btn-outline"
-            onClick={handleRequestOTP}
-            disabled={!identifier || loading}
-            style={{ marginTop: '1rem' }}
-          >
-            {loading ? 'Sending OTP...' : 'Request OTP'}
-          </button>
+          </div>
         )}
+
+        <button
+          className={`btn-primary ${isAdmin ? 'btn-admin' : ''}`}
+          onClick={handleLogin}
+          disabled={!identifier || !password || loading}
+          style={{ marginTop: '1rem' }}
+        >
+          {loading ? (
+            <><Loader2 size={20} className="spinner" /> Signing In...</>
+          ) : (
+            isAdmin ? '🛡️ Sign In as Admin' : 'Sign In'
+          )}
+        </button>
       </div>
 
       <div className="footer-text">Need help? Contact your institution's IT support</div>

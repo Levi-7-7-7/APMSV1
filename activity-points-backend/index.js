@@ -13,7 +13,6 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const tutorRoutes = require('./routes/tutorRoutes');
-const tutorStudentRoutes = require('./routes/tutorStudentRoutes');
 const metaRoutes = require('./routes/metaRoutes');
 const categoryRoutes = require('./routes/categories');
 const certificateRoutes = require('./routes/certificateRoutes');
@@ -54,9 +53,6 @@ app.use('/api/students', studentRoutes);
 
 // Tutor routes (login, students, certificates)
 app.use('/api/tutors', tutorRoutes);
-
-// Tutor bulk student upload (legacy mount point)
-app.use('/api/tutor/students', tutorStudentRoutes);
 
 // Batch and branch lookups (for tutor use)
 app.use('/api/meta', metaRoutes);
