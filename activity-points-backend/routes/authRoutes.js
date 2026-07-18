@@ -8,7 +8,7 @@ const router = express.Router();
 
 // Student login — register number + password.
 // Every student account has a password from the moment it's created by a
-// tutor (default: firstName + birth year), so there's no separate
+// tutor (default: firstName + "12345"), so there's no separate
 // first-time-setup step. Students who don't know/remember their password
 // use "Reset / Forgot Password" (below) at any time.
 router.post('/login', async (req, res) => {

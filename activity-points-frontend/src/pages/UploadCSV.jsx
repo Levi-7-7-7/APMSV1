@@ -5,8 +5,8 @@ import '../css/UploadCSV.css';
 
 // Generate and download a blank CSV template
 const downloadTemplate = () => {
-  const header  = 'name,registerNumber,email,dateOfBirth,isLateralEntry';
-  const example = 'John Doe,2301131001,johndoe@example.com,2004-08-15,false';
+  const header  = 'name,registerNumber,email,isLateralEntry';
+  const example = 'John Doe,2301131001,johndoe@example.com,false';
   const blob    = new Blob([header + '\n' + example + '\n'], { type: 'text/csv' });
   const url     = URL.createObjectURL(blob);
   const a       = document.createElement('a');
@@ -16,7 +16,7 @@ const downloadTemplate = () => {
   URL.revokeObjectURL(url);
 };
 
-const EMPTY_FORM = { name: '', registerNumber: '', email: '', dateOfBirth: '', isLateralEntry: false };
+const EMPTY_FORM = { name: '', registerNumber: '', email: '', isLateralEntry: false };
 
 const UploadCSV = () => {
   const [mode, setMode] = useState('csv'); // 'csv' | 'single'
@@ -68,9 +68,9 @@ const UploadCSV = () => {
     setSingleMsg('');
     setCreatedPassword('');
 
-    if (!form.name.trim() || !form.registerNumber.trim() || !form.email.trim() || !form.dateOfBirth) {
+    if (!form.name.trim() || !form.registerNumber.trim() || !form.email.trim()) {
       setSingleError(true);
-      setSingleMsg('Name, register number, email, and date of birth are all required.');
+      setSingleMsg('Name, register number, and email are all required.');
       return;
     }
 
@@ -93,7 +93,7 @@ const UploadCSV = () => {
     <div className="upload-csv-card">
       <div className="upload-csv-header">
         <h2>Add Students</h2>
-        <p className="upload-csv-sub">Students will be assigned to your batch &amp; branch automatically, with a default password of <strong>firstname + birth year</strong> (e.g. <code>arjun2004</code>).</p>
+        <p className="upload-csv-sub">Students will be assigned to your batch &amp; branch automatically, with a default password of <strong>firstname + 12345</strong> (e.g. <code>arjun12345</code>).</p>
       </div>
 
       {/* Mode toggle */}
@@ -136,19 +136,16 @@ const UploadCSV = () => {
               <span className="csv-col">name</span>
               <span className="csv-col">registerNumber</span>
               <span className="csv-col">email</span>
-              <span className="csv-col">dateOfBirth</span>
               <span className="csv-col">isLateralEntry</span>
             </div>
             <div className="csv-format-row example">
               <span>John Doe</span>
               <span>2301131001</span>
               <span>john@example.com</span>
-              <span>2004-08-15</span>
               <span>false</span>
             </div>
             <ul className="csv-notes">
               <li>First row must be the header exactly as shown above</li>
-              <li>dateOfBirth format: YYYY-MM-DD</li>
               <li>isLateralEntry: true/false (leave blank for false)</li>
               <li>Each student on a new line, no extra spaces</li>
               <li>Duplicate register numbers or emails will be skipped</li>
@@ -190,11 +187,6 @@ const UploadCSV = () => {
           <input
             type="email" placeholder="Email" value={form.email}
             onChange={updateField('email')} className="form-input"
-          />
-          <label style={{ fontSize: '0.85rem', color: '#6b7280' }}>Date of birth</label>
-          <input
-            type="date" value={form.dateOfBirth}
-            onChange={updateField('dateOfBirth')} className="form-input"
           />
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem' }}>
             <input

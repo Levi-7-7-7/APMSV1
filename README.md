@@ -218,7 +218,7 @@ This outputs static files to `dist/`, which can be served by any static host (or
 8. ✅ Log in as admin at `/admin/login` using the credentials from step 4
 9. ✅ As admin, create tutors and set up batches/branches so students can be assigned
 10. ✅ Log in as tutor, go to "Add Students", and add a test student (single add) — note the default password shown on screen
-11. ✅ Log in as that student using their register number and the default password (`firstname` + birth year)
+11. ✅ Log in as that student using their register number and the default password (`firstname` + `12345`)
 
 ---
 
@@ -236,10 +236,10 @@ All protected routes use a JWT to authenticate requests.
 
 There is no student self-registration and no OTP-based first-time setup. A **tutor** creates each student account — either one at a time or via CSV bulk upload — from the "Add Students" tab of the tutor dashboard:
 
-- **Single add** (`POST /api/tutors/students`): the tutor enters the student's name, register number, email, date of birth, and whether they're a lateral-entry student.
-- **CSV bulk upload** (`POST /api/tutors/students/upload`): a CSV with columns `name, registerNumber, email, dateOfBirth, isLateralEntry`.
+- **Single add** (`POST /api/tutors/students`): the tutor enters the student's name, register number, email, and whether they're a lateral-entry student.
+- **CSV bulk upload** (`POST /api/tutors/students/upload`): a CSV with columns `name, registerNumber, email, isLateralEntry`.
 
-Either way, the student is automatically assigned to **that tutor's batch and branch**, and given a **default password of `firstname` (lowercase) + `birth year`** — e.g. a student named "Arjun Menon" born in 2004 gets the password `arjun2004`. The tutor sees this password on-screen after adding the student (for single add) and should pass it on.
+Either way, the student is automatically assigned to **that tutor's batch and branch**, and given a **default password of `firstname` (lowercase) + `12345`** — e.g. a student named "Arjun Menon" gets the password `arjun12345`. The tutor sees this password on-screen after adding the student (for single add) and should pass it on.
 
 The student then logs in immediately with **register number + that password** — no OTP, no separate setup step. They can change their password at any time via **"Reset / Forgot Password"** on the login screen, which emails an OTP to their registered address (via Brevo) to confirm the change.
 

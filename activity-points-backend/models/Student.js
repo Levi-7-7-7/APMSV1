@@ -7,9 +7,9 @@
  *
  * Account creation model (no more OTP-based first-time login):
  *   Students are created by a tutor (single-add or CSV) with a default
- *   password of firstName + birthYear (derived from dateOfBirth). They log
- *   in immediately with registerNumber + that password, and can change it
- *   any time via the "Reset / Forgot Password" flow.
+ *   password of firstName + "12345". They log in immediately with
+ *   registerNumber + that password, and can change it any time via the
+ *   "Reset / Forgot Password" flow.
  */
 
 const mongoose = require('mongoose');
@@ -19,9 +19,6 @@ const StudentSchema = new mongoose.Schema({
   registerNumber: { type: String, required: true, unique: true },
   email:          { type: String, required: true, unique: true },
   password:       { type: String, required: true },
-
-  // Used to derive the default password (firstName + birth year) at creation time
-  dateOfBirth: { type: Date, required: true },
 
   batch:  { type: mongoose.Schema.Types.ObjectId, ref: 'Batch' },
   branch: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },

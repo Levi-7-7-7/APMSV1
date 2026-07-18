@@ -175,26 +175,25 @@ router.delete('/students/:id', tutorAuth, async (req, res) => {
 
 // ─── ADD SINGLE STUDENT ────────────────────────────────────────────────────
 // Creates one student under the tutor's own batch/branch, with a default
-// password of firstName + birth year. Returns that password once so the
+// password of firstName + "12345". Returns that password once so the
 // tutor can pass it on to the student.
 router.post('/students', tutorAuth, async (req, res) => {
   try {
     const tutor = await Tutor.findById(req.tutor.id);
     if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
 
-    const { name, registerNumber, email, dateOfBirth, isLateralEntry } = req.body;
-    if (!name || !registerNumber || !email || !dateOfBirth) {
-      return res.status(400).json({ error: 'name, registerNumber, email and dateOfBirth are required' });
+    const { name, registerNumber, email, isLateralEntry } = req.body;
+    if (!name || !registerNumber || !email) {
+      return res.status(400).json({ error: 'name, registerNumber and email are required' });
     }
 
-    const defaultPassword = generateDefaultPassword(name, dateOfBirth);
+    const defaultPassword = generateDefaultPassword(name);
     const hashedPassword  = await bcrypt.hash(defaultPassword, 10);
 
     const student = await Student.create({
       name:           name.trim(),
       registerNumber: registerNumber.trim(),
       email:          email.trim(),
-      dateOfBirth:    new Date(dateOfBirth),
       isLateralEntry: !!isLateralEntry,
       batch:          tutor.batch  || undefined,
       branch:         tutor.branch || undefined,
@@ -221,8 +220,8 @@ router.post('/students', tutorAuth, async (req, res) => {
 });
 
 // ─── UPLOAD STUDENTS via CSV ──────────────────────────────────────────────────
-// CSV columns: name, registerNumber, email, dateOfBirth (YYYY-MM-DD), isLateralEntry (true/false)
-// Each student is created with a default password of firstName + birth year.
+// CSV columns: name, registerNumber, email, isLateralEntry (true/false)
+// Each student is created with a default password of firstName + "12345".
 router.post('/students/upload', tutorAuth, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
@@ -235,16 +234,13 @@ router.post('/students/upload', tutorAuth, upload.single('file'), async (req, re
     .on('end', async () => {
       try {
         const studentsToInsert = await Promise.all(results.map(async (s) => {
-          const dobRaw = s.dateOfBirth?.trim();
-          const dob    = dobRaw ? new Date(dobRaw) : null;
-          const defaultPassword = generateDefaultPassword(s.name, dob);
+          const defaultPassword = generateDefaultPassword(s.name);
           const hashedPassword  = await bcrypt.hash(defaultPassword, 10);
 
           return {
             name:               s.name?.trim(),
             registerNumber:     s.registerNumber?.trim(),
             email:              s.email?.trim(),
-            dateOfBirth:        dob || undefined,
             isLateralEntry:     /^(true|yes|1)$/i.test((s.isLateralEntry || '').trim()),
             batch:              tutor?.batch  || undefined,
             branch:             tutor?.branch || undefined,
@@ -256,7 +252,7 @@ router.post('/students/upload', tutorAuth, upload.single('file'), async (req, re
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.json({
           message: `${inserted.length} students uploaded successfully`,
-          note: "Each student's default password is their first name (lowercase) + birth year, e.g. \"arjun2004\". They can change it via Reset / Forgot Password.",
+          note: "Each student's default password is their first name (lowercase) + \"12345\", e.g. \"arjun12345\". They can change it via Reset / Forgot Password.",
         });
       } catch (err) {
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
