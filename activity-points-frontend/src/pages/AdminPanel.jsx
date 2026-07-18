@@ -39,6 +39,10 @@ export default function AdminPanel() {
   const [moveBatchId, setMoveBatchId]   = useState("");
   const [moveBranchId, setMoveBranchId] = useState("");
 
+  // Bulk-select for batch delete
+  const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
   const [tutorForm, setTutorForm]   = useState({ name: "", email: "", password: "" });
   const tutorCsvRef = useRef(null);
 
@@ -155,6 +159,7 @@ export default function AdminPanel() {
       if (branch) params.branch = branch;
       const res = await adminAxios.get("/admin/students", { params });
       setStudents(res.data.students || []);
+      setSelectedStudentIds([]);
     } catch { flash("Failed to fetch students", "error"); }
   };
 
@@ -175,8 +180,42 @@ export default function AdminPanel() {
     try {
       await adminAxios.delete(`/admin/students/${id}`);
       setStudents(p => p.filter(s => s._id !== id));
+      setSelectedStudentIds(p => p.filter(sid => sid !== id));
       flash("Student deleted");
     } catch (err) { flash(err.response?.data?.error || "Failed to delete student", "error"); }
+  };
+
+  const toggleStudentSelected = (id) => {
+    setSelectedStudentIds(p => p.includes(id) ? p.filter(sid => sid !== id) : [...p, id]);
+  };
+
+  const toggleSelectAllStudents = () => {
+    setSelectedStudentIds(p => p.length === students.length ? [] : students.map(s => s._id));
+  };
+
+  const handleBulkDeleteStudents = async () => {
+    if (selectedStudentIds.length === 0) return;
+    if (!window.confirm(
+      `Delete ${selectedStudentIds.length} selected student(s)? This also removes all their uploaded certificates and profile photos permanently. This cannot be undone.`
+    )) return;
+
+    setBulkDeleting(true);
+    try {
+      const res = await adminAxios.delete("/admin/students", { data: { ids: selectedStudentIds } });
+      const deletedIds = res.data.deletedIds || [];
+      setStudents(p => p.filter(s => !deletedIds.includes(s._id)));
+      setSelectedStudentIds([]);
+
+      if (res.data.failed?.length) {
+        flash(`${deletedIds.length} deleted, ${res.data.failed.length} failed`, "error");
+      } else {
+        flash(res.data.message || `${deletedIds.length} student(s) deleted`);
+      }
+    } catch (err) {
+      flash(err.response?.data?.error || "Bulk delete failed", "error");
+    } finally {
+      setBulkDeleting(false);
+    }
   };
 
   const startMoveStudent = (student) => {
@@ -539,15 +578,46 @@ export default function AdminPanel() {
                 <div className="ap-card-icon blue"><UserPlus size={16}/></div>
                 <h3>All Students <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({students.length})</span></h3>
               </div>
+
+              {selectedStudentIds.length > 0 && (
+                <div className="ap-bulk-bar">
+                  <span>{selectedStudentIds.length} selected</span>
+                  <div className="ap-bulk-bar-actions">
+                    <button type="button" className="btn ap-btn sm" onClick={() => setSelectedStudentIds([])} disabled={bulkDeleting}>
+                      Clear
+                    </button>
+                    <button type="button" className="btn ap-btn sm danger" onClick={handleBulkDeleteStudents} disabled={bulkDeleting}>
+                      <Trash2 size={13}/> {bulkDeleting ? "Deleting…" : `Delete Selected (${selectedStudentIds.length})`}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="ap-table-wrap">
                 {students.length === 0 ? <div className="ap-empty">No students found.</div> : (
                   <table className="ap-table">
                     <thead><tr>
+                      <th style={{ width: "2rem" }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedStudentIds.length === students.length}
+                          onChange={toggleSelectAllStudents}
+                          aria-label="Select all students"
+                        />
+                      </th>
                       <th>Name</th><th>Register No.</th><th>Email</th><th>Batch</th><th>Branch</th><th>Lateral Entry</th><th>Points</th><th>Actions</th>
                     </tr></thead>
                     <tbody>
                       {students.map(s => (
-                        <tr key={s._id}>
+                        <tr key={s._id} className={selectedStudentIds.includes(s._id) ? "ap-row-selected" : ""}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={selectedStudentIds.includes(s._id)}
+                              onChange={() => toggleStudentSelected(s._id)}
+                              aria-label={`Select ${s.name}`}
+                            />
+                          </td>
                           <td style={{ fontWeight: 600 }}>{s.name}</td>
                           <td style={{ color: "var(--ap-muted)" }}>{s.registerNumber}</td>
                           <td style={{ color: "var(--ap-muted)" }}>{s.email}</td>

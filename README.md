@@ -254,7 +254,7 @@ Unlike tutors (scoped to their own batch/branch), admins can see and manage stud
 - **View all students**, with search (name/register number/email) and batch/branch filters
 - **Add a student** to any batch/branch directly
 - **Move a student** between batches/branches at any time
-- **Delete a student** (same cascade cleanup as above)
+- **Delete a student**, or **batch-delete several at once** via checkboxes and a "Delete Selected" action — both use the same ImageKit cascade cleanup above, run independently per student so one failure doesn't block the rest
 
 ---
 

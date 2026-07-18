@@ -598,6 +598,33 @@ textarea:focus {
   min-height: 36px;
 }
 
+/* ── Bulk action bar (e.g. batch delete students) ── */
+.ap-bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  padding: 0.75rem 1.25rem;
+
+  background: #eff6ff;
+  border-top: 1px solid var(--ap-border);
+  border-bottom: 1px solid var(--ap-border);
+
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ap-primary-dk);
+}
+
+.ap-bulk-bar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ap-row-selected {
+  background: #eff6ff;
+}
+
 /* ── Tables ── */
 .ap-table-wrap {
   overflow-x: auto;
@@ -1189,6 +1216,20 @@ textarea:focus {
 
   .ap-assign-panel {
     padding: 1rem;
+  }
+
+  .ap-bulk-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .ap-bulk-bar-actions {
+    flex-direction: column;
+  }
+
+  .ap-bulk-bar-actions .ap-btn {
+    width: 100%;
   }
 
   /* 16px avoids iOS/Android auto-zoom on focus, which can shift the
