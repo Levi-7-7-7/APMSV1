@@ -1,7 +1,7 @@
 .upload-csv-card {
-  background: #fff;
+  background: var(--white);
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--slate-200);
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
   overflow: hidden;
   max-width: 680px;
@@ -9,20 +9,20 @@
 
 .upload-csv-header {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border-bottom: 1px solid var(--slate-200);
+  background: var(--slate-50);
 }
 
 .upload-csv-header h2 {
   font-size: 1.05rem;
   font-weight: 700;
   margin: 0 0 0.25rem 0;
-  color: #0f172a;
+  color: var(--slate-900);
 }
 
 .upload-csv-sub {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--slate-500);
   margin: 0;
 }
 
@@ -32,21 +32,21 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background: linear-gradient(135deg, #eff6ff, #faf5ff);
+  background: linear-gradient(135deg, var(--blue-tint-50), #faf5ff);
   border-bottom: 1px solid #bfdbfe;
   padding: 1rem 1.5rem;
 }
 
 .csv-template-left strong {
   font-size: 0.9rem;
-  color: #1e40af;
+  color: var(--blue-800);
   display: block;
   margin-bottom: 0.25rem;
 }
 
 .csv-template-left p {
   font-size: 0.82rem;
-  color: #64748b;
+  color: var(--slate-500);
   margin: 0;
 }
 
@@ -55,8 +55,8 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.55rem 1.1rem;
-  background: #2563eb;
-  color: #fff;
+  background: var(--blue-600);
+  color: var(--white);
   border: none;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -67,12 +67,12 @@
   flex-shrink: 0;
 }
 
-.csv-template-btn:hover { background: #1d4ed8; }
+.csv-template-btn:hover { background: var(--blue-700); }
 
 /* Instructions */
 .csv-instructions {
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--slate-200);
 }
 
 .csv-instructions h4 {
@@ -80,7 +80,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .05em;
-  color: #64748b;
+  color: var(--slate-500);
   margin: 0 0 0.75rem 0;
 }
 
@@ -92,8 +92,8 @@
 }
 
 .csv-col {
-  background: #eff6ff;
-  color: #1e40af;
+  background: var(--blue-tint-50);
+  color: var(--blue-800);
   padding: 2px 10px;
   border-radius: 6px;
   font-weight: 600;
@@ -104,14 +104,14 @@
 .csv-format-row.example span {
   font-family: monospace;
   font-size: 0.85rem;
-  color: #475569;
+  color: var(--slate-600);
 }
 
 .csv-notes {
   margin: 0.75rem 0 0 0;
   padding-left: 1.2rem;
   font-size: 0.82rem;
-  color: #64748b;
+  color: var(--slate-500);
   line-height: 1.7;
 }
 
@@ -129,11 +129,11 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem 1rem;
-  background: #f8fafc;
-  border: 1.5px dashed #cbd5e1;
+  background: var(--slate-50);
+  border: 1.5px dashed var(--slate-300);
   border-radius: 8px;
   font-size: 0.875rem;
-  color: #475569;
+  color: var(--slate-600);
   cursor: pointer;
   transition: border-color .15s, background .15s;
   flex: 1;
@@ -141,17 +141,17 @@
 }
 
 .file-input-label:hover {
-  border-color: #2563eb;
-  background: #eff6ff;
-  color: #2563eb;
+  border-color: var(--blue-600);
+  background: var(--blue-tint-50);
+  color: var(--blue-600);
 }
 
 .file-input-label input { display: none; }
 
 .upload-btn {
   padding: 0.6rem 1.25rem;
-  background: #2563eb;
-  color: #fff;
+  background: var(--blue-600);
+  color: var(--white);
   border: none;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -161,7 +161,7 @@
   white-space: nowrap;
 }
 
-.upload-btn:hover:not(:disabled) { background: #1d4ed8; }
+.upload-btn:hover:not(:disabled) { background: var(--blue-700); }
 .upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .upload-result {
@@ -177,13 +177,13 @@
 
 .upload-result.success {
   background: #f0fdf4;
-  color: #15803d;
+  color: var(--green-700);
   border: 1px solid #bbf7d0;
 }
 
 .upload-result.error {
   background: #fef2f2;
-  color: #dc2626;
+  color: var(--red-600);
   border: 1px solid #fecaca;
 }
 
@@ -197,8 +197,8 @@
   display: flex;
   gap: 0.5rem;
   padding: 1rem 1.5rem;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--slate-50);
+  border-bottom: 1px solid var(--slate-200);
 }
 
 .mode-btn {
@@ -208,9 +208,9 @@
   justify-content: center;
   gap: 0.4rem;
   padding: 0.65rem 0.75rem;
-  background: #fff;
-  color: #475569;
-  border: 1.5px solid #e2e8f0;
+  background: var(--white);
+  color: var(--slate-600);
+  border: 1.5px solid var(--slate-200);
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -220,9 +220,9 @@
 }
 
 .mode-btn.active {
-  background: #2563eb;
-  color: #fff;
-  border-color: #2563eb;
+  background: var(--blue-600);
+  color: var(--white);
+  border-color: var(--blue-600);
 }
 
 /* ── Single-student form ──────────────────────────────────────────────── */
@@ -237,25 +237,25 @@
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--slate-600);
   margin-bottom: 0.35rem;
 }
 
 .add-student-input {
   width: 100%;
   padding: 0.7rem 0.85rem;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--slate-200);
   border-radius: 8px;
   font-size: 1rem; /* 16px avoids iOS auto-zoom on focus */
-  color: #0f172a;
-  background: #fff;
+  color: var(--slate-900);
+  background: var(--white);
   box-sizing: border-box;
   transition: border-color .15s;
 }
 
 .add-student-input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--blue-600);
 }
 
 /* Lateral entry — big tappable toggle row instead of a tiny checkbox */
@@ -265,8 +265,8 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.85rem 1rem;
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
+  background: var(--slate-50);
+  border: 1.5px solid var(--slate-200);
   border-radius: 10px;
   cursor: pointer;
   min-height: 44px;
@@ -274,20 +274,20 @@
 }
 
 .lateral-toggle-row.checked {
-  background: #eff6ff;
+  background: var(--blue-tint-50);
   border-color: #93c5fd;
 }
 
 .lateral-toggle-text strong {
   display: block;
   font-size: 0.9rem;
-  color: #0f172a;
+  color: var(--slate-900);
 }
 
 .lateral-toggle-text span {
   display: block;
   font-size: 0.78rem;
-  color: #64748b;
+  color: var(--slate-500);
   margin-top: 0.15rem;
 }
 
@@ -304,7 +304,7 @@
   flex-shrink: 0;
   width: 46px;
   height: 26px;
-  background: #cbd5e1;
+  background: var(--slate-300);
   border-radius: 999px;
   transition: background .15s;
 }
@@ -316,14 +316,14 @@
   left: 3px;
   width: 20px;
   height: 20px;
-  background: #fff;
+  background: var(--white);
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0,0,0,.25);
   transition: transform .15s;
 }
 
 .lateral-toggle-row.checked .lateral-toggle-switch {
-  background: #2563eb;
+  background: var(--blue-600);
 }
 
 .lateral-toggle-row.checked .lateral-toggle-switch::after {

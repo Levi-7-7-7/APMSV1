@@ -5,7 +5,7 @@ body, html {
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #f0f4f8, #dbeafe, #d1fae5);
+  background: linear-gradient(135deg, #f0f4f8, var(--blue-tint-100), var(--green-tint-100));
   min-height: 100vh;
 }
 
@@ -60,19 +60,19 @@ body, html {
 .login-header svg {
   width: 54px;
   height: 54px;
-  color: #2563eb;
+  color: var(--blue-600);
   margin-bottom: 0.6rem;
 }
 
 .login-header h1 {
   margin: 0;
   font-size: 1.9rem;
-  color: #1e293b;
+  color: var(--slate-800);
 }
 
 .login-header p {
   margin: 0;
-  color: #64748b;
+  color: var(--slate-500);
   font-size: 1rem;
 }
 
@@ -87,7 +87,7 @@ body, html {
 
 .form-label {
   font-weight: 600;
-  color: #475569;
+  color: var(--slate-600);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -99,17 +99,17 @@ body, html {
 .form-select {
   height: 48px;
   padding: 0 1rem;
-  border: 2px solid #cbd5e1;
+  border: 2px solid var(--slate-300);
   border-radius: 18px;
   font-size: 1rem;
   transition: all 0.25s ease;
-  background: white;
+  background: var(--white);
 }
 
 .form-input:focus,
 .form-select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--blue-500);
   box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
 }
 
@@ -137,11 +137,11 @@ body, html {
   background: none;
   border: none;
   cursor: pointer;
-  color: #64748b;
+  color: var(--slate-500);
 }
 
 .show-password-btn:hover {
-  color: #1e293b;
+  color: var(--slate-800);
 }
 
 /* =========================
@@ -158,8 +158,8 @@ body, html {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
   padding: 0.65rem 0.8rem;
   border-radius: 14px;
   font-size: 0.95rem;
@@ -173,7 +173,7 @@ body, html {
 .form-footer::after {
   content: '';
   height: 1px;
-  background: #e2e8f0;
+  background: var(--slate-200);
 }
 
 /* =========================
@@ -185,15 +185,15 @@ body, html {
   border-radius: 12px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #2563eb;
-  background: #eff6ff;
+  color: var(--blue-600);
+  background: var(--blue-tint-50);
   cursor: pointer;
   border: none;
   transition: 0.2s;
 }
 
 .forgot-password:hover {
-  background: #dbeafe;
+  background: var(--blue-tint-100);
 }
 
 /* =========================
@@ -202,7 +202,7 @@ body, html {
 .btn-primary {
   width: 100%;
   border: none;
-  color: white;
+  color: var(--white);
   padding: 0.8rem 0;
   border-radius: 24px;
   font-weight: 700;
@@ -216,7 +216,7 @@ body, html {
 }
 
 .btn-primary:disabled {
-  background: #94a3b8;
+  background: var(--slate-400);
   cursor: not-allowed;
 }
 
@@ -224,7 +224,7 @@ body, html {
    STUDENT BUTTON
 ========================= */
 .btn-primary.btn-student {
-  background: linear-gradient(90deg, #2563eb, #1e40af);
+  background: linear-gradient(90deg, var(--blue-600), var(--blue-800));
 }
 
 .btn-primary.btn-student:hover:not(:disabled) {
@@ -255,9 +255,9 @@ body, html {
 
 .btn-outline {
   width: 100%;
-  border: 2px solid #22c55e;
+  border: 2px solid var(--green-500);
   background: none;
-  color: #22c55e;
+  color: var(--green-500);
   padding: 0.8rem 0;
   border-radius: 24px;
   font-weight: 600;
@@ -274,13 +274,13 @@ body, html {
    FEEDBACK
 ========================= */
 .error-message {
-  color: #dc2626;
+  color: var(--red-600);
   font-size: 0.9rem;
   text-align: center;
 }
 
 .success-message {
-  color: #16a34a;
+  color: var(--green-600);
   font-size: 0.9rem;
   text-align: center;
 }
@@ -290,7 +290,7 @@ body, html {
 ========================= */
 .footer-text {
   text-align: center;
-  color: #64748b;
+  color: var(--slate-500);
   font-size: 0.85rem;
   margin-top: 1.5rem;
   width: 100%;
@@ -338,7 +338,7 @@ body, html {
 .role-tabs {
   display: flex;
   border-radius: 16px;
-  background: #f1f5f9;
+  background: var(--slate-100);
   padding: 4px;
   gap: 4px;
   margin-bottom: 1.5rem;
@@ -352,24 +352,24 @@ body, html {
   background: transparent;
   font-size: 0.92rem;
   font-weight: 700;
-  color: #64748b;
+  color: var(--slate-500);
   cursor: pointer;
   transition: all 0.25s ease;
 }
 
 .role-tab:hover:not(:disabled) {
-  color: #1e293b;
+  color: var(--slate-800);
   background: rgba(255,255,255,0.7);
 }
 
 .role-tab.active {
-  background: #ffffff;
+  background: var(--white);
   box-shadow: 0 2px 10px rgba(0,0,0,0.08);
 }
 
 /* Student Active */
 .role-tab.student-tab.active {
-  color: #2563eb;
+  color: var(--blue-600);
 }
 
 /* Tutor Active */

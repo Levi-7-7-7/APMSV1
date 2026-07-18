@@ -5,7 +5,7 @@
   margin: 0 auto;
   padding-bottom: 40px;
   font-family: 'Inter', sans-serif;
-  color: #334155;
+  color: var(--slate-700);
 }
 
 /* Hero */
@@ -29,7 +29,7 @@
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -42,7 +42,7 @@
 }
 
 .profile-hero-title {
-  color: #fff;
+  color: var(--white);
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -64,7 +64,7 @@
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  border: 3px solid #fff;
+  border: 3px solid var(--white);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   object-fit: cover;
 }
@@ -74,7 +74,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--white);
   font-size: 2rem;
   font-weight: 800;
 }
@@ -86,9 +86,9 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 2px solid #fff;
-  background: #2563eb;
-  color: #fff;
+  border: 2px solid var(--white);
+  background: var(--blue-600);
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -111,7 +111,7 @@
 .profile-error {
   margin: 60px 16px 0 16px;
   background: #fee2e2;
-  color: #b91c1c;
+  color: var(--red-700);
   padding: 0.6rem 0.9rem;
   border-radius: 10px;
   font-size: 0.85rem;
@@ -124,7 +124,7 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  background: #fff;
+  background: var(--white);
   border-radius: 16px;
   padding: 88px 20px 24px 20px;
   margin: -40px 16px 24px 16px;
@@ -137,7 +137,7 @@
   margin: 0;
   font-size: 1.4rem;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--slate-800);
   text-align: center;
 }
 
@@ -145,8 +145,8 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  background: #dbeafe;
-  color: #2563eb;
+  background: var(--blue-tint-100);
+  color: var(--blue-600);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.8rem;
@@ -162,7 +162,7 @@
 
 .profile-entry-badge.success {
   background: #dcfce7;
-  color: #15803d;
+  color: var(--green-700);
 }
 
 .profile-entry-badge.warn {
@@ -175,14 +175,14 @@
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #94a3b8;
+  color: var(--slate-400);
   margin: 0 0 8px 20px;
   text-transform: uppercase;
 }
 
 /* Card */
 .profile-card {
-  background: #fff;
+  background: var(--white);
   border-radius: 16px;
   margin: 0 16px 24px 16px;
   box-shadow: 0 5px 15px rgb(219 234 254 / 0.4);
@@ -200,8 +200,8 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: #dbeafe;
-  color: #2563eb;
+  background: var(--blue-tint-100);
+  color: var(--blue-600);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,13 +218,13 @@
 .profile-info-label {
   font-size: 0.72rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--slate-400);
 }
 
 .profile-info-value {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--slate-800);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -232,7 +232,7 @@
 
 .profile-divider {
   height: 1px;
-  background: #f1f5f9;
+  background: var(--slate-100);
   margin-left: 66px;
 }
 
@@ -242,7 +242,7 @@
   align-items: center;
   gap: 10px;
   padding: 18px 16px;
-  color: #64748b;
+  color: var(--slate-500);
   font-size: 0.9rem;
   font-weight: 500;
 }
@@ -268,7 +268,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--white);
   font-weight: 800;
   font-size: 1.1rem;
 }
@@ -283,7 +283,7 @@
 .profile-tutor-name {
   font-size: 1rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--slate-800);
 }
 
 .profile-tutor-meta {
@@ -293,8 +293,8 @@
 }
 
 .profile-meta-chip {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--slate-100);
+  color: var(--slate-600);
   font-size: 0.7rem;
   font-weight: 600;
   padding: 2px 8px;
@@ -303,12 +303,12 @@
 
 .profile-tutor-email {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--slate-400);
 }
 
 .profile-no-tutor {
   padding: 18px 16px;
-  color: #94a3b8;
+  color: var(--slate-400);
   font-size: 0.9rem;
   margin: 0;
 }
@@ -352,7 +352,7 @@
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;

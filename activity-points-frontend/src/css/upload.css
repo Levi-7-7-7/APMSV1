@@ -5,8 +5,8 @@
   max-width: 720px;
   margin: 0 auto;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #334155;
-  background: linear-gradient(135deg, #f8fafc, #dbeafe, #d1fae5);
+  color: var(--slate-700);
+  background: linear-gradient(135deg, var(--slate-50), var(--blue-tint-100), var(--green-tint-100));
 }
 
 /* Header */
@@ -33,7 +33,7 @@
   font-size: 1.75rem;
   font-weight: 600;
   margin-left: 16px;
-  color: #1e293b;
+  color: var(--slate-800);
 }
 
 /* Main content */
@@ -48,10 +48,10 @@
 .certificate-upload-container .upload-select {
   padding: 8px 12px;
   border-radius: 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--slate-300);
   font-size: 14px;
-  background: white;
-  color: #1e293b;
+  background: var(--white);
+  color: var(--slate-800);
 }
 
 /* Eligible points */
@@ -75,7 +75,7 @@
 
 .certificate-upload-container .eligible-points p {
   font-size: 0.875rem;
-  color: #334155;
+  color: var(--slate-700);
   margin: 0;
 }
 
@@ -92,8 +92,8 @@
 
 .certificate-upload-container .upload-input-btn {
   padding: 12px 16px;
-  background-color: #3b82f6;
-  color: white;
+  background-color: var(--blue-500);
+  color: var(--white);
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
@@ -107,14 +107,14 @@
 }
 
 .certificate-upload-container .upload-input-btn:hover {
-  background-color: #2563eb;
+  background-color: var(--blue-600);
 }
 
 /* Submit button */
 .certificate-upload-container .upload-btn {
   padding: 12px 16px;
-  background-color: #3b82f6;
-  color: #fff;
+  background-color: var(--blue-500);
+  color: var(--white);
   border: none;
   border-radius: 12px;
   font-size: 16px;
@@ -129,7 +129,7 @@
 }
 
 .certificate-upload-container .upload-btn:hover:not(:disabled) {
-  background-color: #2563eb;
+  background-color: var(--blue-600);
 }
 
 /* Success screen */
@@ -173,7 +173,7 @@
 
 .success-circle-ring {
   fill: none;
-  stroke: #22c55e;
+  stroke: var(--green-500);
   stroke-width: 5;
   stroke-linecap: round;
   stroke-dasharray: 365;
@@ -185,7 +185,7 @@
 
 .success-check {
   fill: none;
-  stroke: #22c55e;
+  stroke: var(--green-500);
   stroke-width: 6;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -233,8 +233,8 @@
   animation: confetti-burst 1s ease-out 0.25s both;
 }
 
-.piece-0 { background: #22c55e; --tx: -70px; --ty: -40px; --rot: 140deg; animation-delay: 0.25s; }
-.piece-1 { background: #3b82f6; --tx: 60px; --ty: -60px; --rot: -120deg; animation-delay: 0.3s; }
+.piece-0 { background: var(--green-500); --tx: -70px; --ty: -40px; --rot: 140deg; animation-delay: 0.25s; }
+.piece-1 { background: var(--blue-500); --tx: 60px; --ty: -60px; --rot: -120deg; animation-delay: 0.3s; }
 .piece-2 { background: #f59e0b; --tx: -90px; --ty: 10px; --rot: 200deg; animation-delay: 0.22s; }
 .piece-3 { background: #ec4899; --tx: 80px; --ty: 0px; --rot: -180deg; animation-delay: 0.32s; }
 .piece-4 { background: #a855f7; --tx: -40px; --ty: -80px; --rot: 90deg; animation-delay: 0.28s; }
@@ -300,7 +300,7 @@
 .upload-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--slate-600);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -320,7 +320,7 @@
 .search-icon {
   position: absolute;
   left: 12px;
-  color: #64748b;
+  color: var(--slate-500);
   pointer-events: none;
 }
 
@@ -328,16 +328,16 @@
   width: 100%;
   padding: 10px 36px 10px 36px;
   border-radius: 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--slate-300);
   font-size: 14px;
-  background: white;
-  color: #1e293b;
+  background: var(--white);
+  color: var(--slate-800);
   box-sizing: border-box;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--blue-500);
   box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
 }
 
@@ -347,7 +347,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #94a3b8;
+  color: var(--slate-400);
   display: flex;
   align-items: center;
 }
@@ -357,8 +357,8 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   z-index: 100;
@@ -377,28 +377,28 @@
   background: none;
   cursor: pointer;
   text-align: left;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--slate-100);
   transition: background 0.15s;
 }
 
 .search-result-item:hover {
-  background: #f0f9ff;
+  background: var(--blue-tint-75);
 }
 
 .result-sub {
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--slate-800);
 }
 
 .result-cat {
   font-size: 11px;
-  color: #64748b;
+  color: var(--slate-500);
   margin-top: 2px;
 }
 
 .others-option {
-  border-top: 2px solid #e2e8f0;
+  border-top: 2px solid var(--slate-200);
   background: #fafafa;
 }
 
@@ -464,7 +464,7 @@
 .date-field-label {
   font-size: 11px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--slate-500);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }

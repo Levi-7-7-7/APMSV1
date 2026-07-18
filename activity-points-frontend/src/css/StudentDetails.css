@@ -6,14 +6,14 @@
 }
 
 :root {
-  --primary: #2563eb;
-  --bg-main: #f8fafc;
-  --card-bg: #ffffff;
-  --text-main: #1e293b;
-  --text-muted: #64748b;
+  --primary: var(--blue-600);
+  --bg-main: var(--slate-50);
+  --card-bg: var(--white);
+  --text-main: var(--slate-800);
+  --text-muted: var(--slate-500);
   --approved: #10b981;
   --pending: #f59e0b;
-  --rejected: #ef4444;
+  --rejected: var(--red-500);
 }
 
 body {
@@ -113,7 +113,7 @@ body {
   width: 64px;
   height: 64px;
   background: var(--primary);
-  color: white;
+  color: var(--white);
   border-radius: 50%;
   font-size: 1.6rem;
   font-weight: 700;
@@ -209,11 +209,11 @@ body {
 }
 
 .stat-box.raw {
-  background: #f1f5f9;
+  background: var(--slate-100);
 }
 
 .stat-box.capped {
-  background: #eff6ff;
+  background: var(--blue-tint-50);
   border: 1px solid #bfdbfe;
 }
 
@@ -267,7 +267,7 @@ body {
   border-radius: 999px;
   font-size: 0.85rem;
   font-weight: 600;
-  background: #f1f5f9;
+  background: var(--slate-100);
   color: var(--text-muted);
   white-space: nowrap;
   cursor: pointer;
@@ -276,7 +276,7 @@ body {
 
 .pill.active {
   background: var(--primary);
-  color: white;
+  color: var(--white);
 }
 
 /* ================= CERT GRID ================= */
@@ -287,7 +287,7 @@ body {
 }
 
 .cert-card {
-  background: white;
+  background: var(--white);
   border-radius: 12px;
   padding: 1.25rem;
   box-shadow: 0 2px 10px rgba(0,0,0,0.04);
@@ -321,7 +321,7 @@ body {
 
 .status-indicator.approved { background: #dcfce7; color: #166534; }
 .status-indicator.pending { background: #fef3c7; color: #92400e; }
-.status-indicator.rejected { background: #fee2e2; color: #991b1b; }
+.status-indicator.rejected { background: #fee2e2; color: var(--red-800); }
 
 .cert-body {
   margin-top: 1rem;
@@ -335,7 +335,7 @@ body {
 .points-badge {
   display: inline-block;
   margin-top: 0.75rem;
-  background: #f1f5f9;
+  background: var(--slate-100);
   padding: 4px 14px;
   border-radius: 999px;
   font-weight: 700;
@@ -347,7 +347,7 @@ body {
   margin-top: 1.25rem;
   padding: 12px;
   border-radius: 10px;
-  background: #eff6ff;
+  background: var(--blue-tint-50);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -360,7 +360,7 @@ body {
 }
 
 .view-doc:active {
-  background: #dbeafe;
+  background: var(--blue-tint-100);
 }
 
 /* ================= EMPTY ================= */
@@ -415,14 +415,14 @@ body {
   background: none;
   border: 1px solid #bfdbfe;
   border-radius: 6px;
-  color: #2563eb;
+  color: var(--blue-600);
   font-size: 0.8rem;
   font-weight: 500;
   padding: 4px 10px;
   cursor: pointer;
   transition: background .12s;
 }
-.cert-footer .view-doc:hover { background: #eff6ff; }
+.cert-footer .view-doc:hover { background: var(--blue-tint-50); }
 
 /* ── Lateral entry badge ── */
 .lateral-badge {
@@ -450,8 +450,8 @@ body {
   border: 1.5px solid #fecaca;
 }
 
-.stat-box.pass .stat-value { color: #15803d; }
-.stat-box.fail .stat-value { color: #dc2626; }
+.stat-box.pass .stat-value { color: var(--green-700); }
+.stat-box.fail .stat-value { color: var(--red-600); }
 
 .status-val {
   display: flex;
@@ -463,7 +463,7 @@ body {
 .req-pts {
   font-size: 0.72rem;
   font-weight: 400;
-  color: #94a3b8;
+  color: var(--slate-400);
   margin-left: 2px;
 }
 
@@ -474,13 +474,13 @@ body {
   gap: 0.4rem;
   background: #fef2f2;
   border-top: 1px solid #fecaca;
-  color: #991b1b;
+  color: var(--red-800);
   font-size: 0.78rem;
   padding: 0.6rem 0.875rem;
   line-height: 1.4;
 }
 
-.cert-rejection-reason svg { color: #dc2626; margin-top: 1px; }
+.cert-rejection-reason svg { color: var(--red-600); margin-top: 1px; }
 
 /* ── Mobile improvements ── */
 @media (max-width: 480px) {

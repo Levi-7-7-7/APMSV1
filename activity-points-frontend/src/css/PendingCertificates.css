@@ -5,7 +5,7 @@
 }
 
 .pending-card {
-  background: #ffffff;
+  background: var(--white);
   border-radius: 14px;
   padding: 20px;
   display: flex;
@@ -45,8 +45,8 @@
   display: inline-block;
   margin-top: 14px;
   padding: 10px 14px;
-  background-color: #2563eb;
-  color: #fff;
+  background-color: var(--blue-600);
+  color: var(--white);
   text-decoration: none;
   border-radius: 8px;
   font-weight: 600;
@@ -70,13 +70,13 @@
 }
 
 .btn-approve {
-  background-color: #16a34a;
-  color: white;
+  background-color: var(--green-600);
+  color: var(--white);
 }
 
 .btn-reject {
-  background-color: #dc2626;
-  color: white;
+  background-color: var(--red-600);
+  color: var(--white);
 }
 
 .btn-approve:hover,
@@ -135,14 +135,14 @@ button.view-link {
   background: none;
   border: 1px solid #bfdbfe;
   border-radius: 6px;
-  color: #2563eb;
+  color: var(--blue-600);
   font-size: 0.82rem;
   font-weight: 500;
   padding: 4px 10px;
   cursor: pointer;
   transition: background .12s;
 }
-button.view-link:hover { background: #eff6ff; }
+button.view-link:hover { background: var(--blue-tint-50); }
 
 /* ═══════════════════════════════════════════
    REJECT REASON MODAL
@@ -167,7 +167,7 @@ button.view-link:hover { background: #eff6ff; }
 }
 
 .reject-modal {
-  background: #fff;
+  background: var(--white);
   border-radius: 14px;
   width: 100%;
   max-width: 480px;
@@ -196,23 +196,23 @@ button.view-link:hover { background: #eff6ff; }
   gap: 0.5rem;
   font-weight: 700;
   font-size: 0.95rem;
-  color: #b91c1c;
+  color: var(--red-700);
 }
 
-.reject-icon { color: #dc2626; }
+.reject-icon { color: var(--red-600); }
 
 .reject-close-btn {
   background: none;
   border: none;
   cursor: pointer;
-  color: #94a3b8;
+  color: var(--slate-400);
   padding: 2px;
   border-radius: 6px;
   display: flex;
   align-items: center;
   transition: color .12s, background .12s;
 }
-.reject-close-btn:hover { color: #dc2626; background: #fee2e2; }
+.reject-close-btn:hover { color: var(--red-600); background: #fee2e2; }
 
 .reject-modal-body {
   padding: 1.25rem;
@@ -224,15 +224,15 @@ button.view-link:hover { background: #eff6ff; }
 }
 
 .reject-cert-info {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
   border-radius: 8px;
   padding: 0.6rem 0.875rem;
   font-size: 0.875rem;
-  color: #334155;
+  color: var(--slate-700);
 }
 
-.reject-cert-info strong { color: #0f172a; }
+.reject-cert-info strong { color: var(--slate-900); }
 
 .reject-label {
   font-size: 0.82rem;
@@ -243,22 +243,22 @@ button.view-link:hover { background: #eff6ff; }
   gap: 2px;
 }
 
-.reject-required { color: #dc2626; margin-left: 2px; }
+.reject-required { color: var(--red-600); margin-left: 2px; }
 
 .reject-hint {
   font-weight: 400;
-  color: #64748b;
+  color: var(--slate-500);
   font-size: 0.78rem;
 }
 
 .reject-textarea {
   width: 100%;
   padding: 0.7rem 0.875rem;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--slate-200);
   border-radius: 8px;
   font-size: 0.875rem;
   font-family: inherit;
-  color: #0f172a;
+  color: var(--slate-900);
   resize: vertical;
   outline: none;
   transition: border-color .15s, box-shadow .15s;
@@ -266,7 +266,7 @@ button.view-link:hover { background: #eff6ff; }
 }
 
 .reject-textarea:focus {
-  border-color: #dc2626;
+  border-color: var(--red-600);
   box-shadow: 0 0 0 3px rgba(220, 38, 38, .1);
 }
 
@@ -275,13 +275,13 @@ button.view-link:hover { background: #eff6ff; }
   align-items: center;
   gap: 0.35rem;
   font-size: 0.8rem;
-  color: #dc2626;
+  color: var(--red-600);
   margin: 0;
 }
 
 .reject-modal-footer {
   padding: 1rem 1.25rem;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--slate-100);
   display: flex;
   justify-content: flex-end;
   gap: 0.6rem;
@@ -289,21 +289,21 @@ button.view-link:hover { background: #eff6ff; }
 
 .reject-cancel-btn {
   padding: 0.55rem 1.1rem;
-  border: 1.5px solid #e2e8f0;
-  background: #fff;
+  border: 1.5px solid var(--slate-200);
+  background: var(--white);
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  color: #475569;
+  color: var(--slate-600);
   transition: background .12s;
 }
-.reject-cancel-btn:hover { background: #f8fafc; }
+.reject-cancel-btn:hover { background: var(--slate-50); }
 
 .reject-confirm-btn {
   padding: 0.55rem 1.25rem;
-  background: #dc2626;
-  color: #fff;
+  background: var(--red-600);
+  color: var(--white);
   border: none;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -311,4 +311,4 @@ button.view-link:hover { background: #eff6ff; }
   cursor: pointer;
   transition: background .12s;
 }
-.reject-confirm-btn:hover { background: #b91c1c; }
+.reject-confirm-btn:hover { background: var(--red-700); }

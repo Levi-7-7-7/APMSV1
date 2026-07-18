@@ -1,7 +1,7 @@
 /* Container with subtle pastel gradient background */
 .otp-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc, #e0e7ff, #d1fae5);
+  background: linear-gradient(135deg, var(--slate-50), #e0e7ff, var(--green-tint-100));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -9,7 +9,7 @@
   padding: 3rem 1rem;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  color: #1e293b; /* slate-800 */
+  color: var(--slate-800); /* slate-800 */
 }
 
 /* Title styling */
@@ -17,7 +17,7 @@
   font-size: 2.25rem;
   font-weight: 700;
   margin-bottom: 2rem;
-  color: #0f172a; /* slate-900 */
+  color: var(--slate-900); /* slate-900 */
   text-align: center;
   letter-spacing: 0.02em;
 }
@@ -46,15 +46,15 @@
   font-weight: 500;
   border-radius: 16px;
   border: 2px solid #c7d2fe; /* light indigo */
-  background: white;
-  color: #334155; /* slate-700 */
+  background: var(--white);
+  color: var(--slate-700); /* slate-700 */
   box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.06);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   outline-offset: 2px;
 }
 
 .otp-input::placeholder {
-  color: #94a3b8; /* slate-400 */
+  color: var(--slate-400); /* slate-400 */
 }
 
 .otp-input:focus,
@@ -67,7 +67,7 @@
 /* Button with gradient, rounded and subtle hover */
 .otp-button {
   background: linear-gradient(90deg, #6366f1, #4f46e5);
-  color: white;
+  color: var(--white);
   font-weight: 700;
   font-size: 1.125rem;
   padding: 1rem 0;
@@ -90,14 +90,14 @@
 }
 
 .otp-subtext {
-  color: #64748b;
+  color: var(--slate-500);
   font-size: 0.9rem;
   margin-bottom: 1rem;
   text-align: center;
 }
 
 .otp-error {
-  color: #dc2626;
+  color: var(--red-600);
   background: #fef2f2;
   border: 1px solid #fecaca;
   padding: 0.6rem 1rem;

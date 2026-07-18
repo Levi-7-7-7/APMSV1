@@ -1,0 +1,81 @@
+/* ============================================================
+   THEME TOKENS
+   Shared CSS variables used across every stylesheet in the app.
+   Light values below match the app's original hardcoded colors,
+   so nothing changes visually in light mode. The dark override
+   swaps in dark-mode-safe equivalents automatically based on the
+   user's OS/browser color-scheme preference — no toggle needed.
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  /* Neutral / slate scale (page backgrounds, cards, borders, text) */
+  --white: #ffffff;
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  /* Page-level tinted gradient stops */
+  --blue-tint-50: #eff6ff;
+  --blue-tint-75: #f0f9ff;
+  --blue-tint-100: #dbeafe;
+  --green-tint-100: #d1fae5;
+
+  /* Primary accent colors (buttons, links, icons) — same in both modes */
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-800: #1e40af;
+
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
+  --red-800: #991b1b;
+
+  /* Shadows */
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --shadow-color-strong: rgba(0, 0, 0, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    /* Neutral scale inverted: what was a light background/border/faint
+       text now becomes a dark one, and vice versa. */
+    --white: #1e293b;        /* card / input surfaces */
+    --slate-50: #0f172a;     /* page background (was lightest, now darkest) */
+    --slate-100: #16213a;    /* subtle surface */
+    --slate-200: #334155;    /* borders */
+    --slate-300: #475569;    /* stronger borders */
+    --slate-400: #94a3b8;    /* muted text stays legible on dark */
+    --slate-500: #a8b6c9;    /* secondary text, brightened for contrast */
+    --slate-600: #cbd5e1;    /* body text */
+    --slate-700: #e2e8f0;    /* body text, stronger */
+    --slate-800: #f1f5f9;    /* headings */
+    --slate-900: #f8fafc;    /* headings, strongest */
+
+    /* Page-level tinted gradients become subtle dark tints instead of
+       bright pastels, so backgrounds stay calm in dark mode. */
+    --blue-tint-50: rgba(59, 130, 246, 0.08);
+    --blue-tint-75: rgba(59, 130, 246, 0.06);
+    --blue-tint-100: rgba(59, 130, 246, 0.12);
+    --green-tint-100: rgba(34, 197, 94, 0.12);
+
+    /* Shadows need to be stronger to read against a dark surface */
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --shadow-color-strong: rgba(0, 0, 0, 0.55);
+  }
+}

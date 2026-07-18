@@ -48,21 +48,21 @@ button,
 /* ── Variables ── */
 :root {
   --ap-bg:         #f0f4f8;
-  --ap-surface:    #ffffff;
-  --ap-border:     #e2e8f0;
+  --ap-surface:    var(--white);
+  --ap-border:     var(--slate-200);
 
-  --ap-primary:    #2563eb;
-  --ap-primary-dk: #1d4ed8;
+  --ap-primary:    var(--blue-600);
+  --ap-primary-dk: var(--blue-700);
 
-  --ap-danger:     #dc2626;
+  --ap-danger:     var(--red-600);
   --ap-danger-lt:  #fef2f2;
 
-  --ap-success:    #16a34a;
+  --ap-success:    var(--green-600);
   --ap-success-lt: #f0fdf4;
 
-  --ap-text:       #0f172a;
-  --ap-muted:      #64748b;
-  --ap-light:      #f8fafc;
+  --ap-text:       var(--slate-900);
+  --ap-muted:      var(--slate-500);
+  --ap-light:      var(--slate-50);
 
   --ap-shadow:     0 1px 4px rgba(0,0,0,.08),
                     0 0 0 1px rgba(0,0,0,.04);
@@ -113,7 +113,7 @@ button,
   width: 36px;
   height: 36px;
 
-  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  background: linear-gradient(135deg, var(--blue-600), #7c3aed);
 
   border-radius: 10px;
 
@@ -121,7 +121,7 @@ button,
   align-items: center;
   justify-content: center;
 
-  color: #fff;
+  color: var(--white);
   font-weight: 800;
   font-size: 1rem;
 
@@ -204,7 +204,7 @@ button,
 
 .ap-tab:hover {
   color: var(--ap-primary);
-  background: #eff6ff;
+  background: var(--blue-tint-50);
 }
 
 .ap-tab.active {
@@ -381,13 +381,13 @@ button,
 }
 
 .ap-card-icon.blue {
-  background: #eff6ff;
+  background: var(--blue-tint-50);
   color: var(--ap-primary);
 }
 
 .ap-card-icon.green {
   background: #f0fdf4;
-  color: #16a34a;
+  color: var(--green-600);
 }
 
 .ap-card-icon.orange {
@@ -547,7 +547,7 @@ textarea:focus {
 .btn:hover,
 .ap-btn:hover {
   background: var(--ap-light);
-  border-color: #cbd5e1;
+  border-color: var(--slate-300);
 }
 
 .btn:active,
@@ -558,7 +558,7 @@ textarea:focus {
 .btn-primary,
 .ap-btn.primary {
   background: var(--ap-primary);
-  color: #fff;
+  color: var(--white);
   border-color: var(--ap-primary);
 }
 
@@ -648,7 +648,7 @@ textarea:focus {
 }
 
 .ap-table tbody tr:hover td {
-  background: #f8fafc;
+  background: var(--slate-50);
 }
 
 .ap-table-actions {
@@ -672,7 +672,7 @@ textarea:focus {
 .ap-assign-panel {
   background: linear-gradient(
     135deg,
-    #eff6ff 0%,
+    var(--blue-tint-50) 0%,
     #faf5ff 100%
   );
 
@@ -711,7 +711,7 @@ textarea:focus {
 }
 
 .ap-badge.assigned {
-  background: #eff6ff;
+  background: var(--blue-tint-50);
   color: var(--ap-primary);
 }
 
@@ -805,7 +805,7 @@ textarea:focus {
 }
 
 .ap-sub-pts {
-  background: #eff6ff;
+  background: var(--blue-tint-50);
   color: var(--ap-primary);
 
   font-size: 0.75rem;
@@ -985,13 +985,13 @@ textarea:focus {
 }
 
 .ap-stat-icon.blue {
-  background: #eff6ff;
-  color: #2563eb;
+  background: var(--blue-tint-50);
+  color: var(--blue-600);
 }
 
 .ap-stat-icon.green {
   background: #f0fdf4;
-  color: #16a34a;
+  color: var(--green-600);
 }
 
 .ap-stat-icon.orange {
