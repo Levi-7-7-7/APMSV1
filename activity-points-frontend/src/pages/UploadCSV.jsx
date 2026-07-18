@@ -97,19 +97,17 @@ const UploadCSV = () => {
       </div>
 
       {/* Mode toggle */}
-      <div className="csv-template-box" style={{ gap: '0.5rem' }}>
+      <div className="mode-toggle">
         <button
           type="button"
-          className="csv-template-btn"
-          style={{ opacity: mode === 'csv' ? 1 : 0.6 }}
+          className={`mode-btn ${mode === 'csv' ? 'active' : ''}`}
           onClick={() => setMode('csv')}
         >
           <FileUp size={16}/> Bulk Upload (CSV)
         </button>
         <button
           type="button"
-          className="csv-template-btn"
-          style={{ opacity: mode === 'single' ? 1 : 0.6 }}
+          className={`mode-btn ${mode === 'single' ? 'active' : ''}`}
           onClick={() => setMode('single')}
         >
           <UserPlus size={16}/> Add Single Student
@@ -175,26 +173,45 @@ const UploadCSV = () => {
           )}
         </>
       ) : (
-        <form onSubmit={addSingleStudent} className="csv-instructions" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <input
-            type="text" placeholder="Full name" value={form.name}
-            onChange={updateField('name')} className="form-input"
-          />
-          <input
-            type="text" placeholder="Register number" value={form.registerNumber}
-            onChange={updateField('registerNumber')} className="form-input"
-          />
-          <input
-            type="email" placeholder="Email" value={form.email}
-            onChange={updateField('email')} className="form-input"
-          />
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem' }}>
+        <form onSubmit={addSingleStudent} className="single-add-form">
+          <div className="add-student-field">
+            <label htmlFor="student-name">Full name</label>
             <input
-              type="checkbox" checked={form.isLateralEntry}
+              id="student-name"
+              type="text" placeholder="e.g. Arjun Menon" value={form.name}
+              onChange={updateField('name')} className="add-student-input"
+            />
+          </div>
+
+          <div className="add-student-field">
+            <label htmlFor="student-regno">Register number</label>
+            <input
+              id="student-regno"
+              type="text" placeholder="e.g. 2301131001" value={form.registerNumber}
+              onChange={updateField('registerNumber')} className="add-student-input"
+            />
+          </div>
+
+          <div className="add-student-field">
+            <label htmlFor="student-email">Email</label>
+            <input
+              id="student-email"
+              type="email" placeholder="e.g. arjun@example.com" value={form.email}
+              onChange={updateField('email')} className="add-student-input"
+            />
+          </div>
+
+          <label className={`lateral-toggle-row ${form.isLateralEntry ? 'checked' : ''}`}>
+            <span className="lateral-toggle-text">
+              <strong>Lateral Entry Student</strong>
+              <span>Requires 40 points instead of 60</span>
+            </span>
+            <input
+              type="checkbox"
+              checked={form.isLateralEntry}
               onChange={updateField('isLateralEntry')}
             />
-            This student is a <strong>Lateral Entry</strong> student
-            <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>(requires 40 pts instead of 60)</span>
+            <span className="lateral-toggle-switch" aria-hidden="true" />
           </label>
 
           <button type="submit" className="upload-btn" disabled={singleLoading}>
@@ -209,7 +226,7 @@ const UploadCSV = () => {
           )}
 
           {createdPassword && (
-            <div className="upload-result success" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="upload-result success">
               <KeyRound size={16}/>
               Default password: <code>{createdPassword}</code> — share this with the student.
             </div>
