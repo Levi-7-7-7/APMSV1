@@ -14,6 +14,14 @@ router.post('/start-login', async (req, res) => {
     const student = await Student.findOne({ registerNumber });
     if (!student) return res.status(404).json({ error: 'Student not found' });
 
+    // Block re-running first-time setup once it's already been completed.
+    if (student.firstLoginCompleted) {
+      return res.status(400).json({
+        error: 'First-time login has already been completed for this account. Please sign in with your register number and password. If you need further changes, contact your tutor.',
+        firstLoginCompleted: true,
+      });
+    }
+
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     student.otp = otp;
     student.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 minutes
@@ -32,6 +40,16 @@ router.post('/verify-otp', async (req, res) => {
   try {
     const student = await Student.findOne({ registerNumber });
     if (!student) return res.status(404).json({ error: 'Student not found' });
+
+    // Defense in depth — even if start-login was somehow bypassed, don't let
+    // a completed first-time setup be repeated (it would let the OTP flow
+    // silently reset the password and change batch/branch/lateral-entry).
+    if (student.firstLoginCompleted) {
+      return res.status(400).json({
+        error: 'First-time login has already been completed for this account. Please sign in with your register number and password. If you need further changes, contact your tutor.',
+        firstLoginCompleted: true,
+      });
+    }
 
     if (student.otp !== otp || student.otpExpiry < Date.now()) {
       return res.status(400).json({ error: 'Invalid or expired OTP' });
