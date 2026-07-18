@@ -16,6 +16,7 @@ const adminAuth = require('../middleware/adminAuth');
 
 const generateDefaultPassword = require('../utils/defaultPassword');
 const deleteStudentCascade    = require('../utils/deleteStudentCascade');
+const syncStudentCertFolder   = require('../utils/syncStudentCertFolder');
 
 const router = express.Router();
 
@@ -117,12 +118,39 @@ router.patch('/students/:id', adminAuth, async (req, res) => {
       return res.status(400).json({ error: 'No fields to update' });
     }
 
+    // Snapshot name/batch/branch *before* the update — needed to work out
+    // whether the student's ImageKit certificate folder needs to move.
+    const folderSyncNeeded = !!(update.name || update.batch || update.branch);
+    let before = null;
+    if (folderSyncNeeded) {
+      const prevStudent = await Student.findById(req.params.id).populate('batch', 'name').populate('branch', 'name');
+      if (prevStudent) {
+        before = {
+          name: prevStudent.name,
+          branchName: prevStudent.branch?.name,
+          batchName: prevStudent.batch?.name,
+        };
+      }
+    }
+
     const student = await Student.findByIdAndUpdate(req.params.id, update, { new: true })
       .populate('batch', 'name')
       .populate('branch', 'name');
     if (!student) return res.status(404).json({ error: 'Student not found' });
 
-    res.json({ success: true, student });
+    // Best-effort: move the student's certificate folder (and profile photo
+    // inside it) to match their new name/batch/branch, and refresh stored
+    // file URLs so nothing breaks. Never blocks the response on failure.
+    let folderSync = null;
+    if (before) {
+      folderSync = await syncStudentCertFolder(student._id, before, {
+        name: student.name,
+        branchName: student.branch?.name,
+        batchName: student.batch?.name,
+      });
+    }
+
+    res.json({ success: true, student, folderSync });
   } catch (err) {
     if (err.code === 11000) {
       return res.status(400).json({ error: 'A student with that register number or email already exists' });

@@ -29,6 +29,7 @@ const ImageKit = require('imagekit');
 const Batch = require('../models/Batch');
 const Branch = require('../models/Branch');
 const Student = require('../models/Student');
+const { buildStudentCertFolder } = require('../utils/imagekitPaths');
 
 const auth = require('../middleware/auth');
 const Tutor = require('../models/Tutor');
@@ -167,9 +168,10 @@ router.patch(
        * GET OLD PHOTO INFO
        * ───────────────────────────────────── */
 
-      const student = await Student.findById(req.user.id).select(
-        'profilePhoto profilePhotoFileId',
-      );
+      const student = await Student.findById(req.user.id)
+        .select('name profilePhoto profilePhotoFileId branch batch')
+        .populate('branch')
+        .populate('batch');
 
       if (!student) {
         return res.status(404).json({
@@ -200,17 +202,23 @@ router.patch(
         path.extname(req.file.originalname) || '.jpg';
 
       const fileName =
-        `student_${req.user.id}_${Date.now()}${extension}`;
+        `profile_${Date.now()}${extension}`;
 
       /* ─────────────────────────────────────
        * UPLOAD TO IMAGEKIT
+       * Goes into the student's own certificate folder
+       * (/certificates/{branch}/{batch}/{studentName}) instead of a
+       * separate flat folder, so each student only ever needs one folder.
        * ───────────────────────────────────── */
+
+      const folderPath = buildStudentCertFolder(student.branch?.name, student.batch?.name, student.name)
+        || '/student-profiles'; // fallback if branch/batch aren't set yet
 
       const uploadResponse = await imagekit.upload({
         file: req.file.buffer,
         fileName,
 
-        folder: '/student-profiles',
+        folder: folderPath,
         useUniqueFileName: false,
       });
 

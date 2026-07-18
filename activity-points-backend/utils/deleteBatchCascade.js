@@ -5,14 +5,17 @@
  * an admin wants to clear out entirely): removes every student belonging
  * to a batch — optionally scoped to a single branch — along with:
  *   - each student's Certificate documents
- *   - each student's profile photo on ImageKit (stored flat, so each one
- *     has to be removed individually by fileId)
+ *   - each student's profile photo on ImageKit, deleted individually by
+ *     fileId as a safety net for any photo uploaded before profile photos
+ *     were moved into the student's own certificate folder (older data)
  *   - the Student documents themselves
  *   - the ImageKit certificate folder(s) for that batch, e.g.
  *       /certificates/Computer_Science/2022-2026
  *     removed wholesale (one call per branch involved) instead of one
- *     student-folder at a time — this is what actually clears the batch
- *     off the file server.
+ *     student-folder at a time. Since profile photos now live inside each
+ *     student's own certificate folder, this wholesale wipe removes those
+ *     too — the per-fileId photo delete above is just a fallback for
+ *     anything uploaded under the old flat /student-profiles layout.
  *
  * Everything ImageKit-related is best-effort: a missing/already-deleted
  * remote file or folder is logged and skipped rather than aborting the
@@ -46,8 +49,10 @@ async function deleteBatchCascade(batchId, branchId) {
 
   const studentIds = students.map(s => s._id);
 
-  // Delete each student's profile photo on ImageKit (flat /student-profiles
-  // folder — no per-batch grouping to delete wholesale, so this stays per-file)
+  // Delete each student's profile photo on ImageKit by fileId. Mainly a
+  // safety net for older photos still under the flat /student-profiles
+  // layout — current photos live inside the per-student certificate folder
+  // and get swept up by the whole-folder delete below anyway.
   await Promise.all(
     students.map(async (student) => {
       if (!student.profilePhotoFileId) return;

@@ -45,20 +45,10 @@ async function deleteStudentCascade(studentId) {
     }),
   );
 
-  // Delete the student's own certificate folder on ImageKit (e.g.
-  // /certificates/Computer_Science/2023-2027/Arjun_Menon), catching anything
-  // the per-file deletes above didn't know about.
-  const folderPath = buildStudentCertFolder(student.branch?.name, student.batch?.name, student.name);
-  if (folderPath) {
-    try {
-      await imagekit.deleteFolder(folderPath);
-    } catch (err) {
-      // Not fatal — folder may not exist (e.g. student never uploaded anything)
-      console.error(`Failed to delete ImageKit folder ${folderPath}:`, err.message);
-    }
-  }
-
-  // Delete the profile photo on ImageKit, if one was uploaded
+  // Delete the profile photo on ImageKit, if one was uploaded (it now lives
+  // inside the same certificate folder deleted below, but we still remove it
+  // by fileId explicitly too, in case it's an older photo from before photos
+  // were moved into the per-student folder)
   if (student.profilePhotoFileId) {
     try {
       await imagekit.deleteFile(student.profilePhotoFileId);
@@ -67,6 +57,20 @@ async function deleteStudentCascade(studentId) {
         `Failed to delete ImageKit profile photo ${student.profilePhotoFileId} (student ${studentId}):`,
         err.message,
       );
+    }
+  }
+
+  // Delete the student's own certificate folder on ImageKit (e.g.
+  // /certificates/Computer_Science/2023-2027/Arjun_Menon) — the catch-all
+  // that also removes the profile photo above if it lives in here, plus
+  // anything the per-file deletes didn't know about.
+  const folderPath = buildStudentCertFolder(student.branch?.name, student.batch?.name, student.name);
+  if (folderPath) {
+    try {
+      await imagekit.deleteFolder(folderPath);
+    } catch (err) {
+      // Not fatal — folder may not exist (e.g. student never uploaded anything)
+      console.error(`Failed to delete ImageKit folder ${folderPath}:`, err.message);
     }
   }
 
