@@ -131,42 +131,6 @@ router.patch('/students/:id', adminAuth, async (req, res) => {
   }
 });
 
-// ─── BULK DELETE STUDENTS (any batch/branch) ──────────────────────────────
-// Body: { ids: ["...", "...", ...] }
-// Runs the same ImageKit + database cascade cleanup as the single-delete
-// route below, once per student. Deletes are processed independently so
-// one failure (e.g. a stale ImageKit fileId) doesn't block the rest —
-// the response reports exactly which ones succeeded and which failed.
-router.delete('/students', adminAuth, async (req, res) => {
-  try {
-    const { ids } = req.body;
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ error: 'Provide an array of student ids to delete' });
-    }
-
-    const results = await Promise.all(ids.map(async (id) => {
-      try {
-        const deleted = await deleteStudentCascade(id);
-        return { id, success: !!deleted, error: deleted ? null : 'Student not found' };
-      } catch (err) {
-        return { id, success: false, error: err.message };
-      }
-    }));
-
-    const deletedIds = results.filter(r => r.success).map(r => r.id);
-    const failed      = results.filter(r => !r.success);
-
-    res.json({
-      success: true,
-      message: `${deletedIds.length} of ${ids.length} student(s) deleted`,
-      deletedIds,
-      failed, // [{ id, error }] — surfaced to the admin so nothing silently fails
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // ─── DELETE STUDENT (any batch/branch, no restriction) ────────────────────
 // Cascade delete: removes certificate files and profile photo from
 // ImageKit too, not just the database records.

@@ -5,16 +5,9 @@ const Category    = require('../models/Category');
 const Student     = require('../models/Student');
 const Tutor       = require('../models/Tutor');
 const { sendPushNotification } = require('../utils/fcm');
+const { sanitizeName, buildStudentCertFolder } = require('../utils/imagekitPaths');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
-
-// Sanitize a string so it's safe to use as an ImageKit folder/file name
-function sanitizeName(str) {
-  return (str || 'unknown')
-    .trim()
-    .replace(/[\/\\:*?"<>|#]/g, '_')  // remove path-unsafe characters
-    .replace(/\s+/g, '_');             // spaces → underscores
-}
 
 exports.uploadCertificate = [
   upload.single('file'),
@@ -56,10 +49,7 @@ exports.uploadCertificate = [
       if (!student) return res.status(404).json({ message: "Student not found" });
 
       // Build structured ImageKit folder: /certificates/{department}/{batch}/{studentName}
-      const department  = sanitizeName(student.branch?.name);
-      const batch       = sanitizeName(student.batch?.name);
-      const studentName = sanitizeName(student.name);
-      const folderPath  = `/certificates/${department}/${batch}/${studentName}`;
+      const folderPath  = buildStudentCertFolder(student.branch?.name, student.batch?.name, student.name);
 
       // Use the event name entered by the student as the certificate file name,
       // preserving the original file extension (e.g. eventName="Hackathon" → "Hackathon.pdf")

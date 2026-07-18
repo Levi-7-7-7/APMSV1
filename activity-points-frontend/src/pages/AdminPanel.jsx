@@ -39,9 +39,11 @@ export default function AdminPanel() {
   const [moveBatchId, setMoveBatchId]   = useState("");
   const [moveBranchId, setMoveBranchId] = useState("");
 
-  // Bulk-select for batch delete
-  const [selectedStudentIds, setSelectedStudentIds] = useState([]);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
+  // Batch delete (students who have passed out, or any batch being cleared out)
+  const [batchDeleteBatchId, setBatchDeleteBatchId] = useState("");
+  const [batchDeleteBranchId, setBatchDeleteBranchId] = useState("");
+  const [batchDeletePreviewCount, setBatchDeletePreviewCount] = useState(null);
+  const [batchDeleting, setBatchDeleting] = useState(false);
 
   const [tutorForm, setTutorForm]   = useState({ name: "", email: "", password: "" });
   const tutorCsvRef = useRef(null);
@@ -159,7 +161,6 @@ export default function AdminPanel() {
       if (branch) params.branch = branch;
       const res = await adminAxios.get("/admin/students", { params });
       setStudents(res.data.students || []);
-      setSelectedStudentIds([]);
     } catch { flash("Failed to fetch students", "error"); }
   };
 
@@ -180,41 +181,60 @@ export default function AdminPanel() {
     try {
       await adminAxios.delete(`/admin/students/${id}`);
       setStudents(p => p.filter(s => s._id !== id));
-      setSelectedStudentIds(p => p.filter(sid => sid !== id));
       flash("Student deleted");
     } catch (err) { flash(err.response?.data?.error || "Failed to delete student", "error"); }
   };
 
-  const toggleStudentSelected = (id) => {
-    setSelectedStudentIds(p => p.includes(id) ? p.filter(sid => sid !== id) : [...p, id]);
+  // A batch name is expected to look like "2022-2026" — treat it as passed
+  // out once its end year is this year or earlier.
+  const isBatchPassedOut = (batchName) => {
+    const match = /(\d{4})\s*-\s*(\d{4})/.exec(batchName || "");
+    if (!match) return false;
+    return parseInt(match[2], 10) <= new Date().getFullYear();
   };
 
-  const toggleSelectAllStudents = () => {
-    setSelectedStudentIds(p => p.length === students.length ? [] : students.map(s => s._id));
-  };
+  // Recompute how many students match the chosen batch/branch, so the admin
+  // sees a count before committing to the delete.
+  useEffect(() => {
+    if (!batchDeleteBatchId) { setBatchDeletePreviewCount(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const params = { batch: batchDeleteBatchId };
+        if (batchDeleteBranchId) params.branch = batchDeleteBranchId;
+        const res = await adminAxios.get("/admin/students", { params });
+        if (!cancelled) setBatchDeletePreviewCount((res.data.students || []).length);
+      } catch {
+        if (!cancelled) setBatchDeletePreviewCount(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [batchDeleteBatchId, batchDeleteBranchId]);
 
-  const handleBulkDeleteStudents = async () => {
-    if (selectedStudentIds.length === 0) return;
+  const handleBatchDeleteStudents = async () => {
+    if (!batchDeleteBatchId) return flash("Select a batch first", "error");
+    const batchName  = batches.find(b => b._id === batchDeleteBatchId)?.name || "this batch";
+    const branchName = branches.find(br => br._id === batchDeleteBranchId)?.name;
+    const scopeLabel = branchName ? `${batchName} — ${branchName}` : `${batchName} (all branches)`;
+
     if (!window.confirm(
-      `Delete ${selectedStudentIds.length} selected student(s)? This also removes all their uploaded certificates and profile photos permanently. This cannot be undone.`
+      `Delete ALL ${batchDeletePreviewCount ?? ""} student(s) in ${scopeLabel}? ` +
+      `This permanently removes their accounts, certificates, profile photos, and the batch's ` +
+      `certificate folder(s) from the file server. This cannot be undone.`
     )) return;
 
-    setBulkDeleting(true);
+    setBatchDeleting(true);
     try {
-      const res = await adminAxios.delete("/admin/students", { data: { ids: selectedStudentIds } });
-      const deletedIds = res.data.deletedIds || [];
-      setStudents(p => p.filter(s => !deletedIds.includes(s._id)));
-      setSelectedStudentIds([]);
-
-      if (res.data.failed?.length) {
-        flash(`${deletedIds.length} deleted, ${res.data.failed.length} failed`, "error");
-      } else {
-        flash(res.data.message || `${deletedIds.length} student(s) deleted`);
-      }
+      const params = {};
+      if (batchDeleteBranchId) params.branch = batchDeleteBranchId;
+      const res = await adminAxios.delete(`/admin/batches/${batchDeleteBatchId}/students`, { params });
+      flash(res.data.message || "Batch students deleted");
+      setBatchDeleteBatchId(""); setBatchDeleteBranchId(""); setBatchDeletePreviewCount(null);
+      fetchStudents();
     } catch (err) {
-      flash(err.response?.data?.error || "Bulk delete failed", "error");
+      flash(err.response?.data?.error || "Batch delete failed", "error");
     } finally {
-      setBulkDeleting(false);
+      setBatchDeleting(false);
     }
   };
 
@@ -540,6 +560,55 @@ export default function AdminPanel() {
               </div>
             </div>
 
+            {/* Batch delete — clear out an entire passed-out batch (optionally scoped to one branch) */}
+            <div className="ap-card" style={{ marginTop: "1rem", borderColor: "#fecaca" }}>
+              <div className="ap-card-header">
+                <div className="ap-card-icon" style={{ background: "#fef2f2", color: "#dc2626" }}><Trash2 size={16}/></div>
+                <h3>Batch Delete Students</h3>
+              </div>
+              <div className="ap-card-body">
+                <p style={{ fontSize: "0.82rem", color: "var(--ap-muted)", margin: "0 0 1rem" }}>
+                  Remove every student in a batch at once — meant for batches that have already passed out.
+                  This deletes their accounts, certificates, profile photos, and the batch's certificate
+                  folder(s) on the file server. Optionally scope it to one branch (e.g. "2022-2026 — Computer Science").
+                </p>
+                <div className="ap-form-row">
+                  <div className="ap-field">
+                    <label>Batch *</label>
+                    <select className="ap-select" value={batchDeleteBatchId} onChange={e => setBatchDeleteBatchId(e.target.value)}>
+                      <option value="">Select batch</option>
+                      {batches.map(b => (
+                        <option key={b._id} value={b._id}>
+                          {b.name}{isBatchPassedOut(b.name) ? " — passed out" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="ap-field">
+                    <label>Branch</label>
+                    <select className="ap-select" value={batchDeleteBranchId} onChange={e => setBatchDeleteBranchId(e.target.value)}>
+                      <option value="">All branches</option>
+                      {branches.map(br => <option key={br._id} value={br._id}>{br.name}</option>)}
+                    </select>
+                  </div>
+                  <button
+                    type="button" className="btn ap-btn sm danger"
+                    disabled={!batchDeleteBatchId || batchDeleting || batchDeletePreviewCount === 0}
+                    onClick={handleBatchDeleteStudents}
+                  >
+                    <Trash2 size={13}/> {batchDeleting ? "Deleting…" : "Delete Batch"}
+                  </button>
+                </div>
+                {batchDeleteBatchId && (
+                  <p style={{ fontSize: "0.8rem", color: "var(--ap-muted)", marginTop: "0.5rem" }}>
+                    {batchDeletePreviewCount === null ? "Checking matching students…" :
+                      batchDeletePreviewCount === 0 ? "No students match this selection." :
+                      `${batchDeletePreviewCount} student(s) will be permanently deleted.`}
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Move student modal — overlay so it's visible regardless of scroll position */}
             {movingStudentId && (
               <div className="ap-modal-overlay" onClick={() => setMovingStudentId(null)}>
@@ -579,45 +648,15 @@ export default function AdminPanel() {
                 <h3>All Students <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({students.length})</span></h3>
               </div>
 
-              {selectedStudentIds.length > 0 && (
-                <div className="ap-bulk-bar">
-                  <span>{selectedStudentIds.length} selected</span>
-                  <div className="ap-bulk-bar-actions">
-                    <button type="button" className="btn ap-btn sm" onClick={() => setSelectedStudentIds([])} disabled={bulkDeleting}>
-                      Clear
-                    </button>
-                    <button type="button" className="btn ap-btn sm danger" onClick={handleBulkDeleteStudents} disabled={bulkDeleting}>
-                      <Trash2 size={13}/> {bulkDeleting ? "Deleting…" : `Delete Selected (${selectedStudentIds.length})`}
-                    </button>
-                  </div>
-                </div>
-              )}
-
               <div className="ap-table-wrap">
                 {students.length === 0 ? <div className="ap-empty">No students found.</div> : (
                   <table className="ap-table">
                     <thead><tr>
-                      <th style={{ width: "2rem" }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedStudentIds.length === students.length}
-                          onChange={toggleSelectAllStudents}
-                          aria-label="Select all students"
-                        />
-                      </th>
                       <th>Name</th><th>Register No.</th><th>Email</th><th>Batch</th><th>Branch</th><th>Lateral Entry</th><th>Points</th><th>Actions</th>
                     </tr></thead>
                     <tbody>
                       {students.map(s => (
-                        <tr key={s._id} className={selectedStudentIds.includes(s._id) ? "ap-row-selected" : ""}>
-                          <td>
-                            <input
-                              type="checkbox"
-                              checked={selectedStudentIds.includes(s._id)}
-                              onChange={() => toggleStudentSelected(s._id)}
-                              aria-label={`Select ${s.name}`}
-                            />
-                          </td>
+                        <tr key={s._id}>
                           <td style={{ fontWeight: 600 }}>{s.name}</td>
                           <td style={{ color: "var(--ap-muted)" }}>{s.registerNumber}</td>
                           <td style={{ color: "var(--ap-muted)" }}>{s.email}</td>

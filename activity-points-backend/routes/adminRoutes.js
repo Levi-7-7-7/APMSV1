@@ -9,6 +9,7 @@ const Batch    = require("../models/Batch");
 const Branch   = require("../models/Branch");
 const Category = require("../models/Category");
 const adminAuth = require("../middleware/adminAuth");
+const deleteBatchCascade = require("../utils/deleteBatchCascade");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -108,6 +109,35 @@ router.delete("/batches/:id", adminAuth, async (req, res) => {
     await Batch.findByIdAndDelete(req.params.id);
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ─── BATCH DELETE STUDENTS ───────────────────────────────────────────────────
+// DELETE /admin/batches/:id/students?branch=<branchId>
+//
+// For clearing out students who have already passed out: removes every
+// student in this batch (optionally scoped to one branch, e.g. "2022-2026
+// Computer Science"), their Certificate documents, their profile photos on
+// ImageKit, and — unlike deleting students one at a time — the whole batch's
+// certificate folder(s) on ImageKit in one shot
+// (/certificates/{branch}/{batch}), so nothing lingers on the file server.
+router.delete("/batches/:id/students", adminAuth, async (req, res) => {
+  try {
+    const { branch } = req.query;
+    const result = await deleteBatchCascade(req.params.id, branch || null);
+    if (!result) return res.status(404).json({ error: "Batch not found" });
+
+    res.json({
+      success: true,
+      message: result.deletedCount
+        ? `${result.deletedCount} student(s) deleted from ${result.batch.name}${result.branch ? ` (${result.branch.name})` : ""}`
+        : `No students found in ${result.batch.name}${result.branch ? ` (${result.branch.name})` : ""}`,
+      deletedCount: result.deletedCount,
+      deletedNames: result.deletedNames,
+      branchesCleaned: result.branchesCleaned,
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // ─── BRANCHES ────────────────────────────────────────────────────────────────
