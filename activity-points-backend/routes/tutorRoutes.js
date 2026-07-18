@@ -12,6 +12,7 @@ const Certificate = require('../models/Certificate');
 const Category    = require('../models/Category');
 
 const generateDefaultPassword = require('../utils/defaultPassword');
+const deleteStudentCascade = require('../utils/deleteStudentCascade');
 
 const { sendPushNotification } = require('../utils/fcm');
 
@@ -165,8 +166,9 @@ router.delete('/students/:id', tutorAuth, async (req, res) => {
     if (tutor.branch && student.branch && student.branch.toString() !== tutor.branch.toString())
       return res.status(403).json({ error: 'Student not in your assigned branch' });
 
-    await Certificate.deleteMany({ student: student._id });
-    await Student.findByIdAndDelete(req.params.id);
+    // Cascade delete: removes the student's certificate files and profile
+    // photo from ImageKit too, not just the database records.
+    await deleteStudentCascade(req.params.id);
     res.json({ success: true, message: 'Student deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });

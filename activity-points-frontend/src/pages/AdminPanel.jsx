@@ -4,7 +4,7 @@ import adminAxios from "../api/adminAxios";
 import * as XLSX from "xlsx";
 import {
   UserPlus, FilePlus, Download, Edit2, Trash2, Plus,
-  LogOut, Link2, Users, Layers, GitBranch, Tag, Shield
+  LogOut, Link2, Users, Layers, GitBranch, Tag, Shield, Search, ArrowRightLeft
 } from "lucide-react";
 import "../css/AdminPanel.css";
 
@@ -26,6 +26,18 @@ export default function AdminPanel() {
   const [batches, setBatches]       = useState([]);
   const [branches, setBranches]     = useState([]);
   const [categories, setCategories] = useState([]);
+  const [students, setStudents]     = useState([]);
+
+  const [studentForm, setStudentForm] = useState({ name: "", registerNumber: "", email: "", isLateralEntry: false, batchId: "", branchId: "" });
+  const [studentSearch, setStudentSearch] = useState("");
+  const [studentBatchFilter, setStudentBatchFilter]   = useState("");
+  const [studentBranchFilter, setStudentBranchFilter] = useState("");
+  const [createdStudentPassword, setCreatedStudentPassword] = useState("");
+
+  // Move-student panel: which student is currently being reassigned
+  const [movingStudentId, setMovingStudentId] = useState(null);
+  const [moveBatchId, setMoveBatchId]   = useState("");
+  const [moveBranchId, setMoveBranchId] = useState("");
 
   const [tutorForm, setTutorForm]   = useState({ name: "", email: "", password: "" });
   const tutorCsvRef = useRef(null);
@@ -69,16 +81,18 @@ export default function AdminPanel() {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [tR, baR, brR, cR] = await Promise.all([
+      const [tR, baR, brR, cR, sR] = await Promise.all([
         adminAxios.get("/admin/tutors"),
         adminAxios.get("/admin/batches"),
         adminAxios.get("/admin/branches"),
         adminAxios.get("/admin/categories"),
+        adminAxios.get("/admin/students"),
       ]);
       setTutors(tR.data.tutors || []);
       setBatches(baR.data.batches || []);
       setBranches(brR.data.branches || []);
       setCategories(cR.data.categories || []);
+      setStudents(sR.data.students || []);
     } catch { flash("Failed to fetch data", "error"); }
     finally { setLoading(false); }
   };
@@ -127,6 +141,62 @@ export default function AdminPanel() {
       setAssignTutorId(""); setAssignBatchId(""); setAssignBranchId(""); setAssignRole("");
       fetchAll();
     } catch (err) { flash(err.response?.data?.error || "Failed to assign", "error"); }
+  };
+
+  // ── STUDENTS ──
+  const fetchStudents = async (overrides = {}) => {
+    const search = overrides.search ?? studentSearch;
+    const batch  = overrides.batch  ?? studentBatchFilter;
+    const branch = overrides.branch ?? studentBranchFilter;
+    try {
+      const params = {};
+      if (search) params.search = search;
+      if (batch)  params.batch  = batch;
+      if (branch) params.branch = branch;
+      const res = await adminAxios.get("/admin/students", { params });
+      setStudents(res.data.students || []);
+    } catch { flash("Failed to fetch students", "error"); }
+  };
+
+  const handleAddStudent = async (e) => {
+    e.preventDefault();
+    setCreatedStudentPassword("");
+    try {
+      const res = await adminAxios.post("/admin/students", studentForm);
+      flash(res.data.message || "Student added");
+      setCreatedStudentPassword(res.data.defaultPassword || "");
+      setStudentForm({ name: "", registerNumber: "", email: "", isLateralEntry: false, batchId: "", branchId: "" });
+      fetchStudents();
+    } catch (err) { flash(err.response?.data?.error || "Failed to add student", "error"); }
+  };
+
+  const handleDeleteStudent = async (id) => {
+    if (!window.confirm("Delete this student? This also removes their uploaded certificates and profile photo permanently.")) return;
+    try {
+      await adminAxios.delete(`/admin/students/${id}`);
+      setStudents(p => p.filter(s => s._id !== id));
+      flash("Student deleted");
+    } catch (err) { flash(err.response?.data?.error || "Failed to delete student", "error"); }
+  };
+
+  const startMoveStudent = (student) => {
+    setMovingStudentId(student._id);
+    setMoveBatchId(student.batch?._id || "");
+    setMoveBranchId(student.branch?._id || "");
+  };
+
+  const handleMoveStudent = async (e) => {
+    e.preventDefault();
+    const payload = {};
+    if (moveBatchId)  payload.batchId  = moveBatchId;
+    if (moveBranchId) payload.branchId = moveBranchId;
+    if (!payload.batchId && !payload.branchId) return flash("Select a batch and/or branch", "error");
+    try {
+      const res = await adminAxios.patch(`/admin/students/${movingStudentId}`, payload);
+      setStudents(p => p.map(s => s._id === movingStudentId ? res.data.student : s));
+      flash("Student moved successfully");
+      setMovingStudentId(null); setMoveBatchId(""); setMoveBranchId("");
+    } catch (err) { flash(err.response?.data?.error || "Failed to move student", "error"); }
   };
 
   // ── BATCHES ──
@@ -288,6 +358,7 @@ export default function AdminPanel() {
   };
 
   const tabs = [
+    { id: "students",   label: "Students",   icon: <UserPlus size={15}/> },
     { id: "tutors",     label: "Tutors",     icon: <Users size={15}/> },
     { id: "batches",    label: "Batches",    icon: <Layers size={15}/> },
     { id: "branches",   label: "Branches",   icon: <GitBranch size={15}/> },
@@ -326,6 +397,7 @@ export default function AdminPanel() {
         {/* ── Stats Row ── */}
         <div className="ap-stats-row">
           {[
+            { label: "Students",   val: students.length,   icon: <UserPlus size={20}/>,   cls: "blue"   },
             { label: "Tutors",     val: tutors.length,     icon: <Users size={20}/>,      cls: "blue"   },
             { label: "Batches",    val: batches.length,    icon: <Layers size={20}/>,     cls: "green"  },
             { label: "Branches",   val: branches.length,   icon: <GitBranch size={20}/>,  cls: "orange" },
@@ -343,6 +415,160 @@ export default function AdminPanel() {
 
         {/* ── Toast ── */}
         {msg && <div className={`ap-toast ${msgType}`}>{msg}</div>}
+
+        {/* ══════════════ STUDENTS ══════════════ */}
+        {tab === "students" && (
+          <div>
+            <div className="ap-grid-2">
+              {/* Add student */}
+              <div className="ap-card">
+                <div className="ap-card-header">
+                  <div className="ap-card-icon blue"><UserPlus size={16}/></div>
+                  <h3>Add Student</h3>
+                </div>
+                <div className="ap-card-body">
+                  <form onSubmit={handleAddStudent} className="ap-form">
+                    <div className="ap-field"><label>Full Name</label><input placeholder="e.g. Arjun Menon" value={studentForm.name} className="ap-input" required onChange={e => setStudentForm({ ...studentForm, name: e.target.value })}/></div>
+                    <div className="ap-field"><label>Register Number</label><input placeholder="e.g. 2301131001" value={studentForm.registerNumber} className="ap-input" required onChange={e => setStudentForm({ ...studentForm, registerNumber: e.target.value })}/></div>
+                    <div className="ap-field"><label>Email</label><input type="email" placeholder="student@example.com" value={studentForm.email} className="ap-input" required onChange={e => setStudentForm({ ...studentForm, email: e.target.value })}/></div>
+                    <div className="ap-field">
+                      <label>Batch *</label>
+                      <select className="ap-select" value={studentForm.batchId} required onChange={e => setStudentForm({ ...studentForm, batchId: e.target.value })}>
+                        <option value="">Select batch</option>
+                        {batches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="ap-field">
+                      <label>Branch *</label>
+                      <select className="ap-select" value={studentForm.branchId} required onChange={e => setStudentForm({ ...studentForm, branchId: e.target.value })}>
+                        <option value="">Select branch</option>
+                        {branches.map(br => <option key={br._id} value={br._id}>{br.name}</option>)}
+                      </select>
+                    </div>
+                    <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "var(--ap-muted)" }}>
+                      <input type="checkbox" checked={studentForm.isLateralEntry} onChange={e => setStudentForm({ ...studentForm, isLateralEntry: e.target.checked })}/>
+                      Lateral Entry student (40 pts required instead of 60)
+                    </label>
+                    <button className="btn-primary ap-btn" type="submit"><UserPlus size={15}/> Add Student</button>
+                  </form>
+                  {createdStudentPassword && (
+                    <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--ap-muted)" }}>
+                      Default password: <strong style={{ color: "var(--ap-text)" }}>{createdStudentPassword}</strong> — share this with the student.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Search / filter */}
+              <div className="ap-card">
+                <div className="ap-card-header">
+                  <div className="ap-card-icon green"><Search size={16}/></div>
+                  <h3>Search &amp; Filter</h3>
+                </div>
+                <div className="ap-card-body">
+                  <div className="ap-form">
+                    <div className="ap-field">
+                      <label>Search (name / register number / email)</label>
+                      <input
+                        className="ap-input" placeholder="Start typing…" value={studentSearch}
+                        onChange={e => { setStudentSearch(e.target.value); fetchStudents({ search: e.target.value }); }}
+                      />
+                    </div>
+                    <div className="ap-field">
+                      <label>Batch</label>
+                      <select className="ap-select" value={studentBatchFilter} onChange={e => { setStudentBatchFilter(e.target.value); fetchStudents({ batch: e.target.value }); }}>
+                        <option value="">All batches</option>
+                        {batches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="ap-field">
+                      <label>Branch</label>
+                      <select className="ap-select" value={studentBranchFilter} onChange={e => { setStudentBranchFilter(e.target.value); fetchStudents({ branch: e.target.value }); }}>
+                        <option value="">All branches</option>
+                        {branches.map(br => <option key={br._id} value={br._id}>{br.name}</option>)}
+                      </select>
+                    </div>
+                    {(studentSearch || studentBatchFilter || studentBranchFilter) && (
+                      <button
+                        type="button" className="btn ap-btn"
+                        onClick={() => { setStudentSearch(""); setStudentBatchFilter(""); setStudentBranchFilter(""); fetchStudents({ search: "", batch: "", branch: "" }); }}
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Move student panel */}
+            {movingStudentId && (
+              <div className="ap-assign-panel">
+                <h3><ArrowRightLeft size={16}/> Move Student to a Different Batch / Branch</h3>
+                <form onSubmit={handleMoveStudent} className="ap-form-row">
+                  <div className="ap-field">
+                    <label>Batch</label>
+                    <select className="ap-select" value={moveBatchId} onChange={e => setMoveBatchId(e.target.value)}>
+                      <option value="">No change</option>
+                      {batches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="ap-field">
+                    <label>Branch</label>
+                    <select className="ap-select" value={moveBranchId} onChange={e => setMoveBranchId(e.target.value)}>
+                      <option value="">No change</option>
+                      {branches.map(br => <option key={br._id} value={br._id}>{br.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="ap-field">
+                    <label>&nbsp;</label>
+                    <button className="btn-primary ap-btn" type="submit">Move</button>
+                  </div>
+                  <div className="ap-field">
+                    <label>&nbsp;</label>
+                    <button type="button" className="btn ap-btn" onClick={() => setMovingStudentId(null)}>Cancel</button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Student table */}
+            <div className="ap-card">
+              <div className="ap-card-header">
+                <div className="ap-card-icon blue"><UserPlus size={16}/></div>
+                <h3>All Students <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({students.length})</span></h3>
+              </div>
+              <div className="ap-table-wrap">
+                {students.length === 0 ? <div className="ap-empty">No students found.</div> : (
+                  <table className="ap-table">
+                    <thead><tr>
+                      <th>Name</th><th>Register No.</th><th>Email</th><th>Batch</th><th>Branch</th><th>Lateral Entry</th><th>Points</th><th>Actions</th>
+                    </tr></thead>
+                    <tbody>
+                      {students.map(s => (
+                        <tr key={s._id}>
+                          <td style={{ fontWeight: 600 }}>{s.name}</td>
+                          <td style={{ color: "var(--ap-muted)" }}>{s.registerNumber}</td>
+                          <td style={{ color: "var(--ap-muted)" }}>{s.email}</td>
+                          <td>{s.batch?.name  ? <span className="ap-badge assigned">{s.batch.name}</span>  : <span className="ap-badge none">—</span>}</td>
+                          <td>{s.branch?.name ? <span className="ap-badge assigned">{s.branch.name}</span> : <span className="ap-badge none">—</span>}</td>
+                          <td>{s.isLateralEntry ? <span className="ap-badge assigned">Yes</span> : <span className="ap-badge none">No</span>}</td>
+                          <td>{s.totalPoints ?? 0}</td>
+                          <td>
+                            <div className="ap-table-actions">
+                              <button onClick={() => startMoveStudent(s)} className="btn ap-btn sm"><ArrowRightLeft size={13}/> Move</button>
+                              <button onClick={() => handleDeleteStudent(s._id)} className="btn ap-btn sm danger"><Trash2 size={13}/> Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ══════════════ TUTORS ══════════════ */}
         {tab === "tutors" && (

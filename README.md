@@ -243,6 +243,19 @@ Either way, the student is automatically assigned to **that tutor's batch and br
 
 The student then logs in immediately with **register number + that password** — no OTP, no separate setup step. They can change their password at any time via **"Reset / Forgot Password"** on the login screen, which emails an OTP to their registered address (via Brevo) to confirm the change.
 
+### Deleting a student cleans up their files too
+
+Deleting a student (by a tutor, or by an admin) removes their certificate files **and** their profile photo from ImageKit, not just the database records — handled by a shared `deleteStudentCascade` helper used by both delete endpoints. ImageKit deletions are best-effort: if a remote file is already gone or ImageKit is briefly unreachable, it's logged and the database cleanup proceeds regardless.
+
+### Admin student management
+
+Unlike tutors (scoped to their own batch/branch), admins can see and manage students across **every** batch and branch from the "Students" tab of the admin panel:
+
+- **View all students**, with search (name/register number/email) and batch/branch filters
+- **Add a student** to any batch/branch directly
+- **Move a student** between batches/branches at any time
+- **Delete a student** (same cascade cleanup as above)
+
 ---
 
 ## 10. Common Issues
