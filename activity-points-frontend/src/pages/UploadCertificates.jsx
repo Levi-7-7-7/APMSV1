@@ -207,6 +207,12 @@ export default function CertificateUploadScreen() {
     }
   };
 
+  useEffect(() => {
+    if (submitted) {
+      window.scrollTo(0, 0);
+    }
+  }, [submitted]);
+
   if (submitted) {
     return (
       <div className="certificate-upload-container success-screen">
