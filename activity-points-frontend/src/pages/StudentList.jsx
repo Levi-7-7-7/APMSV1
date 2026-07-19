@@ -9,13 +9,12 @@ import {
   ArrowUpDown
 } from 'lucide-react';
 
-import * as XLSX from 'xlsx';
-
 import '../css/StudentList.css';
 import logo from '../assets/mti-logo.png';
 
 import { passThreshold } from '../utils/calcPoints';
 import { exportStudentsPdf } from '../utils/tutorPdfExport';
+import { exportStudentsExcel } from '../utils/tutorExcelExport';
 
 // ======================================================
 // Helpers
@@ -52,6 +51,7 @@ const StudentList = () => {
   const [branchOptions, setBranchOptions] = useState([]);
 
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [excelLoading, setExcelLoading] = useState(false);
 
   const [sortBy, setSortBy] = useState('regNo');
 
@@ -165,35 +165,21 @@ const StudentList = () => {
   // Excel Export
   // ======================================================
 
-  const exportExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(
-      filtered.map((s) => ({
-        Name: s.name,
-        RegisterNumber: s.registerNumber,
-        Batch: s.batch?.name,
-        Branch: s.branch?.name,
-        Email: s.email,
-        TotalPoints: s.totalPoints || 0,
-        Type: s.isLateralEntry
-          ? 'Lateral Entry'
-          : 'Regular',
-        Status:
-          (s.totalPoints || 0) >=
-          PASS_THRESHOLD(s.isLateralEntry)
-            ? 'PASS'
-            : 'FAIL'
-      }))
-    );
+  const exportExcel = async () => {
+    setExcelLoading(true);
 
-    const wb = XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(
-      wb,
-      ws,
-      'Students'
-    );
-
-    XLSX.writeFile(wb, 'students_list.xlsx');
+    try {
+      // Same department/batch sectioning as the PDF export (see
+      // buildExportGroups below) — a principal's unfiltered download gets
+      // every department and every batch, laid out as one styled sheet per
+      // department with a summary sheet in front.
+      await exportStudentsExcel({ groups: buildExportGroups() });
+    } catch (err) {
+      console.error('Excel export failed:', err);
+      alert('Failed to generate Excel file. Please try again.');
+    } finally {
+      setExcelLoading(false);
+    }
   };
 
   // ======================================================
@@ -532,9 +518,22 @@ const StudentList = () => {
           <button
             className="sl-btn outline"
             onClick={exportExcel}
+            disabled={excelLoading}
           >
-            <Download size={15} />
-            Excel
+            {excelLoading ? (
+              <>
+                <Loader2
+                  size={15}
+                  className="sl-spin"
+                />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Download size={15} />
+                Excel
+              </>
+            )}
           </button>
 
           <button
