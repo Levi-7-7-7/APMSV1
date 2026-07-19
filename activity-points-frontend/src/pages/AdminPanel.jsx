@@ -115,8 +115,14 @@ export default function AdminPanel() {
     } catch { return null; }
   })();
 
-  const [tab, setTab]     = useState("tutors");
-  const [loading, setLoading] = useState(false);
+  const [tab, setTab]     = useState(null); // null = dashboard (card grid)
+  const [dashboardSearch, setDashboardSearch] = useState("");
+  const [sectionLoading, setSectionLoading] = useState(false);
+  // Tracks which resources have already been fetched once, so re-opening a
+  // section (or switching back and forth) doesn't re-fetch data that's
+  // already in memory.
+  const loadedRef = useRef({ tutors: false, batches: false, branches: false, categories: false, admins: false });
+  const [logsEverLoaded, setLogsEverLoaded] = useState(false);
   const [msg, setMsg]     = useState("");
   const [msgType, setMsgType] = useState("success");
 
@@ -133,6 +139,8 @@ export default function AdminPanel() {
 
   const [studentForm, setStudentForm] = useState({ name: "", registerNumber: "", email: "", isLateralEntry: false, batchId: "", branchId: "" });
   const [studentSearch, setStudentSearch] = useState("");
+  const studentSearchDebounceRef = useRef(null);
+  const [studentsEverLoaded, setStudentsEverLoaded] = useState(false);
   const [studentBatchFilter, setStudentBatchFilter]   = useState("");
   const [studentBranchFilter, setStudentBranchFilter] = useState("");
   const [createdStudentPassword, setCreatedStudentPassword] = useState("");
@@ -198,28 +206,74 @@ export default function AdminPanel() {
   const [logTotal, setLogTotal] = useState(0);
   const logLimit = 50;
 
-  useEffect(() => { fetchAll(); }, []);
-
-  const fetchAll = async () => {
-    setLoading(true);
-    try {
-      const [tR, baR, brR, cR, sR, aR] = await Promise.all([
-        adminAxios.get("/admin/tutors"),
-        adminAxios.get("/admin/batches"),
-        adminAxios.get("/admin/branches"),
-        adminAxios.get("/admin/categories"),
-        adminAxios.get("/admin/students"),
-        adminAxios.get("/admin/auth/admins"),
-      ]);
-      setTutors(tR.data.tutors || []);
-      setBatches(baR.data.batches || []);
-      setBranches(brR.data.branches || []);
-      setCategories(cR.data.categories || []);
-      setStudents(sR.data.students || []);
-      setAdmins(aR.data.admins || []);
-    } catch { flash("Failed to fetch data", "error"); }
-    finally { setLoading(false); }
+  // ── Lazy, per-resource fetchers ──
+  // Nothing is fetched on mount. Each section pulls only the data it needs,
+  // the first time it's opened — the Students and Activity Log sections
+  // don't auto-fetch at all, since those lists can get large; the admin
+  // searches/filters for what they want instead.
+  const fetchTutors = async () => {
+    try { const res = await adminAxios.get("/admin/tutors"); setTutors(res.data.tutors || []); }
+    catch { flash("Failed to fetch tutors", "error"); }
   };
+  const fetchBatches = async () => {
+    try { const res = await adminAxios.get("/admin/batches"); setBatches(res.data.batches || []); }
+    catch { flash("Failed to fetch batches", "error"); }
+  };
+  const fetchBranches = async () => {
+    try { const res = await adminAxios.get("/admin/branches"); setBranches(res.data.branches || []); }
+    catch { flash("Failed to fetch branches", "error"); }
+  };
+  const fetchCategories = async () => {
+    try { const res = await adminAxios.get("/admin/categories"); setCategories(res.data.categories || []); }
+    catch { flash("Failed to fetch categories", "error"); }
+  };
+  const fetchAdmins = async () => {
+    try { const res = await adminAxios.get("/admin/auth/admins"); setAdmins(res.data.admins || []); }
+    catch { flash("Failed to fetch admins", "error"); }
+  };
+
+  // Fetch a resource only if it hasn't been fetched yet this session.
+  const ensureLoaded = async (key, fetchFn) => {
+    if (loadedRef.current[key]) return;
+    loadedRef.current[key] = true;
+    await fetchFn();
+  };
+
+  // Opens a section from the dashboard cards (or the sidebar), pulling in
+  // only whatever that section actually needs.
+  const openSection = async (id) => {
+    setTab(id);
+    setSectionLoading(true);
+    try {
+      if (id === "tutors") {
+        await Promise.all([
+          ensureLoaded("tutors", fetchTutors),
+          ensureLoaded("batches", fetchBatches),
+          ensureLoaded("branches", fetchBranches),
+        ]);
+      } else if (id === "students") {
+        // Student list itself is never auto-fetched — only batch/branch
+        // dropdown options, needed for the add/filter/move forms.
+        await Promise.all([
+          ensureLoaded("batches", fetchBatches),
+          ensureLoaded("branches", fetchBranches),
+        ]);
+      } else if (id === "batches") {
+        await ensureLoaded("batches", fetchBatches);
+      } else if (id === "branches") {
+        await ensureLoaded("branches", fetchBranches);
+      } else if (id === "categories") {
+        await ensureLoaded("categories", fetchCategories);
+      } else if (id === "admins") {
+        await ensureLoaded("admins", fetchAdmins);
+      }
+      // "logs" needs nothing preloaded — its own filter form fetches on demand.
+    } finally {
+      setSectionLoading(false);
+    }
+  };
+
+  const goToDashboard = () => setTab(null);
 
   // ── ACTIVITY LOG ──
   const fetchLogs = async (overrides = {}) => {
@@ -243,16 +297,15 @@ export default function AdminPanel() {
     finally { setLogsLoading(false); }
   };
 
-  useEffect(() => { if (tab === "logs") fetchLogs({ page: 1 }); }, [tab]);
-
   const applyLogFilters = (e) => {
     e.preventDefault();
+    setLogsEverLoaded(true);
     fetchLogs({ page: 1 });
   };
 
   const clearLogFilters = () => {
     setLogFilters({ actorType: "", action: "", search: "", from: "", to: "" });
-    setTimeout(() => fetchLogs({ page: 1 }), 0);
+    if (logsEverLoaded) setTimeout(() => fetchLogs({ page: 1 }), 0);
   };
 
   const exportLogsCsv = async () => {
@@ -312,7 +365,7 @@ export default function AdminPanel() {
       if (res.data.skipped?.length) {
         window.alert(`Some rows were skipped:\n\n${res.data.skipped.join("\n")}`);
       }
-      fetchAll();
+      fetchTutors();
     } catch (err) { flash(err.response?.data?.error || "CSV upload failed", "error"); }
   };
 
@@ -362,7 +415,7 @@ export default function AdminPanel() {
       await adminAxios.patch(`/admin/tutors/${assignTutorId}/assign`, payload);
       flash("Tutor updated");
       setAssignTutorId(""); setAssignBatchId(""); setAssignBranchId(""); setAssignRole("");
-      fetchAll();
+      fetchTutors();
     } catch (err) { flash(err.response?.data?.error || "Failed to assign", "error"); }
   };
 
@@ -378,7 +431,15 @@ export default function AdminPanel() {
       if (branch) params.branch = branch;
       const res = await adminAxios.get("/admin/students", { params });
       setStudents(res.data.students || []);
+      setStudentsEverLoaded(true);
     } catch { flash("Failed to fetch students", "error"); }
+  };
+
+  // Waits for a short pause in typing before actually hitting the API —
+  // avoids firing a request on every keystroke while searching students.
+  const fetchStudentsDebounced = (overrides = {}) => {
+    if (studentSearchDebounceRef.current) clearTimeout(studentSearchDebounceRef.current);
+    studentSearchDebounceRef.current = setTimeout(() => fetchStudents(overrides), 400);
   };
 
   const handleAddStudent = async (e) => {
@@ -634,19 +695,22 @@ export default function AdminPanel() {
   };
 
   const tabs = [
-    { id: "students",   label: "Students",   icon: <UserPlus size={15}/> },
-    { id: "tutors",     label: "Tutors",     icon: <Users size={15}/> },
-    { id: "batches",    label: "Batches",    icon: <Layers size={15}/> },
-    { id: "branches",   label: "Branches",   icon: <GitBranch size={15}/> },
-    { id: "categories", label: "Categories", icon: <Tag size={15}/> },
-    { id: "admins",     label: "Admins",     icon: <Shield size={15}/> },
-    { id: "logs",       label: "Activity Log", icon: <History size={15}/> },
+    { id: "students",   label: "Students",     desc: "Add, search, and manage student accounts",   icon: <UserPlus size={15}/>,   bigIcon: <UserPlus size={26}/>,   cls: "blue"   },
+    { id: "tutors",     label: "Tutors",       desc: "Add tutors, assign batches, upload CSV",      icon: <Users size={15}/>,      bigIcon: <Users size={26}/>,      cls: "teal"   },
+    { id: "batches",    label: "Batches",      desc: "Manage academic batches",                     icon: <Layers size={15}/>,     bigIcon: <Layers size={26}/>,     cls: "green"  },
+    { id: "branches",   label: "Branches",     desc: "Manage department branches",                  icon: <GitBranch size={15}/>,  bigIcon: <GitBranch size={26}/>,  cls: "orange" },
+    { id: "categories", label: "Categories",   desc: "Activity point categories & levels",          icon: <Tag size={15}/>,        bigIcon: <Tag size={26}/>,        cls: "purple" },
+    { id: "admins",     label: "Admins",       desc: "Manage admin accounts",                       icon: <Shield size={15}/>,     bigIcon: <Shield size={26}/>,     cls: "pink"   },
+    { id: "logs",       label: "Activity Log", desc: "See who did what, and when",                  icon: <History size={15}/>,    bigIcon: <History size={26}/>,    cls: "slate"  },
   ];
 
   const currentTabLabel = tabs.find(t => t.id === tab)?.label || "Dashboard";
+  const visibleDashboardCards = tabs.filter(t =>
+    !dashboardSearch.trim() || t.label.toLowerCase().includes(dashboardSearch.trim().toLowerCase())
+  );
 
   return (
-    <div className="admin-panel">
+    <div className={`admin-panel${tab !== null ? " has-nav" : ""}`}>
 
       {/* ── Fixed WhatsApp-style top bar: avatar, admin name, current page title, three-dot menu ── */}
       <header className="ap-topbar">
@@ -671,9 +735,18 @@ export default function AdminPanel() {
           <input ref={adminPhotoInputRef} type="file" accept="image/*" hidden onChange={handleAdminPhotoFileChange}/>
         </div>
 
-        <span className="ap-topbar-title">{adminEmail}</span>
+        {tab !== null && (
+          <button
+            className="ap-topbar-back"
+            onClick={goToDashboard}
+            aria-label="Back to dashboard"
+            type="button"
+          >
+            <ChevronLeft size={22}/>
+          </button>
+        )}
 
-        <span className="ap-topbar-page-title">{currentTabLabel}</span>
+        <span className="ap-topbar-title">{tab === null ? adminEmail : currentTabLabel}</span>
 
         <div className="ap-topbar-menu" ref={menuRef}>
           <button
@@ -706,38 +779,60 @@ export default function AdminPanel() {
         </div>
       </header>
 
-      {/* ── Nav: left sidebar on desktop/tablet, bottom bar on mobile ── */}
-      <nav className="ap-nav">
-        {tabs.map(t => (
-          <button key={t.id} className={`ap-tab ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
-            {t.icon} <span>{t.label}</span>
-          </button>
-        ))}
-      </nav>
+      {/* ── Nav: left sidebar on desktop/tablet only. On mobile, navigation
+          happens entirely through the dashboard cards + back button below —
+          no more tiny bottom-bar icons. ── */}
+      {tab !== null && (
+        <nav className="ap-nav">
+          {tabs.map(t => (
+            <button key={t.id} className={`ap-tab ${tab === t.id ? "active" : ""}`} onClick={() => openSection(t.id)}>
+              {t.icon} <span>{t.label}</span>
+            </button>
+          ))}
+        </nav>
+      )}
 
       <div className="ap-content">
 
-        {/* ── Stats Row ── */}
-        <div className="ap-stats-row">
-          {[
-            { label: "Students",   val: students.length,   icon: <UserPlus size={20}/>,   cls: "blue"   },
-            { label: "Tutors",     val: tutors.length,     icon: <Users size={20}/>,      cls: "blue"   },
-            { label: "Batches",    val: batches.length,    icon: <Layers size={20}/>,     cls: "green"  },
-            { label: "Branches",   val: branches.length,   icon: <GitBranch size={20}/>,  cls: "orange" },
-            { label: "Categories", val: categories.length, icon: <Tag size={20}/>,        cls: "purple" },
-          ].map(s => (
-            <div key={s.label} className="ap-stat-card">
-              <div className={`ap-stat-icon ${s.cls}`}>{s.icon}</div>
-              <div>
-                <div className="ap-stat-val">{s.val}</div>
-                <div className="ap-stat-lbl">{s.label}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
         {/* ── Toast ── */}
         {msg && <div className={`ap-toast ${msgType}`}>{msg}</div>}
+
+        {/* ══════════════ DASHBOARD ══════════════ */}
+        {tab === null && (
+          <div className="ap-dashboard">
+            <div className="ap-dashboard-search">
+              <Search size={18}/>
+              <input
+                className="ap-dashboard-search-input"
+                placeholder="Search…  e.g. Students, Categories"
+                value={dashboardSearch}
+                onChange={e => setDashboardSearch(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && visibleDashboardCards.length === 1) openSection(visibleDashboardCards[0].id); }}
+              />
+              {dashboardSearch && (
+                <button type="button" className="ap-dashboard-search-clear" aria-label="Clear search" onClick={() => setDashboardSearch("")}>
+                  <X size={16}/>
+                </button>
+              )}
+            </div>
+
+            {visibleDashboardCards.length === 0 ? (
+              <div className="ap-empty">No section matches "{dashboardSearch}".</div>
+            ) : (
+              <div className="ap-dashboard-grid">
+                {visibleDashboardCards.map(t => (
+                  <button key={t.id} className="ap-dashboard-card" onClick={() => openSection(t.id)} type="button">
+                    <div className={`ap-dashboard-card-icon ${t.cls}`}>{t.bigIcon}</div>
+                    <span className="ap-dashboard-card-label">{t.label}</span>
+                    <span className="ap-dashboard-card-desc">{t.desc}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {sectionLoading && <div className="ap-empty" style={{ margin: "1rem 0" }}>Loading…</div>}
 
         {/* ══════════════ STUDENTS ══════════════ */}
         {tab === "students" && (
@@ -794,7 +889,7 @@ export default function AdminPanel() {
                       <label>Search (name / register number / email)</label>
                       <input
                         className="ap-input" placeholder="Start typing…" value={studentSearch}
-                        onChange={e => { setStudentSearch(e.target.value); fetchStudents({ search: e.target.value }); }}
+                        onChange={e => { setStudentSearch(e.target.value); fetchStudentsDebounced({ search: e.target.value }); }}
                       />
                     </div>
                     <div className="ap-field">
@@ -909,11 +1004,13 @@ export default function AdminPanel() {
             <div className="ap-card">
               <div className="ap-card-header">
                 <div className="ap-card-icon blue"><UserPlus size={16}/></div>
-                <h3>All Students <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({students.length})</span></h3>
+                <h3>Students {studentsEverLoaded && <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({students.length})</span>}</h3>
               </div>
 
               <div className="ap-table-wrap">
-                {students.length === 0 ? <div className="ap-empty">No students found.</div> : (
+                {!studentsEverLoaded ? (
+                  <div className="ap-empty">Search by name, register number, or email above — or pick a batch/branch — to load students.</div>
+                ) : students.length === 0 ? <div className="ap-empty">No students found.</div> : (
                   <table className="ap-table">
                     <thead><tr>
                       <th>Photo</th><th>Name</th><th>Register No.</th><th>Email</th><th>Batch</th><th>Branch</th><th>Lateral Entry</th><th>Points</th><th>Actions</th>
@@ -1539,6 +1636,8 @@ export default function AdminPanel() {
               <div className="ap-table-wrap">
                 {logsLoading ? (
                   <div className="ap-empty">Loading…</div>
+                ) : !logsEverLoaded ? (
+                  <div className="ap-empty">Set any filters you want above, then tap <strong>Apply</strong> to load the activity log.</div>
                 ) : logs.length === 0 ? (
                   <div className="ap-empty">No matching activity found.</div>
                 ) : (

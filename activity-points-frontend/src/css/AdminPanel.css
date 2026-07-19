@@ -294,18 +294,6 @@ button,
   text-overflow: ellipsis;
 }
 
-.ap-topbar-page-title {
-  flex: 0 1 auto;
-  max-width: 42vw;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--ap-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: right;
-}
-
 .ap-topbar-menu {
   position: relative;
   flex-shrink: 0;
@@ -556,13 +544,13 @@ button,
 .ap-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: calc(56px + 1.5rem) 1.5rem 6rem 1.5rem; /* clear fixed top bar + bottom nav */
+  padding: calc(56px + 1.5rem) 1.5rem 2.5rem 1.5rem; /* clear fixed top bar */
   width: 100%;
   box-sizing: border-box;
 }
 
 @media (min-width: 769px) {
-  .admin-panel {
+  .admin-panel.has-nav {
     margin-left: 220px; /* room for the fixed left sidebar */
   }
 
@@ -1330,10 +1318,6 @@ textarea:focus {
 
 @media (max-width: 640px) {
 
-  .ap-topbar-page-title {
-    max-width: 34vw;
-  }
-
   .ap-nav {
     padding: 0.35rem 0.25rem;
     padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
@@ -1350,7 +1334,7 @@ textarea:focus {
   }
 
   .ap-content {
-    padding: calc(56px + 0.85rem) 0.85rem 6.5rem 0.85rem;
+    padding: calc(56px + 0.85rem) 0.85rem 2rem 0.85rem;
   }
 
   .ap-grid-2 {
@@ -1508,5 +1492,175 @@ textarea:focus {
 
   .ap-log-filter-actions {
     justify-content: flex-start;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   DASHBOARD — big tappable cards, replaces the old
+   tiny-icon bottom nav as the primary way to navigate
+   on Android/mobile.
+   ═══════════════════════════════════════════════════ */
+
+.ap-dashboard {
+  padding-top: 0.25rem;
+}
+
+.ap-dashboard-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  background: var(--ap-surface);
+  border: 1px solid var(--ap-border);
+  border-radius: 999px;
+
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1.5rem;
+
+  color: var(--ap-muted);
+  box-shadow: var(--ap-shadow);
+}
+
+.ap-dashboard-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--ap-text);
+}
+
+.ap-dashboard-search-input::placeholder {
+  color: var(--ap-muted);
+}
+
+.ap-dashboard-search-clear {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ap-light);
+  color: var(--ap-muted);
+  cursor: pointer;
+}
+
+.ap-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.ap-dashboard-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+
+  background: var(--ap-surface);
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius);
+
+  padding: 1.25rem 1.1rem;
+  min-height: 128px;
+
+  box-shadow: var(--ap-shadow);
+  cursor: pointer;
+  text-align: left;
+
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+
+.ap-dashboard-card:hover {
+  border-color: var(--ap-primary);
+  box-shadow: var(--ap-shadow-md);
+}
+
+.ap-dashboard-card:active {
+  transform: scale(0.97);
+}
+
+.ap-dashboard-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ap-dashboard-card-icon.blue    { background: var(--blue-tint-50); color: var(--ap-primary); }
+.ap-dashboard-card-icon.green   { background: #f0fdf4; color: var(--green-600); }
+.ap-dashboard-card-icon.orange  { background: #fff7ed; color: #ea580c; }
+.ap-dashboard-card-icon.purple  { background: #faf5ff; color: #7c3aed; }
+.ap-dashboard-card-icon.teal    { background: #f0fdfa; color: #0d9488; }
+.ap-dashboard-card-icon.pink    { background: #fdf2f8; color: #be185d; }
+.ap-dashboard-card-icon.slate   { background: var(--ap-light); color: var(--ap-muted); }
+
+.ap-dashboard-card-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ap-text);
+}
+
+.ap-dashboard-card-desc {
+  font-size: 0.8rem;
+  color: var(--ap-muted);
+  line-height: 1.3;
+}
+
+@media (min-width: 641px) {
+  .ap-dashboard-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .ap-dashboard-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ── Back button in the top bar ── */
+.ap-topbar-back {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  margin-left: -6px;
+
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ap-text);
+  cursor: pointer;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ap-topbar-back:hover,
+.ap-topbar-back:active {
+  background: var(--ap-light);
+}
+
+/* ── On mobile, the old bottom tab bar is retired in favor of the
+   dashboard cards + back button. It only reappears as the desktop
+   sidebar (see the ap-nav rules under @media (min-width: 769px)
+   above), so nothing further is needed here. ── */
+@media (max-width: 768px) {
+  .ap-nav {
+    display: none;
   }
 }
