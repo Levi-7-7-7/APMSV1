@@ -72,6 +72,32 @@ async function sendTutorResetOTPEmail(toEmail, tutorName, otp) {
 
 
 
+// ─── SCOPE CHECK: tutor may only act on certificates belonging to students ────
+// in their own assigned batch/branch — mirrors the same check already used by
+// DELETE /students/:id. Returns { tutor, cert, student } on success, or sends
+// the appropriate error response itself and returns null.
+async function authorizeCertificateAccess(req, res) {
+  const tutor = await Tutor.findById(req.tutor.id);
+  if (!tutor) { res.status(404).json({ error: 'Tutor not found' }); return null; }
+
+  const cert = await Certificate.findById(req.params.id);
+  if (!cert) { res.status(404).json({ error: 'Certificate not found' }); return null; }
+
+  const student = await Student.findById(cert.student);
+  if (!student) { res.status(404).json({ error: 'Student not found' }); return null; }
+
+  if (tutor.batch && student.batch && student.batch.toString() !== tutor.batch.toString()) {
+    res.status(403).json({ error: 'Student not in your assigned batch' });
+    return null;
+  }
+  if (tutor.branch && student.branch && student.branch.toString() !== tutor.branch.toString()) {
+    res.status(403).json({ error: 'Student not in your assigned branch' });
+    return null;
+  }
+
+  return { tutor, cert, student };
+}
+
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -309,8 +335,9 @@ router.get('/certificates', tutorAuth, async (req, res) => {
 // ─── APPROVE CERTIFICATE ──────────────────────────────────────────────────────
 router.post('/certificates/:id/approve', tutorAuth, async (req, res) => {
   try {
-    const cert = await Certificate.findById(req.params.id);
-    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+    const authz = await authorizeCertificateAccess(req, res);
+    if (!authz) return; // response already sent
+    const { cert } = authz;
 
     const category = await Category.findById(cert.category);
     if (!category) return res.status(404).json({ error: 'Category not found' });
@@ -377,8 +404,9 @@ router.post('/certificates/:id/approve', tutorAuth, async (req, res) => {
 // ─── REJECT CERTIFICATE ───────────────────────────────────────────────────────
 router.post('/certificates/:id/reject', tutorAuth, async (req, res) => {
   try {
-    const cert = await Certificate.findById(req.params.id);
-    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+    const authz = await authorizeCertificateAccess(req, res);
+    if (!authz) return;
+    const { cert } = authz;
 
     cert.status          = 'rejected';
     cert.pointsAwarded   = 0;
@@ -420,8 +448,9 @@ router.patch('/certificates/:id/reassign', tutorAuth, async (req, res) => {
       return res.status(400).json({ error: 'categoryId and subcategoryName are required' });
     }
 
-    const cert = await Certificate.findById(req.params.id);
-    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+    const authz = await authorizeCertificateAccess(req, res);
+    if (!authz) return;
+    const { cert } = authz;
 
     // Verify category exists
     const category = await Category.findById(categoryId);
@@ -466,8 +495,9 @@ router.patch('/certificates/:id/reassign', tutorAuth, async (req, res) => {
 // ─── REVERT APPROVED CERTIFICATE BACK TO PENDING ─────────────────────────────
 router.post('/certificates/:id/revert-to-pending', tutorAuth, async (req, res) => {
   try {
-    const cert = await Certificate.findById(req.params.id);
-    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+    const authz = await authorizeCertificateAccess(req, res);
+    if (!authz) return;
+    const { cert } = authz;
 
     if (cert.status !== 'approved') {
       return res.status(400).json({ error: 'Only approved certificates can be reverted to pending' });
