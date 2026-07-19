@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { MoreVertical, User, LogOut, X } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import '../css/StudentDashboard.css';
 
+const PAGE_TITLES = {
+  '/student': 'Dashboard',
+  '/student/upload-certificate': 'Upload Certificate',
+  '/student/certificates': 'My Certificates',
+  '/student/profile': 'Profile',
+};
+
 const StudentLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const menuRef = useRef(null);
+  const pageTitle = PAGE_TITLES[location.pathname] || 'Dashboard';
 
   const [userName, setUserName] = useState(() => {
     // Try userData first (set after dashboard fetch), fall back to userName key
@@ -113,6 +122,8 @@ const StudentLayout = () => {
         </button>
 
         <span className="app-topbar-title">{userName}</span>
+
+        <span className="app-topbar-page-title">{pageTitle}</span>
 
         <div className="app-topbar-menu" ref={menuRef}>
           <button

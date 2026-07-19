@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import BottomNav from '../components/BottomNav';
 import axiosInstance from '../api/axiosInstance';
 import { ArrowLeft, Award, Paperclip, Search, X, Calendar } from 'lucide-react';
 import '../css/upload.css';
@@ -466,7 +465,6 @@ export default function CertificateUploadScreen() {
         </button>
       </main>
 
-      <BottomNav activeTab="upload" />
     </div>
   );
 }
