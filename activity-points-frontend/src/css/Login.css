@@ -210,6 +210,10 @@ body, html {
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -307,8 +311,8 @@ body, html {
 
 .spinner {
   animation: spin 1s linear infinite;
-  margin-right: 8px;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 /* =========================
