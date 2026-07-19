@@ -139,7 +139,6 @@ export default function AdminPanel() {
 
   const [studentForm, setStudentForm] = useState({ name: "", registerNumber: "", email: "", isLateralEntry: false, batchId: "", branchId: "" });
   const [studentSearch, setStudentSearch] = useState("");
-  const studentSearchDebounceRef = useRef(null);
   const [studentsEverLoaded, setStudentsEverLoaded] = useState(false);
   const [studentBatchFilter, setStudentBatchFilter]   = useState("");
   const [studentBranchFilter, setStudentBranchFilter] = useState("");
@@ -305,7 +304,6 @@ export default function AdminPanel() {
 
   const clearLogFilters = () => {
     setLogFilters({ actorType: "", action: "", search: "", from: "", to: "" });
-    if (logsEverLoaded) setTimeout(() => fetchLogs({ page: 1 }), 0);
   };
 
   const exportLogsCsv = async () => {
@@ -433,13 +431,6 @@ export default function AdminPanel() {
       setStudents(res.data.students || []);
       setStudentsEverLoaded(true);
     } catch { flash("Failed to fetch students", "error"); }
-  };
-
-  // Waits for a short pause in typing before actually hitting the API —
-  // avoids firing a request on every keystroke while searching students.
-  const fetchStudentsDebounced = (overrides = {}) => {
-    if (studentSearchDebounceRef.current) clearTimeout(studentSearchDebounceRef.current);
-    studentSearchDebounceRef.current = setTimeout(() => fetchStudents(overrides), 400);
   };
 
   const handleAddStudent = async (e) => {
@@ -705,9 +696,58 @@ export default function AdminPanel() {
   ];
 
   const currentTabLabel = tabs.find(t => t.id === tab)?.label || "Dashboard";
+
+  // Every individual feature/card inside every section, so the dashboard
+  // search can jump straight to "Add Tutor" or "Batch Delete Students"
+  // instead of only matching the 7 big section names. `anchorId` is the
+  // DOM id of that feature's card (see the id="..." attributes below);
+  // openSection() switches tabs, then we scroll that card into view.
+  const searchIndex = [
+    { tabId: "students",   anchorId: "sf-add-student",     label: "Add Student",             section: "Students",     keywords: "add create new student register enroll" },
+    { tabId: "students",   anchorId: "sf-search-filter",   label: "Search & Filter Students", section: "Students",     keywords: "search filter find student name register number email batch branch" },
+    { tabId: "students",   anchorId: "sf-batch-delete",    label: "Batch Delete Students",   section: "Students",     keywords: "delete remove batch passed out bulk" },
+    { tabId: "students",   anchorId: "sf-students-table",  label: "Students List",           section: "Students",     keywords: "table list move student delete" },
+    { tabId: "tutors",     anchorId: "sf-add-tutor",       label: "Add Tutor",               section: "Tutors",       keywords: "add create new tutor hod principal role" },
+    { tabId: "tutors",     anchorId: "sf-bulk-upload",     label: "Bulk Upload Tutors (CSV)", section: "Tutors",      keywords: "csv bulk upload import tutors" },
+    { tabId: "tutors",     anchorId: "sf-assign-tutor",    label: "Assign Batch/Branch/Role", section: "Tutors",      keywords: "assign tutor batch branch role hod principal" },
+    { tabId: "tutors",     anchorId: "sf-all-tutors",      label: "All Tutors",              section: "Tutors",       keywords: "table list tutors delete copy email" },
+    { tabId: "batches",    anchorId: "sf-add-batch",       label: "Add New Batch",           section: "Batches",      keywords: "add create new batch" },
+    { tabId: "batches",    anchorId: "sf-all-batches",     label: "All Batches",             section: "Batches",      keywords: "table list batches delete" },
+    { tabId: "branches",   anchorId: "sf-add-branch",      label: "Add New Branch",          section: "Branches",     keywords: "add create new branch department" },
+    { tabId: "branches",   anchorId: "sf-all-branches",    label: "All Branches",            section: "Branches",     keywords: "table list branches delete department" },
+    { tabId: "categories", anchorId: "sf-add-category",    label: "Add Category",            section: "Categories",   keywords: "add create new category points cap duration" },
+    { tabId: "categories", anchorId: "sf-add-subcategory", label: "Add Subcategory",         section: "Categories",   keywords: "subcategory sub category points" },
+    { tabId: "categories", anchorId: "sf-category-list",   label: "All Categories & Levels", section: "Categories",   keywords: "table list categories levels prizes subcategories edit delete" },
+    { tabId: "admins",     anchorId: "sf-add-admin",       label: "Add Admin",               section: "Admins",       keywords: "add create new admin account" },
+    { tabId: "admins",     anchorId: "sf-all-admins",      label: "All Admins",              section: "Admins",       keywords: "table list admins delete" },
+    { tabId: "logs",       anchorId: "sf-activity-log",    label: "Activity Log",            section: "Activity Log", keywords: "logs history who did what filter export csv" },
+  ];
+
+  const searchQuery = dashboardSearch.trim().toLowerCase();
   const visibleDashboardCards = tabs.filter(t =>
-    !dashboardSearch.trim() || t.label.toLowerCase().includes(dashboardSearch.trim().toLowerCase())
+    !searchQuery || t.label.toLowerCase().includes(searchQuery)
   );
+  // Deeper feature-level matches, shown as a results list under the search
+  // box whenever there's something typed in — these link into a specific
+  // card inside a section, not just the section itself.
+  const matchedFeatures = searchQuery
+    ? searchIndex.filter(f =>
+        f.label.toLowerCase().includes(searchQuery) ||
+        f.section.toLowerCase().includes(searchQuery) ||
+        f.keywords.includes(searchQuery)
+      )
+    : [];
+
+  // Jump to a specific feature from a search result: open its section, then
+  // scroll that feature's card into view once the section has rendered.
+  const goToFeature = (feature) => {
+    setDashboardSearch("");
+    openSection(feature.tabId).then(() => {
+      setTimeout(() => {
+        document.getElementById(feature.anchorId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+    });
+  };
 
   return (
     <div className={`admin-panel${tab !== null ? " has-nav" : ""}`}>
@@ -804,10 +844,14 @@ export default function AdminPanel() {
               <Search size={18}/>
               <input
                 className="ap-dashboard-search-input"
-                placeholder="Search…  e.g. Students, Categories"
+                placeholder="Search…  e.g. Add Tutor, Batch Delete, CSV Upload"
                 value={dashboardSearch}
                 onChange={e => setDashboardSearch(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && visibleDashboardCards.length === 1) openSection(visibleDashboardCards[0].id); }}
+                onKeyDown={e => {
+                  if (e.key !== "Enter") return;
+                  if (matchedFeatures.length > 0) goToFeature(matchedFeatures[0]);
+                  else if (visibleDashboardCards.length === 1) openSection(visibleDashboardCards[0].id);
+                }}
               />
               {dashboardSearch && (
                 <button type="button" className="ap-dashboard-search-clear" aria-label="Clear search" onClick={() => setDashboardSearch("")}>
@@ -816,8 +860,25 @@ export default function AdminPanel() {
               )}
             </div>
 
+            {/* Deep results: specific features/cards inside sections, not just
+                the section itself — e.g. typing "csv" jumps straight to the
+                Bulk Upload card inside Tutors. */}
+            {searchQuery && matchedFeatures.length > 0 && (
+              <div className="ap-search-results">
+                {matchedFeatures.map(f => (
+                  <button key={f.anchorId} type="button" className="ap-search-result" onClick={() => goToFeature(f)}>
+                    <Search size={14} className="ap-search-result-icon"/>
+                    <span className="ap-search-result-label">{f.label}</span>
+                    <span className="ap-search-result-section">{f.section}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {visibleDashboardCards.length === 0 ? (
-              <div className="ap-empty">No section matches "{dashboardSearch}".</div>
+              matchedFeatures.length === 0 && (
+                <div className="ap-empty">No section or feature matches "{dashboardSearch}".</div>
+              )
             ) : (
               <div className="ap-dashboard-grid">
                 {visibleDashboardCards.map(t => (
@@ -839,7 +900,7 @@ export default function AdminPanel() {
           <div>
             <div className="ap-grid-2">
               {/* Add student */}
-              <div className="ap-card">
+              <div className="ap-card" id="sf-add-student">
                 <div className="ap-card-header">
                   <div className="ap-card-icon blue"><UserPlus size={16}/></div>
                   <h3>Add Student</h3>
@@ -878,49 +939,58 @@ export default function AdminPanel() {
               </div>
 
               {/* Search / filter */}
-              <div className="ap-card">
+              <div className="ap-card" id="sf-search-filter">
                 <div className="ap-card-header">
                   <div className="ap-card-icon green"><Search size={16}/></div>
                   <h3>Search &amp; Filter</h3>
                 </div>
                 <div className="ap-card-body">
-                  <div className="ap-form">
+                  <form
+                    className="ap-form"
+                    onSubmit={e => { e.preventDefault(); fetchStudents(); }}
+                  >
                     <div className="ap-field">
                       <label>Search (name / register number / email)</label>
                       <input
-                        className="ap-input" placeholder="Start typing…" value={studentSearch}
-                        onChange={e => { setStudentSearch(e.target.value); fetchStudentsDebounced({ search: e.target.value }); }}
+                        className="ap-input" placeholder="Start typing, then hit Search…" value={studentSearch}
+                        onChange={e => setStudentSearch(e.target.value)}
                       />
                     </div>
                     <div className="ap-field">
                       <label>Batch</label>
-                      <select className="ap-select" value={studentBatchFilter} onChange={e => { setStudentBatchFilter(e.target.value); fetchStudents({ batch: e.target.value }); }}>
+                      <select className="ap-select" value={studentBatchFilter} onChange={e => setStudentBatchFilter(e.target.value)}>
                         <option value="">All batches</option>
                         {batches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                       </select>
                     </div>
                     <div className="ap-field">
                       <label>Branch</label>
-                      <select className="ap-select" value={studentBranchFilter} onChange={e => { setStudentBranchFilter(e.target.value); fetchStudents({ branch: e.target.value }); }}>
+                      <select className="ap-select" value={studentBranchFilter} onChange={e => setStudentBranchFilter(e.target.value)}>
                         <option value="">All branches</option>
                         {branches.map(br => <option key={br._id} value={br._id}>{br.name}</option>)}
                       </select>
                     </div>
-                    {(studentSearch || studentBatchFilter || studentBranchFilter) && (
-                      <button
-                        type="button" className="btn ap-btn"
-                        onClick={() => { setStudentSearch(""); setStudentBatchFilter(""); setStudentBranchFilter(""); fetchStudents({ search: "", batch: "", branch: "" }); }}
-                      >
-                        Clear filters
-                      </button>
-                    )}
-                  </div>
+                    <div className="ap-form-row">
+                      <button type="submit" className="btn-primary ap-btn"><Search size={14}/> Search</button>
+                      {(studentSearch || studentBatchFilter || studentBranchFilter) && (
+                        <button
+                          type="button" className="btn ap-btn"
+                          onClick={() => { setStudentSearch(""); setStudentBatchFilter(""); setStudentBranchFilter(""); }}
+                        >
+                          Clear filters
+                        </button>
+                      )}
+                    </div>
+                    <p style={{ fontSize: "0.78rem", color: "var(--ap-muted)", margin: "-0.35rem 0 0" }}>
+                      Filters only take effect when you hit <strong>Search</strong> — clearing them just resets the fields, it won't reload the list on its own.
+                    </p>
+                  </form>
                 </div>
               </div>
             </div>
 
             {/* Batch delete — clear out an entire passed-out batch (optionally scoped to one branch) */}
-            <div className="ap-card" style={{ marginTop: "1rem", borderColor: "#fecaca" }}>
+            <div className="ap-card" id="sf-batch-delete" style={{ marginTop: "1rem", borderColor: "#fecaca" }}>
               <div className="ap-card-header">
                 <div className="ap-card-icon" style={{ background: "#fef2f2", color: "#dc2626" }}><Trash2 size={16}/></div>
                 <h3>Batch Delete Students</h3>
@@ -1001,7 +1071,7 @@ export default function AdminPanel() {
             )}
 
             {/* Student table */}
-            <div className="ap-card">
+            <div className="ap-card" id="sf-students-table">
               <div className="ap-card-header">
                 <div className="ap-card-icon blue"><UserPlus size={16}/></div>
                 <h3>Students {studentsEverLoaded && <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({students.length})</span>}</h3>
@@ -1009,7 +1079,7 @@ export default function AdminPanel() {
 
               <div className="ap-table-wrap">
                 {!studentsEverLoaded ? (
-                  <div className="ap-empty">Search by name, register number, or email above — or pick a batch/branch — to load students.</div>
+                  <div className="ap-empty">Enter a name/register number/email and/or pick a batch/branch above, then hit <strong>Search</strong> to load students.</div>
                 ) : students.length === 0 ? <div className="ap-empty">No students found.</div> : (
                   <table className="ap-table">
                     <thead><tr>
@@ -1047,7 +1117,7 @@ export default function AdminPanel() {
           <div>
             <div className="ap-grid-2">
               {/* Add tutor */}
-              <div className="ap-card">
+              <div className="ap-card" id="sf-add-tutor">
                 <div className="ap-card-header">
                   <div className="ap-card-icon blue"><UserPlus size={16}/></div>
                   <h3>Add Tutor</h3>
@@ -1092,7 +1162,7 @@ export default function AdminPanel() {
               </div>
 
               {/* CSV upload */}
-              <div className="ap-card">
+              <div className="ap-card" id="sf-bulk-upload">
                 <div className="ap-card-header">
                   <div className="ap-card-icon green"><FilePlus size={16}/></div>
                   <h3>Bulk Upload (CSV)</h3>
@@ -1113,7 +1183,7 @@ export default function AdminPanel() {
             </div>
 
             {/* Assign batch/branch/role */}
-            <div className="ap-assign-panel">
+            <div className="ap-assign-panel" id="sf-assign-tutor">
               <h3><Link2 size={16}/> Assign Batch, Branch &amp; Role to Tutor</h3>
               <form onSubmit={handleAssign} className="ap-form-row">
                 <div className="ap-field">
@@ -1161,7 +1231,7 @@ export default function AdminPanel() {
             </div>
 
             {/* Tutor table */}
-            <div className="ap-card">
+            <div className="ap-card" id="sf-all-tutors">
               <div className="ap-card-header">
                 <div className="ap-card-icon blue"><Users size={16}/></div>
                 <h3>All Tutors <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({tutors.length})</span></h3>
@@ -1204,7 +1274,7 @@ export default function AdminPanel() {
         {/* ══════════════ BATCHES ══════════════ */}
         {tab === "batches" && (
           <div>
-            <div className="ap-card" style={{ maxWidth: 480, marginBottom: "1.5rem" }}>
+            <div className="ap-card" id="sf-add-batch" style={{ maxWidth: 480, marginBottom: "1.5rem" }}>
               <div className="ap-card-header">
                 <div className="ap-card-icon green"><Layers size={16}/></div>
                 <h3>Add New Batch</h3>
@@ -1220,7 +1290,7 @@ export default function AdminPanel() {
               </div>
             </div>
 
-            <div className="ap-card">
+            <div className="ap-card" id="sf-all-batches">
               <div className="ap-card-header">
                 <div className="ap-card-icon green"><Layers size={16}/></div>
                 <h3>All Batches <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({batches.length})</span></h3>
@@ -1247,7 +1317,7 @@ export default function AdminPanel() {
         {/* ══════════════ BRANCHES ══════════════ */}
         {tab === "branches" && (
           <div>
-            <div className="ap-card" style={{ maxWidth: 480, marginBottom: "1.5rem" }}>
+            <div className="ap-card" id="sf-add-branch" style={{ maxWidth: 480, marginBottom: "1.5rem" }}>
               <div className="ap-card-header">
                 <div className="ap-card-icon orange"><GitBranch size={16}/></div>
                 <h3>Add New Branch</h3>
@@ -1263,7 +1333,7 @@ export default function AdminPanel() {
               </div>
             </div>
 
-            <div className="ap-card">
+            <div className="ap-card" id="sf-all-branches">
               <div className="ap-card-header">
                 <div className="ap-card-icon orange"><GitBranch size={16}/></div>
                 <h3>All Branches <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({branches.length})</span></h3>
@@ -1292,7 +1362,7 @@ export default function AdminPanel() {
           <div>
             <div className="ap-grid-2" style={{ marginBottom: "1.5rem" }}>
               {/* Category form */}
-              <div className="ap-card">
+              <div className="ap-card" id="sf-add-category">
                 <div className="ap-card-header">
                   <div className="ap-card-icon purple"><Tag size={16}/></div>
                   <h3>{editingCat ? "Edit Category" : "Add Category"}</h3>
@@ -1312,7 +1382,7 @@ export default function AdminPanel() {
               </div>
 
               {/* Subcategory hint */}
-              <div className="ap-card">
+              <div className="ap-card" id="sf-add-subcategory">
                 <div className="ap-card-header">
                   <div className="ap-card-icon purple"><Plus size={16}/></div>
                   <h3>Add Subcategory</h3>
@@ -1327,7 +1397,7 @@ export default function AdminPanel() {
             </div>
 
             {/* Category list */}
-            <p className="ap-section-title"><Tag size={14}/> All Categories ({categories.length})</p>
+            <p className="ap-section-title" id="sf-category-list"><Tag size={14}/> All Categories ({categories.length})</p>
             <div className="ap-cat-list">
               {categories.length === 0 ? <div className="ap-empty">No categories yet.</div> : categories.map(cat => (
                 <div key={cat._id} className="ap-cat-card">
@@ -1505,7 +1575,7 @@ export default function AdminPanel() {
         {/* ══════════════ ADMINS ══════════════ */}
         {tab === "admins" && (
           <div>
-            <div className="ap-card" style={{ maxWidth: 480, marginBottom: "1.5rem" }}>
+            <div className="ap-card" id="sf-add-admin" style={{ maxWidth: 480, marginBottom: "1.5rem" }}>
               <div className="ap-card-header">
                 <div className="ap-card-icon purple"><Shield size={16}/></div>
                 <h3>Add Admin</h3>
@@ -1522,7 +1592,7 @@ export default function AdminPanel() {
               </div>
             </div>
 
-            <div className="ap-card">
+            <div className="ap-card" id="sf-all-admins">
               <div className="ap-card-header">
                 <div className="ap-card-icon purple"><Shield size={16}/></div>
                 <h3>All Admins <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({admins.length})</span></h3>
@@ -1563,7 +1633,7 @@ export default function AdminPanel() {
         {/* ══════════════ ACTIVITY LOG ══════════════ */}
         {tab === "logs" && (
           <div>
-            <div className="ap-card" style={{ marginBottom: "1.5rem" }}>
+            <div className="ap-card" id="sf-activity-log" style={{ marginBottom: "1.5rem" }}>
               <div className="ap-card-header">
                 <div className="ap-card-icon blue"><History size={16}/></div>
                 <h3>Activity Log <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({logTotal})</span></h3>

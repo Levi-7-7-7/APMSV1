@@ -465,8 +465,11 @@ button,
     flex-shrink: 0;
   }
 
+  /* Topbar spans the FULL width and sits visually above the sidebar
+     (it already has a higher z-index than .ap-nav), instead of starting
+     after it and leaving a "hole" where the sidebar's top used to be. */
   .ap-topbar {
-    left: 220px;
+    left: 0;
   }
 }
 
@@ -1553,6 +1556,58 @@ textarea:focus {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+}
+
+/* ── Deep search results: specific features/cards inside a section ── */
+.ap-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: -0.5rem 0 1.25rem;
+}
+
+.ap-search-result {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  background: var(--ap-surface);
+  border: 1px solid var(--ap-border);
+  border-radius: var(--ap-radius-sm);
+  padding: 0.7rem 0.9rem;
+
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--ap-shadow);
+  transition: border-color .15s, background .15s;
+}
+
+.ap-search-result:hover,
+.ap-search-result:active {
+  border-color: var(--ap-primary);
+  background: var(--blue-tint-50);
+}
+
+.ap-search-result-icon {
+  flex-shrink: 0;
+  color: var(--ap-primary);
+}
+
+.ap-search-result-label {
+  flex: 1 1 auto;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ap-text);
+}
+
+.ap-search-result-section {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ap-muted);
+  background: var(--ap-light);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
 }
 
 .ap-dashboard-card {
