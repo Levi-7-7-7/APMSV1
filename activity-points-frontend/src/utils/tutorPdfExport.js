@@ -405,16 +405,19 @@ function makeHiddenRoot() {
 }
 
 /**
- * Generates and downloads the tutor "Student Activity Points Report" PDF,
- * visually matching the report produced by the React Native tutor app.
+ * Renders a single department+batch "section" (header, title band, ledger
+ * table, footer, with its own row-level pagination) into an existing jsPDF
+ * document. Used both for a plain single-scope export and, repeatedly, for
+ * a multi-section export that stacks one section per department/batch.
  *
- * Pagination is done row-by-row so a student's activity list can never be
- * truncated: if it doesn't fit on the current page it simply continues,
- * clearly marked, on the next one.
+ * `isVeryFirstPage` controls whether this section's first page reuses the
+ * blank page jsPDF starts with (true) or starts a fresh page (false) — every
+ * section after the first one in a multi-section document always starts on
+ * a new page, never sharing a page with the previous section's footer.
  */
-export async function exportStudentsPdf({ students, certsByStudent, tutorBranch, tutorBatch, logoUrl }) {
-  const deptName = tutorBranch ? `DEPARTMENT OF ${tutorBranch.toUpperCase()}` : 'DEPARTMENT';
-  const batchLabel = tutorBatch ? ` — BATCH ${tutorBatch}` : '';
+async function renderSectionIntoDoc(doc, { students, certsByStudent, branchName, batchName, logoUrl, isVeryFirstPage }) {
+  const deptName = branchName ? `DEPARTMENT OF ${branchName.toUpperCase()}` : 'DEPARTMENT';
+  const batchLabel = batchName ? ` — BATCH ${batchName}` : '';
   const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
 
   const styleTag = `<style>${REPORT_CSS}</style>`;
@@ -549,8 +552,6 @@ export async function exportStudentsPdf({ students, certsByStudent, tutorBranch,
   const footerNeedsOwnPage = used + spacerHeight > PAGE_CONTENT_MAX_PX - 40;
 
   // --- Render phase: build the real HTML for each page from the chunk plan. ---
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
   for (let pg = 0; pg < pages.length; pg++) {
     const page = pages[pg];
     const isLastContentPage = pg === pages.length - 1;
@@ -591,7 +592,7 @@ export async function exportStudentsPdf({ students, certsByStudent, tutorBranch,
     });
     document.body.removeChild(pageRoot);
 
-    if (pg > 0) doc.addPage();
+    if (!(isVeryFirstPage && pg === 0)) doc.addPage();
     // JPEG at high quality instead of lossless PNG — a raster screenshot of
     // mostly text/tables compresses far better as JPEG (typically 5-10x
     // smaller) with no visible quality loss, and PDF file size scales
@@ -615,7 +616,44 @@ export async function exportStudentsPdf({ students, certsByStudent, tutorBranch,
     doc.addImage(imgData, 'JPEG', MARGIN_X_MM, MARGIN_TOP_MM, CONTENT_WIDTH_MM, imgHmm);
   }
 
-  // --- Page numbers (drawn directly by jsPDF, same as before) ---
+}
+
+/**
+ * Generates and downloads the "Student Activity Points Report" PDF, visually
+ * matching the report produced by the React Native tutor app.
+ *
+ * Accepts one or more `groups` — each `{ branchName, batchName, students }`
+ * becomes its own self-contained section (own header, title band, ledger
+ * table and footer, own row-level pagination), stacked one after another in
+ * a single downloaded file. This is what makes a scoped tutor's single-page
+ * report and a principal's "every department, every batch" report the same
+ * code path: a tutor's export is just a one-group call.
+ *
+ * Pagination within each section is done row-by-row so a student's activity
+ * list can never be truncated: if it doesn't fit on the current page it
+ * simply continues, clearly marked, on the next one.
+ */
+export async function exportStudentsPdf({ groups, certsByStudent, logoUrl }) {
+  if (!groups || groups.length === 0) {
+    throw new Error('exportStudentsPdf: at least one group is required');
+  }
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  for (let gi = 0; gi < groups.length; gi++) {
+    const group = groups[gi];
+    await renderSectionIntoDoc(doc, {
+      students: group.students,
+      certsByStudent,
+      branchName: group.branchName,
+      batchName: group.batchName,
+      logoUrl,
+      isVeryFirstPage: gi === 0
+    });
+  }
+
+  // --- Page numbers (drawn directly by jsPDF), applied once across the
+  // whole document so numbering is continuous across every section. ---
   const totalPages = doc.getNumberOfPages();
   const pageWmm = doc.internal.pageSize.getWidth();
   const pageHmm = doc.internal.pageSize.getHeight();
@@ -626,10 +664,28 @@ export async function exportStudentsPdf({ students, certsByStudent, tutorBranch,
     doc.text(`Page ${i} of ${totalPages}`, pageWmm / 2, pageHmm - FOOTER_RESERVE_MM / 2, { align: 'center' });
   }
 
-  const branchSlug = (tutorBranch || 'dept').replace(/\s+/g, '_').toLowerCase();
-  const batchSlug = (tutorBatch || 'batch').replace(/\s+/g, '_').toLowerCase();
+  // --- Filename ---
+  const slug = (s) => (s || '').replace(/\s+/g, '_').toLowerCase();
   const fileDate = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
-  doc.save(`${branchSlug}_${batchSlug}_${fileDate}.pdf`);
+  let baseName;
+  if (groups.length > 1) {
+    // Multiple sections -> a broader export (all departments, or one
+    // department's every batch, or one batch across every department).
+    const branchNames = [...new Set(groups.map((g) => g.branchName).filter(Boolean))];
+    const batchNames = [...new Set(groups.map((g) => g.batchName).filter(Boolean))];
+    if (branchNames.length > 1 && batchNames.length > 1) {
+      baseName = 'all_departments_all_batches';
+    } else if (branchNames.length === 1) {
+      baseName = `${slug(branchNames[0])}_all_batches`;
+    } else if (batchNames.length === 1) {
+      baseName = `all_departments_${slug(batchNames[0])}`;
+    } else {
+      baseName = 'activity_points_report';
+    }
+  } else {
+    baseName = `${slug(groups[0].branchName) || 'dept'}_${slug(groups[0].batchName) || 'batch'}`;
+  }
+  doc.save(`${baseName}_${fileDate}.pdf`);
 }
 
 export { getBatchName, getBranchName };

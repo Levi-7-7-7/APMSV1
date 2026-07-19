@@ -200,6 +200,128 @@ const StudentList = () => {
   // PDF Export
   // ======================================================
 
+  // Decides how the PDF should be split into department/batch sections,
+  // based on the tutor's role and whatever filters are currently applied.
+  // (Uses `filtered` so name/reg-no search is still respected inside each
+  // section — only the batch/branch dimension is what gets auto-expanded.)
+  //
+  //  - principal, no filters      -> every department, every batch in it
+  //  - principal, branch only     -> that department, every batch in it
+  //  - principal, batch only      -> that batch, across every department
+  //  - principal, branch + batch  -> exactly that one section
+  //  - hod, no batch filter       -> their department, every batch in it
+  //  - hod, batch filter          -> exactly that one section
+  //  - tutor                      -> exactly their one scope, no filters shown
+  const buildExportGroups = () => {
+    const byBranchThenBatch = (list) => {
+      const branches = [
+        ...new Set(list.map((s) => s.branch?.name).filter(Boolean))
+      ].sort();
+
+      const groups = [];
+      branches.forEach((br) => {
+        const inBranch = list.filter((s) => s.branch?.name === br);
+        const batches = [
+          ...new Set(inBranch.map((s) => s.batch?.name).filter(Boolean))
+        ].sort();
+
+        if (batches.length === 0) {
+          groups.push({ branchName: br, batchName: '', students: inBranch });
+          return;
+        }
+
+        batches.forEach((b) => {
+          groups.push({
+            branchName: br,
+            batchName: b,
+            students: inBranch.filter((s) => s.batch?.name === b)
+          });
+        });
+      });
+
+      return groups;
+    };
+
+    if (tutorRole === 'principal') {
+      if (branchFilter && batchFilter) {
+        return [{ branchName: branchFilter, batchName: batchFilter, students: filtered }];
+      }
+
+      if (branchFilter && !batchFilter) {
+        const batches = [
+          ...new Set(filtered.map((s) => s.batch?.name).filter(Boolean))
+        ].sort();
+
+        if (batches.length === 0) {
+          return [{ branchName: branchFilter, batchName: '', students: filtered }];
+        }
+
+        return batches.map((b) => ({
+          branchName: branchFilter,
+          batchName: b,
+          students: filtered.filter((s) => s.batch?.name === b)
+        }));
+      }
+
+      if (!branchFilter && batchFilter) {
+        const branches = [
+          ...new Set(filtered.map((s) => s.branch?.name).filter(Boolean))
+        ].sort();
+
+        if (branches.length === 0) {
+          return [{ branchName: '', batchName: batchFilter, students: filtered }];
+        }
+
+        return branches.map((br) => ({
+          branchName: br,
+          batchName: batchFilter,
+          students: filtered.filter((s) => s.branch?.name === br)
+        }));
+      }
+
+      // No filters at all -> every department, every batch inside it.
+      const groups = byBranchThenBatch(filtered);
+      return groups.length
+        ? groups
+        : [{ branchName: '', batchName: '', students: filtered }];
+    }
+
+    if (tutorRole === 'hod') {
+      if (batchFilter) {
+        return [
+          {
+            branchName: tutorBranch?.name,
+            batchName: batchFilter,
+            students: filtered
+          }
+        ];
+      }
+
+      const batches = [
+        ...new Set(filtered.map((s) => s.batch?.name).filter(Boolean))
+      ].sort();
+
+      if (batches.length === 0) {
+        return [{ branchName: tutorBranch?.name, batchName: '', students: filtered }];
+      }
+
+      return batches.map((b) => ({
+        branchName: tutorBranch?.name,
+        batchName: b,
+        students: filtered.filter((s) => s.batch?.name === b)
+      }));
+    }
+
+    // Plain tutor: always scoped to their one batch/branch, no filters shown.
+    return [
+      {
+        branchName: tutorBranch?.name,
+        batchName: tutorBatch?.name,
+        students: filtered
+      }
+    ];
+  };
+
   const exportPDF = async () => {
     setPdfLoading(true);
 
@@ -226,12 +348,11 @@ const StudentList = () => {
 
       // Renders the exact same header / gradient title band / rowspan
       // ledger table / trophy badges / footer as the React Native tutor
-      // app's buildPdfHtml, rasterized via html2canvas into the PDF.
+      // app's buildPdfHtml, rasterized via html2canvas into the PDF —
+      // once per department/batch section (see buildExportGroups above).
       await exportStudentsPdf({
-        students: filtered,
+        groups: buildExportGroups(),
         certsByStudent,
-        tutorBranch: tutorBranch?.name,
-        tutorBatch: tutorBatch?.name,
         logoUrl: logo
       });
     } catch (err) {
