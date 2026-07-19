@@ -133,14 +133,13 @@
 }
 
 /* Success screen */
-.certificate-upload-container .success-screen {
-  min-height: 60vh;
-  min-height: 60dvh;
+.certificate-upload-container.success-screen {
+  min-height: 82vh;
+  min-height: 82dvh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 24px;
-  padding-top: 48px;
+  padding: 24px 24px 100px 24px;
   box-sizing: border-box;
   overflow-x: hidden;
   width: 100%;
