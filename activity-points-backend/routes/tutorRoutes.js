@@ -13,6 +13,7 @@ const Category    = require('../models/Category');
 
 const generateDefaultPassword = require('../utils/defaultPassword');
 const deleteStudentCascade = require('../utils/deleteStudentCascade');
+const { validateTutorRoleConfig } = require('../utils/tutorRoleRules');
 
 const { sendPushNotification } = require('../utils/fcm');
 
@@ -72,13 +73,47 @@ async function sendTutorResetOTPEmail(toEmail, tutorName, otp) {
 
 
 
+// ─── Fetch the requesting tutor-side account and make sure it's actually ──────
+// configured correctly for its role (see utils/tutorRoleRules.js). An account
+// stuck between "created" and "assigned" by an admin — or any account that
+// somehow ends up in an invalid state — is refused everywhere, not just on
+// writes, so it can never accidentally behave like a principal (blank
+// batch/branch = sees/acts on everything) before it's actually meant to.
+// Sends the response itself and returns null on failure.
+async function fetchConfiguredTutor(req, res) {
+  const tutor = await Tutor.findById(req.tutor.id);
+  if (!tutor) { res.status(404).json({ error: 'Tutor not found' }); return null; }
+
+  const configError = validateTutorRoleConfig(tutor.role, tutor.batch, tutor.branch);
+  if (configError) {
+    res.status(403).json({ error: `Your account isn't fully set up yet (${configError}) — contact an admin.` });
+    return null;
+  }
+  return tutor;
+}
+
+// ─── Gate for actions that MODIFY data (approve/reject/reassign/revert, ───────
+// add/delete student, bulk-upload students). Only role 'tutor' — the account
+// actually assigned to one specific batch+branch — may do these. HOD and
+// Principal accounts are view-only, regardless of what their batch/branch
+// scope would otherwise allow. Sends the response itself and returns false
+// on failure.
+function requireFullTutor(tutor, res) {
+  if (tutor.role !== 'tutor') {
+    res.status(403).json({ error: 'HOD and Principal accounts have view-only access and cannot modify records.' });
+    return false;
+  }
+  return true;
+}
+
 // ─── SCOPE CHECK: tutor may only act on certificates belonging to students ────
 // in their own assigned batch/branch — mirrors the same check already used by
 // DELETE /students/:id. Returns { tutor, cert, student } on success, or sends
 // the appropriate error response itself and returns null.
 async function authorizeCertificateAccess(req, res) {
-  const tutor = await Tutor.findById(req.tutor.id);
-  if (!tutor) { res.status(404).json({ error: 'Tutor not found' }); return null; }
+  const tutor = await fetchConfiguredTutor(req, res);
+  if (!tutor) return null; // response already sent
+  if (!requireFullTutor(tutor, res)) return null;
 
   const cert = await Certificate.findById(req.params.id);
   if (!cert) { res.status(404).json({ error: 'Certificate not found' }); return null; }
@@ -150,9 +185,11 @@ router.patch('/fcm-token', tutorAuth, async (req, res) => {
 // ─── GET STUDENTS (filtered to tutor's batch + branch) ───────────────────────
 router.get('/students', tutorAuth, async (req, res) => {
   try {
-    // Fetch the tutor so we know their assigned batch/branch
-    const tutor = await Tutor.findById(req.tutor.id);
-    if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
+    // Fetch the tutor so we know their assigned batch/branch. HOD/Principal
+    // may view here (read-only) — fetchConfiguredTutor only blocks accounts
+    // that aren't properly configured yet for their role.
+    const tutor = await fetchConfiguredTutor(req, res);
+    if (!tutor) return;
 
     // Build query — only filter if the tutor has an assignment
     const query = {};
@@ -182,7 +219,10 @@ router.get('/students', tutorAuth, async (req, res) => {
 // ─── DELETE STUDENT ───────────────────────────────────────────────────────────
 router.delete('/students/:id', tutorAuth, async (req, res) => {
   try {
-    const tutor   = await Tutor.findById(req.tutor.id);
+    const tutor = await fetchConfiguredTutor(req, res);
+    if (!tutor) return;
+    if (!requireFullTutor(tutor, res)) return;
+
     const student = await Student.findById(req.params.id);
     if (!student) return res.status(404).json({ error: 'Student not found' });
 
@@ -207,8 +247,9 @@ router.delete('/students/:id', tutorAuth, async (req, res) => {
 // tutor can pass it on to the student.
 router.post('/students', tutorAuth, async (req, res) => {
   try {
-    const tutor = await Tutor.findById(req.tutor.id);
-    if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
+    const tutor = await fetchConfiguredTutor(req, res);
+    if (!tutor) return;
+    if (!requireFullTutor(tutor, res)) return;
 
     const { name, registerNumber, email, isLateralEntry } = req.body;
     if (!name || !registerNumber || !email) {
@@ -253,7 +294,10 @@ router.post('/students', tutorAuth, async (req, res) => {
 router.post('/students/upload', tutorAuth, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-  const tutor   = await Tutor.findById(req.tutor.id);
+  const tutor = await fetchConfiguredTutor(req, res);
+  if (!tutor) { if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); return; }
+  if (!requireFullTutor(tutor, res)) { if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); return; }
+
   const results = [];
 
   fs.createReadStream(req.file.path)
@@ -292,10 +336,11 @@ router.post('/students/upload', tutorAuth, upload.single('file'), async (req, re
 // ─── PENDING CERTIFICATES (tutor's batch+branch students only) ───────────────
 router.get('/certificates/pending', tutorAuth, async (req, res) => {
   try {
-    const tutor = await Tutor.findById(req.tutor.id);
+    const tutor = await fetchConfiguredTutor(req, res);
+    if (!tutor) return;
     const query = {};
-    if (tutor?.batch)  query.batch  = tutor.batch;
-    if (tutor?.branch) query.branch = tutor.branch;
+    if (tutor.batch)  query.batch  = tutor.batch;
+    if (tutor.branch) query.branch = tutor.branch;
 
     // Get student IDs in this tutor's scope
     const students = await Student.find(query).select('_id');
@@ -314,10 +359,11 @@ router.get('/certificates/pending', tutorAuth, async (req, res) => {
 // ─── ALL CERTIFICATES (tutor's scope) ────────────────────────────────────────
 router.get('/certificates', tutorAuth, async (req, res) => {
   try {
-    const tutor = await Tutor.findById(req.tutor.id);
+    const tutor = await fetchConfiguredTutor(req, res);
+    if (!tutor) return;
     const query = {};
-    if (tutor?.batch)  query.batch  = tutor.batch;
-    if (tutor?.branch) query.branch = tutor.branch;
+    if (tutor.batch)  query.batch  = tutor.batch;
+    if (tutor.branch) query.branch = tutor.branch;
 
     const students   = await Student.find(query).select('_id');
     const studentIds = students.map(s => s._id);

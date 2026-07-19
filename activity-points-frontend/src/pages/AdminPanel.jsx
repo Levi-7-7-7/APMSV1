@@ -55,7 +55,7 @@ export default function AdminPanel() {
   const [batchDeletePreviewCount, setBatchDeletePreviewCount] = useState(null);
   const [batchDeleting, setBatchDeleting] = useState(false);
 
-  const [tutorForm, setTutorForm]   = useState({ name: "", email: "", password: "" });
+  const [tutorForm, setTutorForm]   = useState({ name: "", email: "", password: "", role: "tutor", batchId: "", branchId: "" });
   const tutorCsvRef = useRef(null);
 
   const [admins, setAdmins] = useState([]);
@@ -121,10 +121,16 @@ export default function AdminPanel() {
   // ── TUTORS ──
   const handleTutorCreate = async (e) => {
     e.preventDefault();
+    if (tutorForm.role === "tutor" && (!tutorForm.batchId || !tutorForm.branchId)) {
+      return flash("A tutor needs both a batch and a branch selected", "error");
+    }
+    if (tutorForm.role === "hod" && !tutorForm.branchId) {
+      return flash("An HOD needs a branch selected", "error");
+    }
     try {
       const res = await adminAxios.post("/admin/tutors", tutorForm);
       setTutors(p => [res.data.tutor, ...p]);
-      setTutorForm({ name: "", email: "", password: "" });
+      setTutorForm({ name: "", email: "", password: "", role: "tutor", batchId: "", branchId: "" });
       flash("Tutor created successfully");
     } catch (err) { flash(err.response?.data?.error || "Failed to create tutor", "error"); }
   };
@@ -136,7 +142,11 @@ export default function AdminPanel() {
     const fd = new FormData(); fd.append("file", file);
     try {
       const res = await adminAxios.post("/admin/tutors/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
-      flash(res.data.message || "CSV uploaded"); fetchAll();
+      flash(res.data.message || "CSV uploaded");
+      if (res.data.skipped?.length) {
+        window.alert(`Some rows were skipped:\n\n${res.data.skipped.join("\n")}`);
+      }
+      fetchAll();
     } catch (err) { flash(err.response?.data?.error || "CSV upload failed", "error"); }
   };
 
@@ -737,6 +747,35 @@ export default function AdminPanel() {
                     <div className="ap-field"><label>Full Name</label><input placeholder="e.g. Dr. Ravi Kumar" value={tutorForm.name} className="ap-input" required onChange={e => setTutorForm({ ...tutorForm, name: e.target.value })}/></div>
                     <div className="ap-field"><label>Email</label><input type="email" placeholder="tutor@college.edu" value={tutorForm.email} className="ap-input" required onChange={e => setTutorForm({ ...tutorForm, email: e.target.value })}/></div>
                     <div className="ap-field"><label>Password</label><input type="password" placeholder="Set a password" value={tutorForm.password} className="ap-input" required onChange={e => setTutorForm({ ...tutorForm, password: e.target.value })}/></div>
+                    <div className="ap-field">
+                      <label>Role</label>
+                      <select className="ap-select" value={tutorForm.role} onChange={e => setTutorForm({ ...tutorForm, role: e.target.value })}>
+                        <option value="tutor">Tutor (own batch + branch)</option>
+                        <option value="hod">HOD (whole department)</option>
+                        <option value="principal">Principal (everything)</option>
+                      </select>
+                    </div>
+                    <div className="ap-field">
+                      <label>Batch{tutorForm.role === "tutor" && " *"}</label>
+                      <select className="ap-select" value={tutorForm.batchId} onChange={e => setTutorForm({ ...tutorForm, batchId: e.target.value })} disabled={tutorForm.role === "hod" || tutorForm.role === "principal"} required={tutorForm.role === "tutor"}>
+                        <option value="">Select batch</option>
+                        {batches.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="ap-field">
+                      <label>Branch{tutorForm.role !== "principal" && " *"}</label>
+                      <select className="ap-select" value={tutorForm.branchId} onChange={e => setTutorForm({ ...tutorForm, branchId: e.target.value })} disabled={tutorForm.role === "principal"} required={tutorForm.role !== "principal"}>
+                        <option value="">Select branch</option>
+                        {branches.map(br => <option key={br._id} value={br._id}>{br.name}</option>)}
+                      </select>
+                    </div>
+                    {(tutorForm.role === "hod" || tutorForm.role === "principal") && (
+                      <p style={{ fontSize: "0.8rem", color: "var(--ap-muted)", margin: "-0.25rem 0 0.5rem" }}>
+                        {tutorForm.role === "hod"
+                          ? "HOD sees every batch within the branch you pick above."
+                          : "Principal sees every batch and branch — nothing to pick here."}
+                      </p>
+                    )}
                     <button className="btn-primary ap-btn" type="submit"><UserPlus size={15}/> Create Tutor</button>
                   </form>
                 </div>
@@ -750,7 +789,10 @@ export default function AdminPanel() {
                 </div>
                 <div className="ap-card-body">
                   <p style={{ fontSize: "0.85rem", color: "var(--ap-muted)", marginBottom: "1rem" }}>
-                    CSV must have columns: <strong>name, email, password</strong>
+                    CSV columns: <strong>name, email, password, role, batch, branch</strong><br/>
+                    <span style={{ fontSize: "0.78rem" }}>
+                      role is <code>tutor</code>, <code>hod</code>, or <code>principal</code>. batch/branch are the exact <strong>names</strong> (not IDs) — leave batch blank for hod/principal, leave both blank for principal.
+                    </span>
                   </p>
                   <form onSubmit={handleCsvUpload} className="ap-form">
                     <input ref={tutorCsvRef} type="file" accept=".csv" style={{ fontSize: "0.875rem" }}/>

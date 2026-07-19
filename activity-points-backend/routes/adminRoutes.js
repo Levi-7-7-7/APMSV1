@@ -3,6 +3,7 @@ const express  = require("express");
 const multer   = require("multer");
 const fs       = require("fs");
 const csv      = require("csv-parser");
+const bcrypt   = require("bcryptjs");
 
 const Tutor    = require("../models/Tutor");
 const Batch    = require("../models/Batch");
@@ -10,6 +11,7 @@ const Branch   = require("../models/Branch");
 const Category = require("../models/Category");
 const adminAuth = require("../middleware/adminAuth");
 const deleteBatchCascade = require("../utils/deleteBatchCascade");
+const { validateTutorRoleConfig } = require("../utils/tutorRoleRules");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -18,9 +20,34 @@ const upload = multer({ dest: "uploads/" });
 
 router.post("/tutors", adminAuth, async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-    const tutor = await Tutor.create({ name, email, password, role: role || 'tutor' });
-    res.json({ success: true, tutor });
+    // Role/batch/branch are REQUIRED at creation time — there is no more
+    // "create bare, assign later" path. The combination is validated against
+    // the same rules used by PATCH /tutors/:id/assign (see
+    // utils/tutorRoleRules.js), so an account can never be created in an
+    // inconsistent state:
+    //   tutor     -> batch AND branch required
+    //   hod       -> branch required, batch must be left blank
+    //   principal -> both left blank
+    const { name, email, password, role, batchId, branchId } = req.body;
+
+    if (!role) return res.status(400).json({ error: 'role is required (tutor, hod, or principal)' });
+
+    let finalBatch  = batchId  || null;
+    let finalBranch = branchId || null;
+
+    // Force the correct blanks for hod/principal even if stray ids were sent.
+    if (role === 'hod')       finalBatch = null;
+    if (role === 'principal') { finalBatch = null; finalBranch = null; }
+
+    const configError = validateTutorRoleConfig(role, finalBatch, finalBranch);
+    if (configError) return res.status(400).json({ error: configError });
+
+    const tutor = await Tutor.create({
+      name, email, password, role,
+      batch: finalBatch, branch: finalBranch,
+    });
+    const populated = await tutor.populate([{ path: 'batch', select: 'name' }, { path: 'branch', select: 'name' }]);
+    res.json({ success: true, tutor: populated });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
@@ -42,7 +69,12 @@ router.delete("/tutors/:id", adminAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// FIX: new endpoint — assign batch and/or branch to a tutor
+// Assign role and/or batch and/or branch to a tutor-side account.
+// Validates the RESULTING combination (existing values merged with this
+// update) against the rules in utils/tutorRoleRules.js before saving, so a
+// tutor can never end up half-configured (e.g. role 'tutor' with a batch
+// but no branch, or a leftover branch on an account just switched to
+// 'principal').
 router.patch("/tutors/:id/assign", adminAuth, async (req, res) => {
   try {
     const { batchId, branchId, role } = req.body;
@@ -61,25 +93,101 @@ router.patch("/tutors/:id/assign", adminAuth, async (req, res) => {
     if (role === 'hod')       update.batch = null;
     if (role === 'principal') { update.batch = null; update.branch = null; }
 
+    const existing = await Tutor.findById(req.params.id);
+    if (!existing) return res.status(404).json({ error: "Tutor not found" });
+
+    // Merge this update onto the existing account to see the FINAL shape,
+    // and validate that before writing anything.
+    const effectiveRole   = update.role   !== undefined ? update.role   : existing.role;
+    const effectiveBatch  = 'batch'  in update ? update.batch  : existing.batch;
+    const effectiveBranch = 'branch' in update ? update.branch : existing.branch;
+
+    const configError = validateTutorRoleConfig(effectiveRole, effectiveBatch, effectiveBranch);
+    if (configError) return res.status(400).json({ error: configError });
+
     const tutor = await Tutor.findByIdAndUpdate(req.params.id, update, { new: true })
       .populate("batch", "name").populate("branch", "name");
-    if (!tutor) return res.status(404).json({ error: "Tutor not found" });
     res.json({ success: true, tutor });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-router.post("/tutors/upload", adminAuth, upload.single("file"), (req, res) => {
+// CSV columns required: name, email, password, role (tutor/hod/principal),
+// batch (batch NAME, only for role=tutor), branch (branch NAME, for
+// role=tutor/hod). Same validation as single-tutor creation — a row that
+// doesn't satisfy its role's batch/branch shape is skipped and reported,
+// never silently created half-configured.
+router.post("/tutors/upload", adminAuth, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
   const results = [];
+
   fs.createReadStream(req.file.path)
     .pipe(csv())
     .on("data", (data) => results.push(data))
+    .on("error", (err) => {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      if (!res.headersSent) res.status(400).json({ error: `Failed to read CSV: ${err.message}` });
+    })
     .on("end", async () => {
       try {
-        const docs = results.map(r => ({ name: r.name, email: r.email, password: r.password }));
-        await Tutor.insertMany(docs, { ordered: false });
+        const allBatches  = await Batch.find();
+        const allBranches = await Branch.find();
+        const batchByName  = new Map(allBatches.map(b => [b.name.trim().toLowerCase(), b._id]));
+        const branchByName = new Map(allBranches.map(b => [b.name.trim().toLowerCase(), b._id]));
+
+        const docs = [];
+        const skipped = [];
+
+        for (const [i, r] of results.entries()) {
+          const rowLabel = `Row ${i + 2} (${r.email || r.name || 'unknown'})`; // +2: header row + 1-indexing
+          const role = (r.role || '').trim().toLowerCase();
+
+          if (!r.name || !r.email || !r.password) {
+            skipped.push(`${rowLabel}: missing name, email, or password`);
+            continue;
+          }
+
+          let batchId = null, branchId = null;
+
+          if (role === 'tutor' || role === 'hod') {
+            if (r.branch) {
+              branchId = branchByName.get(r.branch.trim().toLowerCase()) || null;
+              if (!branchId) { skipped.push(`${rowLabel}: branch "${r.branch}" not found`); continue; }
+            }
+          }
+          if (role === 'tutor') {
+            if (r.batch) {
+              batchId = batchByName.get(r.batch.trim().toLowerCase()) || null;
+              if (!batchId) { skipped.push(`${rowLabel}: batch "${r.batch}" not found`); continue; }
+            }
+          }
+
+          const configError = validateTutorRoleConfig(role, batchId, branchId);
+          if (configError) { skipped.push(`${rowLabel}: ${configError}`); continue; }
+
+          const hashedPassword = await bcrypt.hash(r.password, 10);
+          docs.push({
+            name: r.name.trim(),
+            email: r.email.trim(),
+            password: hashedPassword, // pre-hashed — insertMany skips the pre-save hashing hook
+            role,
+            batch: batchId,
+            branch: branchId,
+          });
+        }
+
+        let insertedCount = 0;
+        if (docs.length) {
+          const inserted = await Tutor.insertMany(docs, { ordered: false });
+          insertedCount = inserted.length;
+        }
+
         fs.unlinkSync(req.file.path);
-        res.json({ success: true, message: `${docs.length} tutors uploaded` });
+        res.json({
+          success: true,
+          message: `${insertedCount} tutor(s) uploaded${skipped.length ? `, ${skipped.length} skipped` : ''}`,
+          skipped,
+        });
       } catch (err) {
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.status(400).json({ error: err.message });
