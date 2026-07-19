@@ -150,30 +150,6 @@ const StudentLayout = () => {
         </div>
       </header>
 
-      {/* Hero greeting — scrolls normally beneath the fixed top bar */}
-      <header className="dashboard-header">
-        <div className="header-top">
-          <div className="avatar-group">
-            <button
-              className="avatar avatar-btn"
-              onClick={() => setAvatarEnlarged(true)}
-              aria-label="View profile photo"
-              type="button"
-            >
-              {profilePhoto ? (
-                <img src={profilePhoto} alt={userName} />
-              ) : (
-                <span className="avatar-fallback">{avatarInitials}</span>
-              )}
-            </button>
-            <div className="greeting">
-              <h1>Hello, {userName}</h1>
-              <p>Welcome back!</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Nested student pages */}
       <main className="dashboard-main">
         <Outlet />
