@@ -314,7 +314,7 @@ body, html {
   display: inline-block;
   flex-shrink: 0;
   position: relative;
-  top: 4px; /* nudge down slightly relative to the text */
+  top: 8px; /* nudge down slightly relative to the text */
 }
 
 /* =========================
