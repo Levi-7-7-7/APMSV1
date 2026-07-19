@@ -31,6 +31,33 @@ function AvatarThumb({ src, name, onClick }) {
   );
 }
 
+// Which activity-log actions each actor type can actually perform — used to
+// keep the "Action" filter from offering nonsensical combos like Students +
+// "Admin Login". Kept in sync with the action strings used across the
+// backend's logActivity(...) calls (see activity-points-backend/routes/*).
+const ACTIONS_BY_ACTOR = {
+  student: [
+    "student_login", "student_password_reset", "student_profile_photo_updated",
+    "certificate_uploaded", "certificate_deleted",
+  ],
+  tutor: [
+    "tutor_login", "tutor_password_reset", "tutor_profile_photo_updated",
+    "student_created", "student_deleted", "students_bulk_uploaded",
+    "certificate_approved", "certificate_rejected", "certificate_reassigned", "certificate_reverted_to_pending",
+  ],
+  admin: [
+    "admin_login", "admin_profile_photo_updated", "admin_created", "admin_deleted",
+    "student_created", "student_updated", "student_deleted",
+    "tutor_created", "tutor_deleted", "tutor_assigned", "tutors_bulk_uploaded",
+    "batch_created", "batch_deleted", "batch_students_deleted",
+    "branch_created", "branch_deleted",
+    "category_created", "category_updated", "category_deleted",
+    "subcategory_created", "subcategory_updated", "subcategory_deleted",
+    "level_created", "level_updated", "level_deleted",
+  ],
+  system: ["admin_created"],
+};
+
 export default function AdminPanel() {
   const navigate = useNavigate();
   const handleLogout = () => {
@@ -1650,7 +1677,15 @@ export default function AdminPanel() {
                     <select
                       className="ap-select"
                       value={logFilters.actorType}
-                      onChange={e => setLogFilters({ ...logFilters, actorType: e.target.value })}
+                      onChange={e => {
+                        const actorType = e.target.value;
+                        // Drop the chosen action if it's not something this
+                        // actor type can actually do (e.g. switching to
+                        // "Students" while "Admin Login" was selected).
+                        const stillValid = !logFilters.action || !actorType ||
+                          (ACTIONS_BY_ACTOR[actorType] || []).includes(logFilters.action);
+                        setLogFilters({ ...logFilters, actorType, action: stillValid ? logFilters.action : "" });
+                      }}
                     >
                       <option value="">Everyone</option>
                       <option value="admin">Admins</option>
@@ -1668,9 +1703,11 @@ export default function AdminPanel() {
                       onChange={e => setLogFilters({ ...logFilters, action: e.target.value })}
                     >
                       <option value="">All actions</option>
-                      {logActions.map(a => (
-                        <option key={a} value={a}>{a.replace(/_/g, " ")}</option>
-                      ))}
+                      {logActions
+                        .filter(a => !logFilters.actorType || (ACTIONS_BY_ACTOR[logFilters.actorType] || []).includes(a))
+                        .map(a => (
+                          <option key={a} value={a}>{a.replace(/_/g, " ")}</option>
+                        ))}
                     </select>
                   </div>
 
