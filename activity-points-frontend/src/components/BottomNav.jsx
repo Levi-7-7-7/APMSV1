@@ -13,12 +13,12 @@ export default function BottomNav() {
   const { pathname } = useLocation();
 
   return (
-    <div className="bottom-nav">
+    <div className="student-bottom-nav">
       {navItems.map(({ id, icon: Icon, label, path }) => (
         <button
           key={id}
           onClick={() => navigate(path)}
-          className={`nav-btn ${pathname === path ? 'active' : ''}`}
+          className={`student-nav-btn ${pathname === path ? 'active' : ''}`}
           type="button"
           aria-label={label}
         >

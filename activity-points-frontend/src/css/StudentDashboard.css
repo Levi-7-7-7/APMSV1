@@ -427,7 +427,7 @@
 }
 
 /* Bottom navigation */
-.bottom-nav {
+.student-bottom-nav {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -441,7 +441,7 @@
 }
 
 /* 🔑 THIS IS THE KEY */
-.nav-btn {
+.student-nav-btn {
   flex: 1; /* 👈 equal width for all buttons */
   display: flex;
   flex-direction: column;
@@ -458,13 +458,13 @@
   transition: color 0.2s ease;
 }
 
-.nav-btn span {
+.student-nav-btn span {
   margin-top: 4px;
   text-align: center;
   line-height: 1.1;
 }
 
-.nav-btn.active {
+.student-nav-btn.active {
   color: var(--blue-600);
   font-weight: 700;
 }
@@ -473,7 +473,7 @@
 /* On wider screens the nav moves to a fixed left sidebar, WhatsApp/Slack
    style. Phones (<=768px) keep the bottom bar. */
 @media (min-width: 769px) {
-  .bottom-nav {
+  .student-bottom-nav {
     top: 0;
     bottom: 0;
     left: 0;
@@ -490,7 +490,7 @@
     box-shadow: 2px 0 8px var(--shadow-color);
   }
 
-  .nav-btn {
+  .student-nav-btn {
     flex: none;
     flex-direction: row;
     align-items: center;
@@ -502,17 +502,17 @@
     line-height: 1;
   }
 
-  .nav-btn svg {
+  .student-nav-btn svg {
     flex-shrink: 0;
     display: block;
   }
 
-  .nav-btn span {
+  .student-nav-btn span {
     margin-top: 0;
     line-height: 1.2;
   }
 
-  .nav-btn.active {
+  .student-nav-btn.active {
     background: var(--blue-tint-100);
   }
 
