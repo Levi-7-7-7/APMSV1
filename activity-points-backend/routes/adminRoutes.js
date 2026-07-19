@@ -70,7 +70,7 @@ router.post("/tutors", adminAuth, async (req, res) => {
 router.get("/tutors", adminAuth, async (req, res) => {
   try {
     const tutors = await Tutor.find()
-      .select("name email createdAt batch branch role")
+      .select("name email createdAt batch branch role profilePhoto")
       .populate("batch",   "name")
       .populate("branch",  "name");
     res.json({ success: true, tutors });

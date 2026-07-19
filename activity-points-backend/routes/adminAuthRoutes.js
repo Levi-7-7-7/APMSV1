@@ -1,11 +1,24 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
+const path = require("path");
 const Admin = require("../models/Admin");
 const adminAuth = require("../middleware/adminAuth");
 const logActivity = require("../utils/activityLog");
+const imagekit = require("../utils/imagekit");
 
 const router = express.Router();
+
+// Memory-storage upload for profile photos (same pattern as tutor routes)
+const photoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files are allowed"));
+  },
+});
 
 // Admin Login
 router.post("/login", async (req, res) => {
@@ -38,6 +51,63 @@ router.post("/login", async (req, res) => {
     res.json({ success: true, token, email: admin.email });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Get the logged-in admin's own profile (email + photo)
+router.get("/me", adminAuth, async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.admin.id).select("email profilePhoto");
+    if (!admin) return res.status(404).json({ error: "Admin not found" });
+    res.json({ success: true, admin });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Upload / update the logged-in admin's own profile photo
+router.patch("/profile-photo", adminAuth, photoUpload.single("photo"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No photo file provided" });
+
+    const admin = await Admin.findById(req.admin.id).select("email profilePhoto profilePhotoFileId");
+    if (!admin) return res.status(404).json({ error: "Admin not found" });
+
+    // Delete old image from ImageKit if it exists
+    if (admin.profilePhotoFileId) {
+      try { await imagekit.deleteFile(admin.profilePhotoFileId); } catch (_) {}
+    }
+
+    const extension = path.extname(req.file.originalname) || ".jpg";
+    const fileName = `admin_${req.admin.id}_${Date.now()}${extension}`;
+
+    const uploadResponse = await imagekit.upload({
+      file: req.file.buffer,
+      fileName,
+      folder: "/admin-profiles",
+      useUniqueFileName: false,
+    });
+
+    admin.profilePhoto = uploadResponse.url;
+    admin.profilePhotoFileId = uploadResponse.fileId;
+    await admin.save();
+
+    logActivity({
+      req,
+      actorType: "admin",
+      actorId: req.admin.id,
+      actorEmail: admin.email,
+      action: "admin_profile_photo_updated",
+      description: `${admin.email} updated their profile photo`,
+      targetType: "Admin",
+      targetId: admin._id,
+      targetName: admin.email,
+    });
+
+    res.json({ success: true, profilePhoto: uploadResponse.url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Profile photo upload failed" });
   }
 });
 
@@ -101,10 +171,10 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// List all admins (id + email only — never the password hash)
+// List all admins (id + email + photo only — never the password hash)
 router.get("/admins", adminAuth, async (req, res) => {
   try {
-    const admins = await Admin.find().select("email").sort({ email: 1 });
+    const admins = await Admin.find().select("email profilePhoto").sort({ email: 1 });
     res.json({ success: true, admins });
   } catch (err) {
     res.status(500).json({ error: err.message });

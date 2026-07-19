@@ -5,9 +5,31 @@ import * as XLSX from "xlsx";
 import {
   UserPlus, FilePlus, Download, Edit2, Trash2, Plus,
   LogOut, Link2, Users, Layers, GitBranch, Tag, Shield, Search, ArrowRightLeft,
-  History, Filter, ChevronLeft, ChevronRight, MoreVertical
+  History, Filter, ChevronLeft, ChevronRight, MoreVertical, Camera, Loader2, X
 } from "lucide-react";
+import PhotoCropModal from "../components/PhotoCropModal";
 import "../css/AdminPanel.css";
+
+// Small circular avatar used throughout the panel (admin/tutor/student
+// tables + the top bar) — shows the photo if there is one, otherwise
+// initials derived from a name or email.
+function getInitials(nameOrEmail) {
+  return (nameOrEmail || "?")
+    .split(/[\s@.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0])
+    .join("")
+    .toUpperCase();
+}
+
+function AvatarThumb({ src, name, onClick }) {
+  return (
+    <button type="button" className="ap-avatar-thumb" onClick={onClick} aria-label={`View ${name || "profile"} photo`}>
+      {src ? <img src={src} alt={name || "Profile"}/> : <span>{getInitials(name)}</span>}
+    </button>
+  );
+}
 
 export default function AdminPanel() {
   const navigate = useNavigate();
@@ -15,14 +37,7 @@ export default function AdminPanel() {
 
   // Admin identity for the top bar (email stored at login time)
   const adminEmail = localStorage.getItem("adminEmail") || "Admin";
-  const adminInitials = adminEmail
-    .split("@")[0]
-    .split(/[.\s_-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(w => w[0])
-    .join("")
-    .toUpperCase() || "A";
+  const adminInitials = getInitials(adminEmail);
 
   // Three-dot top bar menu — closes on outside click or Escape
   const [menuOpen, setMenuOpen] = useState(false);
@@ -38,6 +53,51 @@ export default function AdminPanel() {
       document.removeEventListener("keydown", onKey);
     };
   }, [menuOpen]);
+
+  // ── Admin's own profile photo ──
+  const [adminPhoto, setAdminPhoto] = useState(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const [pendingAdminPhoto, setPendingAdminPhoto] = useState(null); // file picked, pre-crop
+  const adminPhotoInputRef = useRef(null);
+
+  useEffect(() => {
+    adminAxios.get("/admin/auth/me")
+      .then(res => setAdminPhoto(res.data?.admin?.profilePhoto ?? null))
+      .catch(() => {});
+  }, []);
+
+  const handleAdminPhotoClick = () => { if (!photoUploading) adminPhotoInputRef.current?.click(); };
+
+  const handleAdminPhotoFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (adminPhotoInputRef.current) adminPhotoInputRef.current.value = "";
+    if (!file) return;
+    setPhotoError("");
+    setPendingAdminPhoto(file);
+  };
+
+  const confirmAdminPhotoUpload = async (croppedFile) => {
+    setPhotoError("");
+    setPhotoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("photo", croppedFile);
+      const res = await adminAxios.patch("/admin/auth/profile-photo", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setAdminPhoto(res.data.profilePhoto);
+      setPendingAdminPhoto(null);
+    } catch (err) {
+      setPhotoError(err.response?.data?.error || "Could not upload photo. Please try again.");
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
+  // ── Shared "tap to enlarge" viewer for any profile photo in the panel
+  // (admin's own, other admins, tutors, students) ──
+  const [viewerPhoto, setViewerPhoto] = useState(null); // { src, initials, label }
 
   // Decode the logged-in admin's own id from their JWT (no library needed —
   // just reading the payload) so we can flag "You" in the admins list and
@@ -584,8 +644,25 @@ export default function AdminPanel() {
 
       {/* ── Fixed WhatsApp-style top bar: avatar, admin name, current page title, three-dot menu ── */}
       <header className="ap-topbar">
-        <div className="ap-topbar-avatar" aria-hidden="true">
-          <span>{adminInitials}</span>
+        <div className="ap-topbar-avatar-wrap">
+          <button
+            className="ap-topbar-avatar"
+            onClick={() => adminPhoto ? setViewerPhoto({ src: adminPhoto, name: adminEmail }) : handleAdminPhotoClick()}
+            aria-label={adminPhoto ? "View profile photo" : "Add profile photo"}
+            type="button"
+          >
+            {adminPhoto ? <img src={adminPhoto} alt={adminEmail}/> : <span>{adminInitials}</span>}
+          </button>
+          <button
+            className="ap-topbar-avatar-camera"
+            onClick={handleAdminPhotoClick}
+            disabled={photoUploading}
+            aria-label="Change profile photo"
+            type="button"
+          >
+            {photoUploading ? <Loader2 size={10} className="spin"/> : <Camera size={10}/>}
+          </button>
+          <input ref={adminPhotoInputRef} type="file" accept="image/*" hidden onChange={handleAdminPhotoFileChange}/>
         </div>
 
         <span className="ap-topbar-title">{adminEmail}</span>
@@ -606,6 +683,10 @@ export default function AdminPanel() {
 
           {menuOpen && (
             <div className="ap-topbar-dropdown" role="menu">
+              <button role="menuitem" type="button" onClick={() => { setMenuOpen(false); handleAdminPhotoClick(); }}>
+                <Camera size={16}/>
+                <span>{adminPhoto ? "Change Photo" : "Add Photo"}</span>
+              </button>
               <button role="menuitem" type="button" onClick={() => { setMenuOpen(false); exportExcel(); }}>
                 <Download size={16}/>
                 <span>Export Tutors</span>
@@ -829,11 +910,12 @@ export default function AdminPanel() {
                 {students.length === 0 ? <div className="ap-empty">No students found.</div> : (
                   <table className="ap-table">
                     <thead><tr>
-                      <th>Name</th><th>Register No.</th><th>Email</th><th>Batch</th><th>Branch</th><th>Lateral Entry</th><th>Points</th><th>Actions</th>
+                      <th>Photo</th><th>Name</th><th>Register No.</th><th>Email</th><th>Batch</th><th>Branch</th><th>Lateral Entry</th><th>Points</th><th>Actions</th>
                     </tr></thead>
                     <tbody>
                       {students.map(s => (
                         <tr key={s._id}>
+                          <td><AvatarThumb src={s.profilePhoto} name={s.name} onClick={() => setViewerPhoto({ src: s.profilePhoto, name: s.name })}/></td>
                           <td style={{ fontWeight: 600 }}>{s.name}</td>
                           <td style={{ color: "var(--ap-muted)" }}>{s.registerNumber}</td>
                           <td style={{ color: "var(--ap-muted)" }}>{s.email}</td>
@@ -985,11 +1067,12 @@ export default function AdminPanel() {
                 {tutors.length === 0 ? <div className="ap-empty">No tutors yet. Add one above.</div> : (
                   <table className="ap-table">
                     <thead><tr>
-                      <th>Name</th><th>Email</th><th>Role</th><th>Batch</th><th>Branch</th><th>Actions</th>
+                      <th>Photo</th><th>Name</th><th>Email</th><th>Role</th><th>Batch</th><th>Branch</th><th>Actions</th>
                     </tr></thead>
                     <tbody>
                       {tutors.map(t => (
                         <tr key={t._id}>
+                          <td><AvatarThumb src={t.profilePhoto} name={t.name} onClick={() => setViewerPhoto({ src: t.profilePhoto, name: t.name })}/></td>
                           <td style={{ fontWeight: 600 }}>{t.name}</td>
                           <td style={{ color: "var(--ap-muted)" }}>{t.email}</td>
                           <td>
@@ -1344,10 +1427,11 @@ export default function AdminPanel() {
               <div className="ap-table-wrap">
                 {admins.length === 0 ? <div className="ap-empty">No admins found.</div> : (
                   <table className="ap-table">
-                    <thead><tr><th>Email</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>Photo</th><th>Email</th><th>Actions</th></tr></thead>
                     <tbody>
                       {admins.map(a => (
                         <tr key={a._id}>
+                          <td><AvatarThumb src={a.profilePhoto} name={a.email} onClick={() => setViewerPhoto({ src: a.profilePhoto, name: a.email })}/></td>
                           <td style={{ fontWeight: 600 }}>
                             {a.email}{a._id === currentAdminId && <span className="ap-badge assigned" style={{ marginLeft: "0.5rem" }}>You</span>}
                           </td>
@@ -1510,6 +1594,33 @@ export default function AdminPanel() {
         )}
 
       </div>
+
+      {/* Crop tool shown before confirming a newly picked admin photo */}
+      <PhotoCropModal
+        file={pendingAdminPhoto}
+        uploading={photoUploading}
+        error={photoError}
+        onCancel={() => setPendingAdminPhoto(null)}
+        onConfirm={confirmAdminPhotoUpload}
+      />
+
+      {/* Tap-to-enlarge viewer, shared by the top bar avatar and every
+          photo thumbnail in the students/tutors/admins tables */}
+      {viewerPhoto && (
+        <div className="ap-avatar-lightbox" onClick={() => setViewerPhoto(null)} role="dialog" aria-modal="true">
+          <button className="ap-avatar-lightbox-close" onClick={() => setViewerPhoto(null)} aria-label="Close" type="button">
+            <X size={22}/>
+          </button>
+          <div className="ap-avatar-lightbox-content" onClick={e => e.stopPropagation()}>
+            {viewerPhoto.src ? (
+              <img src={viewerPhoto.src} alt={viewerPhoto.name || "Profile"}/>
+            ) : (
+              <span className="ap-avatar-fallback-lg">{getInitials(viewerPhoto.name)}</span>
+            )}
+          </div>
+          {viewerPhoto.name && <p className="ap-avatar-lightbox-label">{viewerPhoto.name}</p>}
+        </div>
+      )}
     </div>
   );
 }

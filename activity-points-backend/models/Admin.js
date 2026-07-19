@@ -3,7 +3,9 @@ const bcrypt = require("bcryptjs");
 
 const adminSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
+  password: { type: String, required: true },
+  profilePhoto: { type: String, default: null },
+  profilePhotoFileId: { type: String, default: null },
 });
 
 // hash password

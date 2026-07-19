@@ -35,7 +35,7 @@ router.get('/students', adminAuth, async (req, res) => {
     }
 
     const students = await Student.find(filter)
-      .select('name registerNumber email batch branch isLateralEntry totalPoints createdAt')
+      .select('name registerNumber email batch branch isLateralEntry totalPoints createdAt profilePhoto')
       .populate('batch', 'name')
       .populate('branch', 'name')
       .sort({ name: 1 });
