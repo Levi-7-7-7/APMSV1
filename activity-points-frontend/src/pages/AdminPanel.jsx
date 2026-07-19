@@ -5,13 +5,39 @@ import * as XLSX from "xlsx";
 import {
   UserPlus, FilePlus, Download, Edit2, Trash2, Plus,
   LogOut, Link2, Users, Layers, GitBranch, Tag, Shield, Search, ArrowRightLeft,
-  History, Filter, ChevronLeft, ChevronRight
+  History, Filter, ChevronLeft, ChevronRight, MoreVertical
 } from "lucide-react";
 import "../css/AdminPanel.css";
 
 export default function AdminPanel() {
   const navigate = useNavigate();
-  const handleLogout = () => { localStorage.removeItem("adminToken"); navigate("/"); };
+  const handleLogout = () => { localStorage.removeItem("adminToken"); localStorage.removeItem("adminEmail"); navigate("/"); };
+
+  // Admin identity for the top bar (email stored at login time)
+  const adminEmail = localStorage.getItem("adminEmail") || "Admin";
+  const adminInitials = adminEmail
+    .split("@")[0]
+    .split(/[.\s_-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0])
+    .join("")
+    .toUpperCase() || "A";
+
+  // Three-dot top bar menu — closes on outside click or Escape
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClick = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setMenuOpen(false); };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
 
   // Decode the logged-in admin's own id from their JWT (no library needed —
   // just reading the payload) so we can flag "You" in the admins list and
@@ -551,29 +577,53 @@ export default function AdminPanel() {
     { id: "logs",       label: "Activity Log", icon: <History size={15}/> },
   ];
 
+  const currentTabLabel = tabs.find(t => t.id === tab)?.label || "Dashboard";
+
   return (
     <div className="admin-panel">
 
-      {/* ── Top Bar ── */}
-      <div className="ap-topbar">
-        <div className="ap-brand">
-          <div className="ap-brand-icon"><Shield size={18}/></div>
-          <div className="ap-brand-text">
-            <h1>Admin Panel</h1>
-            <p>Activity Points Management System</p>
-          </div>
+      {/* ── Fixed WhatsApp-style top bar: avatar, admin name, current page title, three-dot menu ── */}
+      <header className="ap-topbar">
+        <div className="ap-topbar-avatar" aria-hidden="true">
+          <span>{adminInitials}</span>
         </div>
-        <div className="ap-topbar-actions">
-          <button className="ap-btn" onClick={exportExcel}><Download size={15}/> Export Tutors</button>
-          <button className="ap-btn logout" onClick={handleLogout}><LogOut size={15}/> Logout</button>
-        </div>
-      </div>
 
-      {/* ── Tab Nav ── */}
+        <span className="ap-topbar-title">{adminEmail}</span>
+
+        <span className="ap-topbar-page-title">{currentTabLabel}</span>
+
+        <div className="ap-topbar-menu" ref={menuRef}>
+          <button
+            className="ap-topbar-menu-btn"
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="More options"
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+            type="button"
+          >
+            <MoreVertical size={22}/>
+          </button>
+
+          {menuOpen && (
+            <div className="ap-topbar-dropdown" role="menu">
+              <button role="menuitem" type="button" onClick={() => { setMenuOpen(false); exportExcel(); }}>
+                <Download size={16}/>
+                <span>Export Tutors</span>
+              </button>
+              <button role="menuitem" type="button" className="danger" onClick={() => { setMenuOpen(false); handleLogout(); }}>
+                <LogOut size={16}/>
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* ── Nav: left sidebar on desktop/tablet, bottom bar on mobile ── */}
       <nav className="ap-nav">
         {tabs.map(t => (
           <button key={t.id} className={`ap-tab ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
-            {t.icon} {t.label}
+            {t.icon} <span>{t.label}</span>
           </button>
         ))}
       </nav>

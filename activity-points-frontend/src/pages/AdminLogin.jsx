@@ -18,6 +18,7 @@ export default function AdminLogin() {
     try {
       const res = await axios.post(`${API_BASE}/admin/auth/login`, { email, password });
       localStorage.setItem("adminToken", res.data.token);
+      localStorage.setItem("adminEmail", res.data.email || email);
       navigate("/admin");
     } catch (err) {
       setError(err.response?.data?.error || "Login failed");

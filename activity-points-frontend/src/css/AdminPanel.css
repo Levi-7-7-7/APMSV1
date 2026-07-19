@@ -92,92 +92,149 @@ button,
   overflow-x: hidden;
 }
 
-/* ── Header ── */
+/* ============================================================
+   FIXED TOP BAR — WhatsApp-style, same pattern as the tutor/student
+   sections: avatar, name, current page title, three-dot menu.
+   ============================================================ */
 .ap-topbar {
-  background: var(--ap-surface);
-  border-bottom: 1px solid var(--ap-border);
-
-  padding: 0 2rem;
-  height: 64px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
-
-  box-shadow: 0 1px 8px rgba(0,0,0,.06);
-}
-
-.ap-brand {
+  left: 0;
+  right: 0;
+  height: 56px;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-
-  min-width: 0;
+  padding: 0 1rem;
+  background: var(--ap-surface);
+  border-bottom: 1px solid var(--ap-border);
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  z-index: 300;
 }
 
-.ap-brand-icon {
-  width: 36px;
-  height: 36px;
-
+.ap-topbar-avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
   background: linear-gradient(135deg, var(--blue-600), #7c3aed);
-
-  border-radius: 10px;
-
+  color: var(--on-color);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
 
-  color: var(--on-color);
-  font-weight: 800;
+.ap-topbar-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
   font-size: 1rem;
+  color: var(--ap-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
+.ap-topbar-page-title {
+  flex: 0 1 auto;
+  max-width: 42vw;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--ap-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+.ap-topbar-menu {
+  position: relative;
   flex-shrink: 0;
 }
 
-.ap-brand-text {
-  min-width: 0;
-}
-
-.ap-brand-text h1 {
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin: 0;
+.ap-topbar-menu-btn {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  margin: -8px;
+  border-radius: 50%;
   color: var(--ap-text);
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ap-brand-text p {
-  font-size: 0.75rem;
-  color: var(--ap-muted);
-  margin: 0;
-}
-
-.ap-topbar-actions {
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-
-  flex-wrap: wrap;
+  justify-content: center;
+  transition: background-color .15s ease;
 }
 
-/* ── Tab Navigation ── */
-.ap-nav {
+.ap-topbar-menu-btn:hover,
+.ap-topbar-menu-btn:active {
+  background-color: var(--ap-light);
+}
+
+.ap-topbar-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 180px;
   background: var(--ap-surface);
-  border-bottom: 1px solid var(--ap-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  border: 1px solid var(--ap-border);
+  overflow: hidden;
+  animation: ap-dropdown-in .15s ease;
+  z-index: 310;
+}
 
-  padding: 0 2rem;
+@keyframes ap-dropdown-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
 
+.ap-topbar-dropdown button {
   display: flex;
-  overflow-x: auto;
-  overflow-y: hidden;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ap-text);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color .15s ease;
+}
 
+.ap-topbar-dropdown button:hover {
+  background-color: var(--ap-light);
+}
+
+.ap-topbar-dropdown button.danger {
+  color: var(--red-600);
+}
+
+/* ============================================================
+   NAV — bottom bar on mobile, fixed left sidebar on desktop/tablet.
+   Same treatment as the tutor section's tutor-nav-sidebar.
+   ============================================================ */
+.ap-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--ap-surface);
+  border-top: 1px solid var(--ap-border);
+  display: flex;
+  justify-content: space-around;
+  padding: 0.5rem 0.35rem;
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -2px 12px rgba(0,0,0,.06);
+  z-index: 200;
+  overflow-x: auto;
   scrollbar-width: none;
 }
 
@@ -186,30 +243,32 @@ button,
 }
 
 .ap-tab {
-  padding: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1 1 0;
+  min-width: 56px;
 
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: 0.4rem 0.3rem;
+  border-radius: 8px;
 
+  font-size: 0.62rem;
+  font-weight: 600;
   color: var(--ap-muted);
 
   background: none;
   border: none;
-  border-bottom: 3px solid transparent;
-
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.15;
 
-  transition:
-    color .15s,
-    border-color .15s,
-    background .15s;
+  transition: color .15s, background .15s;
+}
 
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-
-  min-height: 48px;
+.ap-tab span {
+  line-height: 1.15;
 }
 
 .ap-tab:hover {
@@ -219,8 +278,52 @@ button,
 
 .ap-tab.active {
   color: var(--ap-primary);
-  border-bottom-color: var(--ap-primary);
-  font-weight: 600;
+  font-weight: 700;
+  background: var(--blue-tint-50);
+}
+
+/* Desktop / tablet: nav becomes a fixed left sidebar, WhatsApp/Slack
+   style — same breakpoint and treatment as the tutor section. */
+@media (min-width: 769px) {
+  .ap-nav {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: 220px;
+    height: 100vh;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 88px 12px 24px 12px;
+    border-top: none;
+    border-right: 1px solid var(--ap-border);
+    box-shadow: 2px 0 8px rgba(0,0,0,.06);
+    overflow-x: visible;
+    overflow-y: auto;
+  }
+
+  .ap-tab {
+    flex: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .ap-tab svg {
+    flex-shrink: 0;
+  }
+
+  .ap-topbar {
+    left: 220px;
+  }
 }
 
 /* ── Modal (e.g. Move Student) — bottom sheet on mobile, centered dialog on desktop ── */
@@ -297,8 +400,19 @@ button,
 .ap-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: calc(56px + 1.5rem) 1.5rem 6rem 1.5rem; /* clear fixed top bar + bottom nav */
   width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+  .admin-panel {
+    margin-left: 220px; /* room for the fixed left sidebar */
+  }
+
+  .ap-content {
+    padding: calc(56px + 2rem) 2rem 2rem 2rem;
+  }
 }
 
 /* ── Toast ── */
@@ -1060,67 +1174,19 @@ textarea:focus {
 
 @media (max-width: 640px) {
 
-  .ap-topbar {
-    padding: 0.65rem 0.85rem;
-
-    height: auto;
-    min-height: 60px;
-
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .ap-brand {
-    width: 100%;
-  }
-
-  .ap-brand-text h1 {
-    font-size: 0.92rem;
-  }
-
-  .ap-brand-text p {
-    display: none;
-  }
-
-  .ap-topbar-actions {
-    width: 100%;
-    justify-content: flex-end;
+  .ap-topbar-page-title {
+    max-width: 34vw;
   }
 
   .ap-nav {
-    padding: 0 0.4rem;
+    padding: 0.35rem 0.25rem;
+    padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
   }
 
   .ap-tab {
-    padding: 0.8rem 0.9rem;
-    font-size: 0.8rem;
-  }
-
-  /* All 5 tabs visible at once as an equal-width strip, instead of a
-     horizontally-scrolling row where only 2-3 fit in view at a time */
-  .ap-nav {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    overflow-x: visible;
-    padding: 0.35rem 0.35rem 0;
-    gap: 2px;
-  }
-
-  .ap-tab {
-    flex-direction: column;
-    gap: 0.2rem;
-
-    padding: 0.55rem 0.2rem;
-    font-size: 0.62rem;
-    font-weight: 600;
-
-    min-height: 52px;
-    white-space: normal;
-    text-align: center;
-    line-height: 1.15;
-
-    border-bottom-width: 2px;
-    border-radius: 6px 6px 0 0;
+    padding: 0.4rem 0.15rem;
+    font-size: 0.58rem;
+    min-width: 48px;
   }
 
   .ap-tab svg {
@@ -1128,7 +1194,7 @@ textarea:focus {
   }
 
   .ap-content {
-    padding: 0.85rem;
+    padding: calc(56px + 0.85rem) 0.85rem 6.5rem 0.85rem;
   }
 
   .ap-grid-2 {
