@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/Admin");
 const adminAuth = require("../middleware/adminAuth");
+const logActivity = require("../utils/activityLog");
 
 const router = express.Router();
 
@@ -21,6 +22,18 @@ router.post("/login", async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: admin._id,
+      actorEmail: admin.email,
+      action: 'admin_login',
+      description: `Admin ${admin.email} logged in`,
+      targetType: 'Admin',
+      targetId: admin._id,
+      targetName: admin.email,
+    });
 
     res.json({ success: true, token });
   } catch (err) {
@@ -51,6 +64,19 @@ router.post("/register", async (req, res) => {
         const exists = await Admin.findOne({ email });
         if (exists) return res.status(400).json({ error: "Admin already exists" });
         const admin = await Admin.create({ email, password });
+
+        logActivity({
+          req,
+          actorType: 'admin',
+          actorId: req.admin?.id,
+          actorEmail: req.admin?.email,
+          action: 'admin_created',
+          description: `Admin created a new admin account (${email})`,
+          targetType: 'Admin',
+          targetId: admin._id,
+          targetName: email,
+        });
+
         res.json({ success: true, message: "Admin created", id: admin._id });
       });
     }
@@ -58,6 +84,17 @@ router.post("/register", async (req, res) => {
     // No admins exist yet — allow one unauthenticated bootstrap registration.
     const { email, password } = req.body;
     const admin = await Admin.create({ email, password });
+
+    logActivity({
+      req,
+      actorType: 'system',
+      action: 'admin_created',
+      description: `First admin account created (${email}) via bootstrap registration`,
+      targetType: 'Admin',
+      targetId: admin._id,
+      targetName: email,
+    });
+
     res.json({ success: true, message: "First admin account created", id: admin._id });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -86,6 +123,19 @@ router.delete("/admins/:id", adminAuth, async (req, res) => {
     }
     const deleted = await Admin.findByIdAndDelete(req.params.id);
     if (!deleted) return res.status(404).json({ error: "Admin not found" });
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'admin_deleted',
+      description: `Admin ${req.admin?.email || req.admin?.id} deleted admin account (${deleted.email})`,
+      targetType: 'Admin',
+      targetId: deleted._id,
+      targetName: deleted.email,
+    });
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -19,6 +19,7 @@ const certificateRoutes = require('./routes/certificateRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const adminAuthRoutes = require('./routes/adminAuthRoutes');
 const adminStudentRoutes = require('./routes/adminStudentRoutes');
+const adminLogRoutes = require('./routes/adminLogRoutes');
 
 const path = require('path');
 
@@ -70,6 +71,9 @@ app.use('/api/admin/auth', adminAuthRoutes);
 // Admin management (tutors, batches, branches, categories)
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin', adminStudentRoutes);
+
+// Admin-only, read-only activity log (view + CSV export)
+app.use('/api/admin', adminLogRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

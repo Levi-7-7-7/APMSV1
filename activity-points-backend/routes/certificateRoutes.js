@@ -4,6 +4,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const imagekit = require('../utils/imagekit');
 const Certificate = require('../models/Certificate');
+const logActivity = require('../utils/activityLog');
 const {
   uploadCertificate,
   getMyCertificates
@@ -46,6 +47,17 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     }
 
     await Certificate.findByIdAndDelete(req.params.id);
+
+    logActivity({
+      req,
+      actorType: 'student',
+      actorId: req.user.id,
+      action: 'certificate_deleted',
+      description: `Student cancelled/deleted certificate "${cert.eventName || cert.subcategory || ''}"`,
+      targetType: 'Certificate',
+      targetId: cert._id,
+      targetName: cert.eventName || cert.subcategory,
+    });
 
     res.json({ success: true, message: 'Certificate cancelled and deleted' });
   } catch (err) {

@@ -12,6 +12,7 @@ const Category = require("../models/Category");
 const adminAuth = require("../middleware/adminAuth");
 const deleteBatchCascade = require("../utils/deleteBatchCascade");
 const { validateTutorRoleConfig } = require("../utils/tutorRoleRules");
+const logActivity = require("../utils/activityLog");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -47,6 +48,20 @@ router.post("/tutors", adminAuth, async (req, res) => {
       batch: finalBatch, branch: finalBranch,
     });
     const populated = await tutor.populate([{ path: 'batch', select: 'name' }, { path: 'branch', select: 'name' }]);
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'tutor_created',
+      description: `Admin created ${role} account ${name} (${email})`,
+      targetType: 'Tutor',
+      targetId: tutor._id,
+      targetName: name,
+      meta: { role },
+    });
+
     res.json({ success: true, tutor: populated });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -64,7 +79,20 @@ router.get("/tutors", adminAuth, async (req, res) => {
 
 router.delete("/tutors/:id", adminAuth, async (req, res) => {
   try {
-    await Tutor.findByIdAndDelete(req.params.id);
+    const deleted = await Tutor.findByIdAndDelete(req.params.id);
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'tutor_deleted',
+      description: `Admin deleted tutor account${deleted ? ` ${deleted.name} (${deleted.email})` : ''}`,
+      targetType: 'Tutor',
+      targetId: req.params.id,
+      targetName: deleted?.name || null,
+    });
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -107,6 +135,20 @@ router.patch("/tutors/:id/assign", adminAuth, async (req, res) => {
 
     const tutor = await Tutor.findByIdAndUpdate(req.params.id, update, { new: true })
       .populate("batch", "name").populate("branch", "name");
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'tutor_assigned',
+      description: `Admin updated tutor ${tutor?.name || req.params.id}${role ? ` — role set to ${role}` : ''}${tutor?.batch ? `, batch: ${tutor.batch.name}` : ''}${tutor?.branch ? `, branch: ${tutor.branch.name}` : ''}`,
+      targetType: 'Tutor',
+      targetId: req.params.id,
+      targetName: tutor?.name,
+      meta: update,
+    });
+
     res.json({ success: true, tutor });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -183,6 +225,17 @@ router.post("/tutors/upload", adminAuth, upload.single("file"), async (req, res)
         }
 
         fs.unlinkSync(req.file.path);
+
+        logActivity({
+          req,
+          actorType: 'admin',
+          actorId: req.admin?.id,
+          actorEmail: req.admin?.email,
+          action: 'tutors_bulk_uploaded',
+          description: `Admin uploaded ${insertedCount} tutor(s) via CSV${skipped.length ? ` (${skipped.length} skipped)` : ''}`,
+          meta: { count: insertedCount, skipped: skipped.length },
+        });
+
         res.json({
           success: true,
           message: `${insertedCount} tutor(s) uploaded${skipped.length ? `, ${skipped.length} skipped` : ''}`,
@@ -200,6 +253,19 @@ router.post("/tutors/upload", adminAuth, upload.single("file"), async (req, res)
 router.post("/batches", adminAuth, async (req, res) => {
   try {
     const b = await Batch.create({ name: req.body.name });
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'batch_created',
+      description: `Admin created batch "${b.name}"`,
+      targetType: 'Batch',
+      targetId: b._id,
+      targetName: b.name,
+    });
+
     res.json({ success: true, batch: b });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -214,7 +280,20 @@ router.get("/batches", adminAuth, async (req, res) => {
 // FIX: delete was defined here but not wired in UI — now UI calls it correctly
 router.delete("/batches/:id", adminAuth, async (req, res) => {
   try {
-    await Batch.findByIdAndDelete(req.params.id);
+    const deleted = await Batch.findByIdAndDelete(req.params.id);
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'batch_deleted',
+      description: `Admin deleted batch${deleted ? ` "${deleted.name}"` : ''}`,
+      targetType: 'Batch',
+      targetId: req.params.id,
+      targetName: deleted?.name,
+    });
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -233,6 +312,19 @@ router.delete("/batches/:id/students", adminAuth, async (req, res) => {
     const { branch } = req.query;
     const result = await deleteBatchCascade(req.params.id, branch || null);
     if (!result) return res.status(404).json({ error: "Batch not found" });
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'batch_students_deleted',
+      description: `Admin deleted ${result.deletedCount} student(s) from ${result.batch.name}${result.branch ? ` (${result.branch.name})` : ""}`,
+      targetType: 'Batch',
+      targetId: req.params.id,
+      targetName: result.batch.name,
+      meta: { deletedCount: result.deletedCount, branch: result.branch?.name || null },
+    });
 
     res.json({
       success: true,
@@ -253,6 +345,19 @@ router.delete("/batches/:id/students", adminAuth, async (req, res) => {
 router.post("/branches", adminAuth, async (req, res) => {
   try {
     const br = await Branch.create({ name: req.body.name });
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'branch_created',
+      description: `Admin created branch "${br.name}"`,
+      targetType: 'Branch',
+      targetId: br._id,
+      targetName: br.name,
+    });
+
     res.json({ success: true, branch: br });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -267,7 +372,20 @@ router.get("/branches", adminAuth, async (req, res) => {
 // FIX: delete was defined here but not wired in UI — now UI calls it correctly
 router.delete("/branches/:id", adminAuth, async (req, res) => {
   try {
-    await Branch.findByIdAndDelete(req.params.id);
+    const deleted = await Branch.findByIdAndDelete(req.params.id);
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'branch_deleted',
+      description: `Admin deleted branch${deleted ? ` "${deleted.name}"` : ''}`,
+      targetType: 'Branch',
+      targetId: req.params.id,
+      targetName: deleted?.name,
+    });
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -285,6 +403,14 @@ router.post("/categories", adminAuth, async (req, res) => {
   try {
     const { name, description, maxPoints, minDuration } = req.body;
     const cat = await Category.create({ name, description, maxPoints, minDuration, subcategories: [] });
+
+    logActivity({
+      req, actorType: 'admin', actorId: req.admin?.id, actorEmail: req.admin?.email,
+      action: 'category_created',
+      description: `Admin created category "${cat.name}"`,
+      targetType: 'Category', targetId: cat._id, targetName: cat.name,
+    });
+
     res.json({ success: true, category: cat });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -292,13 +418,29 @@ router.post("/categories", adminAuth, async (req, res) => {
 router.put("/categories/:id", adminAuth, async (req, res) => {
   try {
     const cat = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+    logActivity({
+      req, actorType: 'admin', actorId: req.admin?.id, actorEmail: req.admin?.email,
+      action: 'category_updated',
+      description: `Admin updated category "${cat?.name}"`,
+      targetType: 'Category', targetId: req.params.id, targetName: cat?.name,
+    });
+
     res.json({ success: true, category: cat });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
 router.delete("/categories/:id", adminAuth, async (req, res) => {
   try {
-    await Category.findByIdAndDelete(req.params.id);
+    const deleted = await Category.findByIdAndDelete(req.params.id);
+
+    logActivity({
+      req, actorType: 'admin', actorId: req.admin?.id, actorEmail: req.admin?.email,
+      action: 'category_deleted',
+      description: `Admin deleted category${deleted ? ` "${deleted.name}"` : ''}`,
+      targetType: 'Category', targetId: req.params.id, targetName: deleted?.name,
+    });
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -310,6 +452,15 @@ router.post("/categories/:id/subcategory", adminAuth, async (req, res) => {
     if (!cat) return res.status(404).json({ error: "Category not found" });
     cat.subcategories.push({ name, fixedPoints: Number(points), maxPoints: null, levels: [] });
     await cat.save();
+
+    logActivity({
+      req, actorType: 'admin', actorId: req.admin?.id, actorEmail: req.admin?.email,
+      action: 'subcategory_created',
+      description: `Admin added subcategory "${name}" to category "${cat.name}"`,
+      targetType: 'Category', targetId: cat._id, targetName: cat.name,
+      meta: { subcategory: name, points },
+    });
+
     res.json({ success: true, category: cat });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -319,8 +470,18 @@ router.delete("/categories/:categoryId/subcategory/:subId", adminAuth, async (re
     const cat = await Category.findById(req.params.categoryId);
     if (!cat) return res.status(404).json({ error: "Category not found" });
     const sub = cat.subcategories.id(req.params.subId);
+    const subName = sub?.name;
     if (sub) sub.deleteOne();
     await cat.save();
+
+    logActivity({
+      req, actorType: 'admin', actorId: req.admin?.id, actorEmail: req.admin?.email,
+      action: 'subcategory_deleted',
+      description: `Admin deleted subcategory "${subName}" from category "${cat.name}"`,
+      targetType: 'Category', targetId: cat._id, targetName: cat.name,
+      meta: { subcategory: subName },
+    });
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -333,9 +494,19 @@ router.put("/categories/:categoryId/subcategory/:subId", adminAuth, async (req, 
     if (!cat) return res.status(404).json({ error: "Category not found" });
     const sub = cat.subcategories.id(req.params.subId);
     if (!sub) return res.status(404).json({ error: "Subcategory not found" });
+    const oldName = sub.name;
     if (name) sub.name = name;
     sub.fixedPoints = points != null ? Number(points) : null;
     await cat.save();
+
+    logActivity({
+      req, actorType: 'admin', actorId: req.admin?.id, actorEmail: req.admin?.email,
+      action: 'subcategory_updated',
+      description: `Admin updated subcategory "${oldName}" in category "${cat.name}"`,
+      targetType: 'Category', targetId: cat._id, targetName: cat.name,
+      meta: { subcategory: sub.name, points },
+    });
+
     res.json({ success: true, category: cat });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -353,6 +524,15 @@ router.post("/categories/:categoryId/subcategory/:subId/level", adminAuth, async
     // If this subcategory has levels, clear fixedPoints so it's level-based
     sub.fixedPoints = null;
     await cat.save();
+
+    logActivity({
+      req, actorType: 'admin', actorId: req.admin?.id, actorEmail: req.admin?.email,
+      action: 'level_created',
+      description: `Admin added level "${name}" to subcategory "${sub.name}" (${cat.name})`,
+      targetType: 'Category', targetId: cat._id, targetName: cat.name,
+      meta: { subcategory: sub.name, level: name },
+    });
+
     res.json({ success: true, category: cat });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -377,6 +557,15 @@ router.put("/categories/:categoryId/subcategory/:subId/level/:levelName", adminA
     if (name) level.name = name;
     if (prizes) level.prizes = prizes;
     await cat.save();
+
+    logActivity({
+      req, actorType: 'admin', actorId: req.admin?.id, actorEmail: req.admin?.email,
+      action: 'level_updated',
+      description: `Admin updated level "${levelName}" in subcategory "${sub.name}" (${cat.name})`,
+      targetType: 'Category', targetId: cat._id, targetName: cat.name,
+      meta: { subcategory: sub.name, level: level.name },
+    });
+
     res.json({ success: true, category: cat });
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
@@ -391,6 +580,15 @@ router.delete("/categories/:categoryId/subcategory/:subId/level/:levelName", adm
     const levelName = decodeURIComponent(req.params.levelName);
     sub.levels = sub.levels.filter(l => l.name !== levelName);
     await cat.save();
+
+    logActivity({
+      req, actorType: 'admin', actorId: req.admin?.id, actorEmail: req.admin?.email,
+      action: 'level_deleted',
+      description: `Admin deleted level "${levelName}" from subcategory "${sub.name}" (${cat.name})`,
+      targetType: 'Category', targetId: cat._id, targetName: cat.name,
+      meta: { subcategory: sub.name, level: levelName },
+    });
+
     res.json({ success: true, category: cat });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

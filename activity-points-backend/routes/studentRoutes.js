@@ -33,6 +33,7 @@ const { buildStudentCertFolder } = require('../utils/imagekitPaths');
 
 const auth = require('../middleware/auth');
 const Tutor = require('../models/Tutor');
+const logActivity = require('../utils/activityLog');
 
 const router = express.Router();
 
@@ -230,6 +231,18 @@ router.patch(
       student.profilePhotoFileId = uploadResponse.fileId;
 
       await student.save();
+
+      logActivity({
+        req,
+        actorType: 'student',
+        actorId: req.user.id,
+        actorName: student.name,
+        action: 'student_profile_photo_updated',
+        description: `${student.name} updated their profile photo`,
+        targetType: 'Student',
+        targetId: student._id,
+        targetName: student.name,
+      });
 
       /* ─────────────────────────────────────
        * RESPONSE

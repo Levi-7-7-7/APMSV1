@@ -4,7 +4,8 @@ import adminAxios from "../api/adminAxios";
 import * as XLSX from "xlsx";
 import {
   UserPlus, FilePlus, Download, Edit2, Trash2, Plus,
-  LogOut, Link2, Users, Layers, GitBranch, Tag, Shield, Search, ArrowRightLeft
+  LogOut, Link2, Users, Layers, GitBranch, Tag, Shield, Search, ArrowRightLeft,
+  History, Filter, ChevronLeft, ChevronRight
 } from "lucide-react";
 import "../css/AdminPanel.css";
 
@@ -95,6 +96,16 @@ export default function AdminPanel() {
   const [editingLevelName, setEditingLevelName] = useState(null); // original name of the level being edited
   const [editLevelForm, setEditLevelForm] = useState({ name: "", prizes: [] });
 
+  // ── ACTIVITY LOG ──
+  const [logs, setLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logActions, setLogActions] = useState([]);
+  const [logFilters, setLogFilters] = useState({ actorType: "", action: "", search: "", from: "", to: "" });
+  const [logPage, setLogPage] = useState(1);
+  const [logPages, setLogPages] = useState(1);
+  const [logTotal, setLogTotal] = useState(0);
+  const logLimit = 50;
+
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
@@ -116,6 +127,69 @@ export default function AdminPanel() {
       setAdmins(aR.data.admins || []);
     } catch { flash("Failed to fetch data", "error"); }
     finally { setLoading(false); }
+  };
+
+  // ── ACTIVITY LOG ──
+  const fetchLogs = async (overrides = {}) => {
+    const page = overrides.page ?? logPage;
+    setLogsLoading(true);
+    try {
+      const params = { page, limit: logLimit };
+      if (logFilters.actorType) params.actorType = logFilters.actorType;
+      if (logFilters.action)    params.action    = logFilters.action;
+      if (logFilters.search)    params.search    = logFilters.search;
+      if (logFilters.from)      params.from      = logFilters.from;
+      if (logFilters.to)        params.to        = logFilters.to;
+
+      const res = await adminAxios.get("/admin/logs", { params });
+      setLogs(res.data.logs || []);
+      setLogTotal(res.data.total || 0);
+      setLogPages(res.data.pages || 1);
+      setLogActions(res.data.actions || []);
+      setLogPage(page);
+    } catch { flash("Failed to fetch activity log", "error"); }
+    finally { setLogsLoading(false); }
+  };
+
+  useEffect(() => { if (tab === "logs") fetchLogs({ page: 1 }); }, [tab]);
+
+  const applyLogFilters = (e) => {
+    e.preventDefault();
+    fetchLogs({ page: 1 });
+  };
+
+  const clearLogFilters = () => {
+    setLogFilters({ actorType: "", action: "", search: "", from: "", to: "" });
+    setTimeout(() => fetchLogs({ page: 1 }), 0);
+  };
+
+  const exportLogsCsv = async () => {
+    try {
+      const params = {};
+      if (logFilters.actorType) params.actorType = logFilters.actorType;
+      if (logFilters.action)    params.action    = logFilters.action;
+      if (logFilters.search)    params.search    = logFilters.search;
+      if (logFilters.from)      params.from      = logFilters.from;
+      if (logFilters.to)        params.to        = logFilters.to;
+
+      const res = await adminAxios.get("/admin/logs/export", { params, responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `activity-log-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      flash("Log exported");
+    } catch { flash("Failed to export activity log", "error"); }
+  };
+
+  const actorBadgeClass = (actorType) => {
+    if (actorType === "admin")  return "purple";
+    if (actorType === "tutor")  return "blue";
+    if (actorType === "student") return "green";
+    return "none";
   };
 
   // ── TUTORS ──
@@ -474,6 +548,7 @@ export default function AdminPanel() {
     { id: "branches",   label: "Branches",   icon: <GitBranch size={15}/> },
     { id: "categories", label: "Categories", icon: <Tag size={15}/> },
     { id: "admins",     label: "Admins",     icon: <Shield size={15}/> },
+    { id: "logs",       label: "Activity Log", icon: <History size={15}/> },
   ];
 
   return (
@@ -1244,6 +1319,142 @@ export default function AdminPanel() {
                   </table>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════ ACTIVITY LOG ══════════════ */}
+        {tab === "logs" && (
+          <div>
+            <div className="ap-card" style={{ marginBottom: "1.5rem" }}>
+              <div className="ap-card-header">
+                <div className="ap-card-icon blue"><History size={16}/></div>
+                <h3>Activity Log <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({logTotal})</span></h3>
+              </div>
+              <div className="ap-card-body">
+                <p style={{ fontSize: "0.85rem", color: "var(--ap-muted)", marginBottom: "1rem" }}>
+                  Every login and change made by students, tutors, and admins — who did it and when. This log is
+                  read-only: nothing here can be edited or deleted from within the app.
+                </p>
+
+                <form onSubmit={applyLogFilters} className="ap-log-filters">
+                  <div className="ap-field">
+                    <label>Who</label>
+                    <select
+                      className="ap-select"
+                      value={logFilters.actorType}
+                      onChange={e => setLogFilters({ ...logFilters, actorType: e.target.value })}
+                    >
+                      <option value="">Everyone</option>
+                      <option value="admin">Admins</option>
+                      <option value="tutor">Tutors</option>
+                      <option value="student">Students</option>
+                      <option value="system">System</option>
+                    </select>
+                  </div>
+
+                  <div className="ap-field">
+                    <label>Action</label>
+                    <select
+                      className="ap-select"
+                      value={logFilters.action}
+                      onChange={e => setLogFilters({ ...logFilters, action: e.target.value })}
+                    >
+                      <option value="">All actions</option>
+                      {logActions.map(a => (
+                        <option key={a} value={a}>{a.replace(/_/g, " ")}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="ap-field">
+                    <label>From</label>
+                    <input type="date" className="ap-input" value={logFilters.from}
+                      onChange={e => setLogFilters({ ...logFilters, from: e.target.value })}/>
+                  </div>
+
+                  <div className="ap-field">
+                    <label>To</label>
+                    <input type="date" className="ap-input" value={logFilters.to}
+                      onChange={e => setLogFilters({ ...logFilters, to: e.target.value })}/>
+                  </div>
+
+                  <div className="ap-field" style={{ flex: "1 1 220px" }}>
+                    <label>Search</label>
+                    <input type="text" className="ap-input" placeholder="Name, email, description…"
+                      value={logFilters.search}
+                      onChange={e => setLogFilters({ ...logFilters, search: e.target.value })}/>
+                  </div>
+
+                  <div className="ap-log-filter-actions">
+                    <button type="submit" className="btn-primary ap-btn sm"><Filter size={13}/> Apply</button>
+                    <button type="button" className="ap-btn sm" onClick={clearLogFilters}>Clear</button>
+                    <button type="button" className="ap-btn sm" onClick={exportLogsCsv}><Download size={13}/> Export CSV</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div className="ap-card">
+              <div className="ap-table-wrap">
+                {logsLoading ? (
+                  <div className="ap-empty">Loading…</div>
+                ) : logs.length === 0 ? (
+                  <div className="ap-empty">No matching activity found.</div>
+                ) : (
+                  <table className="ap-table">
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Who</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                        <th>Target</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {logs.map(l => (
+                        <tr key={l._id}>
+                          <td style={{ whiteSpace: "nowrap", fontSize: "0.8rem", color: "var(--ap-muted)" }}>
+                            {new Date(l.createdAt).toLocaleString()}
+                          </td>
+                          <td>
+                            <span className={`ap-badge ${actorBadgeClass(l.actorType)}`}>{l.actorType}</span>
+                            <div style={{ fontSize: "0.8rem", marginTop: "0.25rem" }}>
+                              {l.actorName || l.actorEmail || "—"}
+                            </div>
+                          </td>
+                          <td style={{ fontSize: "0.8rem" }}>{l.action.replace(/_/g, " ")}</td>
+                          <td style={{ maxWidth: 360 }}>{l.description}</td>
+                          <td style={{ fontSize: "0.8rem", color: "var(--ap-muted)" }}>
+                            {l.targetName ? `${l.targetType || ""}: ${l.targetName}` : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {logPages > 1 && (
+                <div className="ap-log-pagination">
+                  <button
+                    className="ap-btn sm"
+                    disabled={logPage <= 1}
+                    onClick={() => fetchLogs({ page: logPage - 1 })}
+                  >
+                    <ChevronLeft size={14}/> Prev
+                  </button>
+                  <span>Page {logPage} of {logPages}</span>
+                  <button
+                    className="ap-btn sm"
+                    disabled={logPage >= logPages}
+                    onClick={() => fetchLogs({ page: logPage + 1 })}
+                  >
+                    Next <ChevronRight size={14}/>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const Student = require('../models/Student');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
+const logActivity = require('../utils/activityLog');
 
 // Brevo client setup
 const client = SibApiV3Sdk.ApiClient.instance;
@@ -81,6 +82,19 @@ exports.resetPassword = async (req, res) => {
     student.resetPasswordToken = null;
     student.resetPasswordExpires = null;
     await student.save();
+
+    logActivity({
+      req,
+      actorType: 'student',
+      actorId: student._id,
+      actorName: student.name,
+      actorEmail: student.email,
+      action: 'student_password_reset',
+      description: `${student.name} (${student.registerNumber}) reset their password`,
+      targetType: 'Student',
+      targetId: student._id,
+      targetName: student.name,
+    });
 
     res.json({ message: 'Password reset successfully. You can now log in.' });
   } catch (error) {

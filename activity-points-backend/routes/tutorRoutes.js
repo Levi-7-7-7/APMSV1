@@ -19,6 +19,7 @@ const { sendPushNotification } = require('../utils/fcm');
 
 
 const { calcCappedPoints, syncStudentTotalPoints } = require('../utils/calcPoints');
+const logActivity = require('../utils/activityLog');
 
 const path    = require('path');
 const ImageKit = require('imagekit');
@@ -151,6 +152,19 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    logActivity({
+      req,
+      actorType: 'tutor',
+      actorId: tutor._id,
+      actorName: tutor.name,
+      actorEmail: tutor.email,
+      action: 'tutor_login',
+      description: `${tutor.name} (${tutor.role || 'tutor'}) logged in`,
+      targetType: 'Tutor',
+      targetId: tutor._id,
+      targetName: tutor.name,
+    });
+
     res.json({
       message: 'Login successful',
       token,
@@ -235,6 +249,20 @@ router.delete('/students/:id', tutorAuth, async (req, res) => {
     // Cascade delete: removes the student's certificate files and profile
     // photo from ImageKit too, not just the database records.
     await deleteStudentCascade(req.params.id);
+
+    logActivity({
+      req,
+      actorType: 'tutor',
+      actorId: tutor._id,
+      actorName: tutor.name,
+      actorEmail: tutor.email,
+      action: 'student_deleted',
+      description: `${tutor.name} deleted student ${student.name} (${student.registerNumber})`,
+      targetType: 'Student',
+      targetId: student._id,
+      targetName: student.name,
+    });
+
     res.json({ success: true, message: 'Student deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -267,6 +295,19 @@ router.post('/students', tutorAuth, async (req, res) => {
       batch:          tutor.batch  || undefined,
       branch:         tutor.branch || undefined,
       password:       hashedPassword,
+    });
+
+    logActivity({
+      req,
+      actorType: 'tutor',
+      actorId: tutor._id,
+      actorName: tutor.name,
+      actorEmail: tutor.email,
+      action: 'student_created',
+      description: `${tutor.name} added student ${student.name} (${student.registerNumber})`,
+      targetType: 'Student',
+      targetId: student._id,
+      targetName: student.name,
     });
 
     res.json({
@@ -322,6 +363,18 @@ router.post('/students/upload', tutorAuth, upload.single('file'), async (req, re
 
         const inserted = await Student.insertMany(studentsToInsert, { ordered: false });
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
+        logActivity({
+          req,
+          actorType: 'tutor',
+          actorId: tutor._id,
+          actorName: tutor.name,
+          actorEmail: tutor.email,
+          action: 'students_bulk_uploaded',
+          description: `${tutor.name} uploaded ${inserted.length} student(s) via CSV`,
+          meta: { count: inserted.length },
+        });
+
         res.json({
           message: `${inserted.length} students uploaded successfully`,
           note: "Each student's default password is their first name (lowercase) + \"12345\", e.g. \"arjun12345\". They can change it via Reset / Forgot Password.",
@@ -424,6 +477,20 @@ router.post('/certificates/:id/approve', tutorAuth, async (req, res) => {
     const categories = await Category.find();
     const newTotal   = await syncStudentTotalPoints(cert.student, Certificate, Student, categories);
 
+    logActivity({
+      req,
+      actorType: 'tutor',
+      actorId: authz.tutor._id,
+      actorName: authz.tutor.name,
+      actorEmail: authz.tutor.email,
+      action: 'certificate_approved',
+      description: `${authz.tutor.name} approved "${cert.eventName || cert.subcategory}" for ${authz.student.name} (+${pointsToAward} pts)`,
+      targetType: 'Certificate',
+      targetId: cert._id,
+      targetName: cert.eventName || cert.subcategory,
+      meta: { pointsAwarded: pointsToAward, student: authz.student.name },
+    });
+
     // ── Push notification (non-blocking) ─────────────────────────────────────
     const student = await Student.findById(cert.student).select('fcmToken');
     if (student?.fcmToken) {
@@ -461,6 +528,20 @@ router.post('/certificates/:id/reject', tutorAuth, async (req, res) => {
 
     const categories = await Category.find();
     await syncStudentTotalPoints(cert.student, Certificate, Student, categories);
+
+    logActivity({
+      req,
+      actorType: 'tutor',
+      actorId: authz.tutor._id,
+      actorName: authz.tutor.name,
+      actorEmail: authz.tutor.email,
+      action: 'certificate_rejected',
+      description: `${authz.tutor.name} rejected "${cert.eventName || cert.subcategory}" for ${authz.student.name}${cert.rejectionReason ? ` (${cert.rejectionReason})` : ''}`,
+      targetType: 'Certificate',
+      targetId: cert._id,
+      targetName: cert.eventName || cert.subcategory,
+      meta: { reason: cert.rejectionReason, student: authz.student.name },
+    });
 
     // ── Push notification (non-blocking) ─────────────────────────────────────
     const student = await Student.findById(cert.student).select('fcmToken');
@@ -532,6 +613,20 @@ router.patch('/certificates/:id/reassign', tutorAuth, async (req, res) => {
     const allCategories = await Category.find();
     await syncStudentTotalPoints(cert.student, Certificate, Student, allCategories);
 
+    logActivity({
+      req,
+      actorType: 'tutor',
+      actorId: authz.tutor._id,
+      actorName: authz.tutor.name,
+      actorEmail: authz.tutor.email,
+      action: 'certificate_reassigned',
+      description: `${authz.tutor.name} reassigned a certificate for ${authz.student.name} to "${subcategoryName}"`,
+      targetType: 'Certificate',
+      targetId: cert._id,
+      targetName: cert.eventName || subcategoryName,
+      meta: { category: category.name, subcategory: subcategoryName, level, prizeType, student: authz.student.name },
+    });
+
     res.json({ message: 'Certificate reassigned successfully', potentialPoints });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -555,6 +650,20 @@ router.post('/certificates/:id/revert-to-pending', tutorAuth, async (req, res) =
 
     const categories = await Category.find();
     await syncStudentTotalPoints(cert.student, Certificate, Student, categories);
+
+    logActivity({
+      req,
+      actorType: 'tutor',
+      actorId: authz.tutor._id,
+      actorName: authz.tutor.name,
+      actorEmail: authz.tutor.email,
+      action: 'certificate_reverted_to_pending',
+      description: `${authz.tutor.name} reverted "${cert.eventName || cert.subcategory}" for ${authz.student.name} back to pending`,
+      targetType: 'Certificate',
+      targetId: cert._id,
+      targetName: cert.eventName || cert.subcategory,
+      meta: { student: authz.student.name },
+    });
 
     // ── Push notification (non-blocking) ─────────────────────────────────────
     const student = await Student.findById(cert.student).select('fcmToken');
@@ -625,6 +734,19 @@ router.post('/reset-password', async (req, res) => {
     tutor.resetPasswordExpires = null;
     await tutor.save();
 
+    logActivity({
+      req,
+      actorType: 'tutor',
+      actorId: tutor._id,
+      actorName: tutor.name,
+      actorEmail: tutor.email,
+      action: 'tutor_password_reset',
+      description: `${tutor.name} reset their password`,
+      targetType: 'Tutor',
+      targetId: tutor._id,
+      targetName: tutor.name,
+    });
+
     res.json({ message: 'Password reset successfully. You can now log in.' });
   } catch (err) {
     console.error('Tutor reset-password error:', err);
@@ -650,7 +772,7 @@ router.patch('/profile-photo', tutorAuth, photoUpload.single('photo'), async (re
   try {
     if (!req.file) return res.status(400).json({ error: 'No photo file provided' });
 
-    const tutor = await Tutor.findById(req.tutor.id).select('profilePhoto profilePhotoFileId');
+    const tutor = await Tutor.findById(req.tutor.id).select('name profilePhoto profilePhotoFileId');
     if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
 
     // Delete old image from ImageKit if it exists
@@ -671,6 +793,18 @@ router.patch('/profile-photo', tutorAuth, photoUpload.single('photo'), async (re
     tutor.profilePhoto       = uploadResponse.url;
     tutor.profilePhotoFileId = uploadResponse.fileId;
     await tutor.save();
+
+    logActivity({
+      req,
+      actorType: 'tutor',
+      actorId: req.tutor.id,
+      actorName: tutor.name,
+      action: 'tutor_profile_photo_updated',
+      description: `${tutor.name || 'A tutor'} updated their profile photo`,
+      targetType: 'Tutor',
+      targetId: tutor._id,
+      targetName: tutor.name,
+    });
 
     res.json({ success: true, profilePhoto: uploadResponse.url });
   } catch (err) {

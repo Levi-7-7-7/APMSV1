@@ -6,6 +6,7 @@ const Student     = require('../models/Student');
 const Tutor       = require('../models/Tutor');
 const { sendPushNotification } = require('../utils/fcm');
 const { sanitizeName, buildStudentCertFolder } = require('../utils/imagekitPaths');
+const logActivity = require('../utils/activityLog');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -121,6 +122,19 @@ exports.uploadCertificate = [
         console.warn('[FCM] Tutor notification failed:', notifyErr.message);
       }
       // ─────────────────────────────────────────────────────────────────────────
+
+      logActivity({
+        req,
+        actorType: 'student',
+        actorId: studentId,
+        actorName: student.name,
+        action: 'certificate_uploaded',
+        description: `${student.name} uploaded a certificate${eventName ? ` ("${eventName.trim()}")` : ''}`,
+        targetType: 'Certificate',
+        targetId: cert._id,
+        targetName: cert.eventName || cert.subcategory,
+        meta: { subcategory: subcategoryName, potentialPoints },
+      });
 
       res.json({ message: "Certificate uploaded successfully", certificate: cert });
     } catch (error) {

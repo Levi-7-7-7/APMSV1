@@ -17,6 +17,7 @@ const adminAuth = require('../middleware/adminAuth');
 const generateDefaultPassword = require('../utils/defaultPassword');
 const deleteStudentCascade    = require('../utils/deleteStudentCascade');
 const syncStudentCertFolder   = require('../utils/syncStudentCertFolder');
+const logActivity = require('../utils/activityLog');
 
 const router = express.Router();
 
@@ -71,6 +72,19 @@ router.post('/students', adminAuth, async (req, res) => {
       batch:          batchId,
       branch:         branchId,
       password:       hashedPassword,
+    });
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'student_created',
+      description: `Admin added student ${student.name} (${student.registerNumber})`,
+      targetType: 'Student',
+      targetId: student._id,
+      targetName: student.name,
+      meta: { batch: batch.name, branch: branch.name },
     });
 
     res.json({
@@ -150,6 +164,19 @@ router.patch('/students/:id', adminAuth, async (req, res) => {
       });
     }
 
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'student_updated',
+      description: `Admin updated student ${student.name} (${student.registerNumber})`,
+      targetType: 'Student',
+      targetId: student._id,
+      targetName: student.name,
+      meta: update,
+    });
+
     res.json({ success: true, student, folderSync });
   } catch (err) {
     if (err.code === 11000) {
@@ -164,8 +191,22 @@ router.patch('/students/:id', adminAuth, async (req, res) => {
 // ImageKit too, not just the database records.
 router.delete('/students/:id', adminAuth, async (req, res) => {
   try {
+    const student = await Student.findById(req.params.id).select('name registerNumber');
     const deleted = await deleteStudentCascade(req.params.id);
     if (!deleted) return res.status(404).json({ error: 'Student not found' });
+
+    logActivity({
+      req,
+      actorType: 'admin',
+      actorId: req.admin?.id,
+      actorEmail: req.admin?.email,
+      action: 'student_deleted',
+      description: `Admin deleted student${student ? ` ${student.name} (${student.registerNumber})` : ''}`,
+      targetType: 'Student',
+      targetId: req.params.id,
+      targetName: student?.name,
+    });
+
     res.json({ success: true, message: 'Student deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
