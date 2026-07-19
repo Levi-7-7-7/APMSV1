@@ -1,5 +1,5 @@
 // src/pages/Login.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, GraduationCap, User, Lock, Loader2, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
@@ -14,8 +14,41 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [checkingSession, setCheckingSession] = useState(true);
 
   const navigate = useNavigate();
+
+  // On mount: if a valid session already exists, skip the login form entirely
+  useEffect(() => {
+    const restoreSession = async () => {
+      const storedRole = localStorage.getItem('role');
+
+      if (storedRole === 'student' && localStorage.getItem('token')) {
+        try {
+          // Confirm the token actually still works before redirecting
+          await axiosInstance.get('/students/me');
+          navigate('/student', { replace: true });
+          return;
+        } catch {
+          localStorage.removeItem('token');
+          localStorage.removeItem('role');
+        }
+      } else if (storedRole === 'tutor' && localStorage.getItem('tutorToken')) {
+        navigate('/tutor/dashboard/students', { replace: true });
+        return;
+      } else if (storedRole === 'admin' && localStorage.getItem('adminToken')) {
+        navigate('/admin', { replace: true });
+        return;
+      }
+      setCheckingSession(false);
+    };
+    restoreSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (checkingSession) {
+    return null; // or a small spinner/splash if you'd like one
+  }
 
   // Reset fields when role changes
   const handleRoleChange = (newRole) => {
