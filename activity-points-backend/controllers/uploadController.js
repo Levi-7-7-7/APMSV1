@@ -37,10 +37,27 @@ exports.uploadCertificate = [
         // Calculate potentialPoints at upload time so student sees an estimate
         if (sub.fixedPoints != null) {
           potentialPoints = sub.fixedPoints;
-        } else if (sub.levels?.length && level && prizeType) {
-          const lvl  = sub.levels.find(l => l.name.toLowerCase() === level.toLowerCase());
-          const prize = lvl?.prizes.find(p => p.type === prizeType);
-          potentialPoints = prize?.points ?? 0;
+        } else if (sub.levels?.length) {
+          // Strict server-side enforcement: a level-based subcategory REQUIRES
+          // both level and prizeType — never allow a cert through with points
+          // silently defaulted to 0 because the frontend was bypassed.
+          if (!level || !prizeType) {
+            return res.status(400).json({
+              message: "This subcategory requires both a level and a prize type to be selected."
+            });
+          }
+
+          const lvl = sub.levels.find(l => l.name.toLowerCase() === level.toLowerCase());
+          if (!lvl) {
+            return res.status(400).json({ message: "Invalid level for this subcategory" });
+          }
+
+          const prize = lvl.prizes.find(p => p.type.toLowerCase() === prizeType.toLowerCase());
+          if (!prize) {
+            return res.status(400).json({ message: "Invalid prize type for the selected level" });
+          }
+
+          potentialPoints = prize.points;
         }
       }
 

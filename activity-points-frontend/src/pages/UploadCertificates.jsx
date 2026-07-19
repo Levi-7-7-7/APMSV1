@@ -167,9 +167,22 @@ export default function CertificateUploadScreen() {
     setUploadedFile(file);
   };
 
+  const currentSub = !isOthers && subcategoryName
+    ? subcategories.find(s => s.name === subcategoryName)
+    : null;
+  const hasLevels = currentSub?.levels?.length > 0;
+
   const canSubmit = isOthers
     ? (othersDescription.trim() && uploadedFile && !uploading)
-    : (categoryId && subcategoryName && uploadedFile && !uploading);
+    : (
+        categoryId &&
+        subcategoryName &&
+        // If the subcategory has levels (e.g. Professional Body Competitions),
+        // both a level AND a prize type must be selected before submitting.
+        (!hasLevels || (levelSelected && prizeType)) &&
+        uploadedFile &&
+        !uploading
+      );
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -232,11 +245,6 @@ export default function CertificateUploadScreen() {
       </div>
     );
   }
-
-  const currentSub = !isOthers && subcategoryName
-    ? subcategories.find(s => s.name === subcategoryName)
-    : null;
-  const hasLevels = currentSub?.levels?.length > 0;
 
   // Dynamic prize items from the selected level's actual prizes (mirrors RN)
   const selectedLevelObj = currentSub?.levels?.find(l => l.name === levelSelected);
