@@ -64,4 +64,32 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// List all admins (id + email only — never the password hash)
+router.get("/admins", adminAuth, async (req, res) => {
+  try {
+    const admins = await Admin.find().select("email").sort({ email: 1 });
+    res.json({ success: true, admins });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete an admin.
+// Safety guard: never allow the very last admin account to be deleted —
+// that would lock everyone out of admin access entirely (the only way back
+// in at that point is the createAdmin.js CLI script).
+router.delete("/admins/:id", adminAuth, async (req, res) => {
+  try {
+    const count = await Admin.countDocuments();
+    if (count <= 1) {
+      return res.status(400).json({ error: "Can't delete the last remaining admin account." });
+    }
+    const deleted = await Admin.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: "Admin not found" });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

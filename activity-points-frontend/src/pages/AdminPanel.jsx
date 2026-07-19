@@ -12,6 +12,16 @@ export default function AdminPanel() {
   const navigate = useNavigate();
   const handleLogout = () => { localStorage.removeItem("adminToken"); navigate("/"); };
 
+  // Decode the logged-in admin's own id from their JWT (no library needed —
+  // just reading the payload) so we can flag "You" in the admins list and
+  // warn before a self-delete.
+  const currentAdminId = (() => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      return JSON.parse(atob(token.split(".")[1])).id;
+    } catch { return null; }
+  })();
+
   const [tab, setTab]     = useState("tutors");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg]     = useState("");
@@ -47,6 +57,9 @@ export default function AdminPanel() {
 
   const [tutorForm, setTutorForm]   = useState({ name: "", email: "", password: "" });
   const tutorCsvRef = useRef(null);
+
+  const [admins, setAdmins] = useState([]);
+  const [adminForm, setAdminForm] = useState({ email: "", password: "" });
 
   const [assignTutorId,  setAssignTutorId]  = useState("");
   const [assignBatchId,  setAssignBatchId]  = useState("");
@@ -87,18 +100,20 @@ export default function AdminPanel() {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [tR, baR, brR, cR, sR] = await Promise.all([
+      const [tR, baR, brR, cR, sR, aR] = await Promise.all([
         adminAxios.get("/admin/tutors"),
         adminAxios.get("/admin/batches"),
         adminAxios.get("/admin/branches"),
         adminAxios.get("/admin/categories"),
         adminAxios.get("/admin/students"),
+        adminAxios.get("/admin/auth/admins"),
       ]);
       setTutors(tR.data.tutors || []);
       setBatches(baR.data.batches || []);
       setBranches(brR.data.branches || []);
       setCategories(cR.data.categories || []);
       setStudents(sR.data.students || []);
+      setAdmins(aR.data.admins || []);
     } catch { flash("Failed to fetch data", "error"); }
     finally { setLoading(false); }
   };
@@ -131,6 +146,32 @@ export default function AdminPanel() {
       await adminAxios.delete(`/admin/tutors/${id}`);
       setTutors(p => p.filter(t => t._id !== id)); flash("Tutor deleted");
     } catch { flash("Failed to delete tutor", "error"); }
+  };
+
+  // ── ADMINS ──
+  const handleAdminCreate = async (e) => {
+    e.preventDefault();
+    if (adminForm.password.length < 8) return flash("Password must be at least 8 characters", "error");
+    try {
+      const res = await adminAxios.post("/admin/auth/register", adminForm);
+      setAdmins(p => [...p, { _id: res.data.id, email: adminForm.email }].sort((a, b) => a.email.localeCompare(b.email)));
+      setAdminForm({ email: "", password: "" });
+      flash("Admin created successfully");
+    } catch (err) { flash(err.response?.data?.error || "Failed to create admin", "error"); }
+  };
+
+  const handleDeleteAdmin = async (id, email) => {
+    const isSelf = id === currentAdminId;
+    const warning = isSelf
+      ? `This is YOUR OWN account (${email}) — deleting it will log you out immediately. Continue?`
+      : `Delete admin ${email}?`;
+    if (!window.confirm(warning)) return;
+    try {
+      await adminAxios.delete(`/admin/auth/admins/${id}`);
+      setAdmins(p => p.filter(a => a._id !== id));
+      flash("Admin deleted");
+      if (isSelf) handleLogout();
+    } catch (err) { flash(err.response?.data?.error || "Failed to delete admin", "error"); }
   };
 
   const handleAssign = async (e) => {
@@ -422,6 +463,7 @@ export default function AdminPanel() {
     { id: "batches",    label: "Batches",    icon: <Layers size={15}/> },
     { id: "branches",   label: "Branches",   icon: <GitBranch size={15}/> },
     { id: "categories", label: "Categories", icon: <Tag size={15}/> },
+    { id: "admins",     label: "Admins",     icon: <Shield size={15}/> },
   ];
 
   return (
@@ -1103,6 +1145,63 @@ export default function AdminPanel() {
                   )}
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════ ADMINS ══════════════ */}
+        {tab === "admins" && (
+          <div>
+            <div className="ap-card" style={{ maxWidth: 480, marginBottom: "1.5rem" }}>
+              <div className="ap-card-header">
+                <div className="ap-card-icon purple"><Shield size={16}/></div>
+                <h3>Add Admin</h3>
+              </div>
+              <div className="ap-card-body">
+                <p style={{ fontSize: "0.85rem", color: "var(--ap-muted)", marginBottom: "1rem" }}>
+                  Admins have full access to this panel — only add people you trust with that.
+                </p>
+                <form onSubmit={handleAdminCreate} className="ap-form">
+                  <div className="ap-field"><label>Email</label><input type="email" placeholder="admin@college.edu" value={adminForm.email} className="ap-input" required onChange={e => setAdminForm({ ...adminForm, email: e.target.value })}/></div>
+                  <div className="ap-field"><label>Password</label><input type="password" placeholder="At least 8 characters" value={adminForm.password} className="ap-input" required minLength={8} onChange={e => setAdminForm({ ...adminForm, password: e.target.value })}/></div>
+                  <button className="btn-primary ap-btn" type="submit"><Shield size={15}/> Create Admin</button>
+                </form>
+              </div>
+            </div>
+
+            <div className="ap-card">
+              <div className="ap-card-header">
+                <div className="ap-card-icon purple"><Shield size={16}/></div>
+                <h3>All Admins <span style={{ color: "var(--ap-muted)", fontWeight: 400 }}>({admins.length})</span></h3>
+              </div>
+              <div className="ap-table-wrap">
+                {admins.length === 0 ? <div className="ap-empty">No admins found.</div> : (
+                  <table className="ap-table">
+                    <thead><tr><th>Email</th><th>Actions</th></tr></thead>
+                    <tbody>
+                      {admins.map(a => (
+                        <tr key={a._id}>
+                          <td style={{ fontWeight: 600 }}>
+                            {a.email}{a._id === currentAdminId && <span className="ap-badge assigned" style={{ marginLeft: "0.5rem" }}>You</span>}
+                          </td>
+                          <td>
+                            <div className="ap-table-actions">
+                              <button
+                                onClick={() => handleDeleteAdmin(a._id, a.email)}
+                                className="btn ap-btn sm danger"
+                                disabled={admins.length <= 1}
+                                title={admins.length <= 1 ? "Can't delete the last remaining admin" : "Delete admin"}
+                              >
+                                <Trash2 size={13}/> Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
           </div>
         )}
