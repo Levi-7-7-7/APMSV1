@@ -33,7 +33,13 @@ function AvatarThumb({ src, name, onClick }) {
 
 export default function AdminPanel() {
   const navigate = useNavigate();
-  const handleLogout = () => { localStorage.removeItem("adminToken"); localStorage.removeItem("adminEmail"); navigate("/"); };
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      localStorage.removeItem("adminToken");
+      localStorage.removeItem("adminEmail");
+      navigate("/");
+    }
+  };
 
   // Admin identity for the top bar (email stored at login time)
   const adminEmail = localStorage.getItem("adminEmail") || "Admin";
