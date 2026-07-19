@@ -4,6 +4,8 @@ import { Eye, EyeOff, GraduationCap, User, Lock, Loader2, Shield } from 'lucide-
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import adminAxios from '../api/adminAxios';
+import tutorAxios from '../api/tutorAxios';
+import BootLoader from '../components/BootLoader';
 import '../css/Login.css';
 
 export default function Login() {
@@ -15,30 +17,54 @@ export default function Login() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [checkingSession, setCheckingSession] = useState(true);
+  const [bootFadeOut, setBootFadeOut] = useState(false);
 
   const navigate = useNavigate();
 
-  // On mount: if a valid session already exists, skip the login form entirely
+  // On mount: if a valid session already exists, skip the login form
+  // entirely. The backend runs on a free hosting tier that spins down
+  // after inactivity, so this first request can take up to ~60s to wake
+  // it back up — BootLoader keeps something on screen for that whole
+  // wait, and we only navigate once we actually hear back.
   useEffect(() => {
     const restoreSession = async () => {
       const storedRole = localStorage.getItem('role');
+
+      // Let the fade-out transition play for a moment before swapping the
+      // route, so the loader doesn't just vanish mid-frame.
+      const goTo = (path) => {
+        setBootFadeOut(true);
+        setTimeout(() => navigate(path, { replace: true }), 220);
+      };
 
       if (storedRole === 'student' && localStorage.getItem('token')) {
         try {
           // Confirm the token actually still works before redirecting
           await axiosInstance.get('/students/me');
-          navigate('/student', { replace: true });
+          goTo('/student');
           return;
         } catch {
           localStorage.removeItem('token');
           localStorage.removeItem('role');
         }
       } else if (storedRole === 'tutor' && localStorage.getItem('tutorToken')) {
-        navigate('/tutor/dashboard/students', { replace: true });
-        return;
+        try {
+          await tutorAxios.get('/tutors/me');
+          goTo('/tutor/dashboard/students');
+          return;
+        } catch {
+          localStorage.removeItem('tutorToken');
+          localStorage.removeItem('role');
+        }
       } else if (storedRole === 'admin' && localStorage.getItem('adminToken')) {
-        navigate('/admin', { replace: true });
-        return;
+        try {
+          await adminAxios.get('/admin/auth/me');
+          goTo('/admin');
+          return;
+        } catch {
+          localStorage.removeItem('adminToken');
+          localStorage.removeItem('role');
+        }
       }
       setCheckingSession(false);
     };
@@ -47,7 +73,7 @@ export default function Login() {
   }, []);
 
   if (checkingSession) {
-    return null; // or a small spinner/splash if you'd like one
+    return <BootLoader fadingOut={bootFadeOut} />;
   }
 
   // Reset fields when role changes

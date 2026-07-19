@@ -60,6 +60,30 @@ html, body {
   background-color: var(--slate-50);
 }
 
+/* ============================================================
+   ICON / SPINNER ALIGNMENT FIX (applies app-wide)
+   Every "<Loader2 className="spin"/> Some Text" combo across the app
+   renders an inline <svg> right next to plain text. Inline <svg> defaults
+   to vertical-align: baseline, which lines the icon's bottom edge up with
+   the text's baseline — since letters have no descenders sitting below
+   that baseline, the icon visually reads as floating noticeably ABOVE the
+   text ("raised"). That's the bug: it's not one component, it's every
+   spinner+label pairing in the app, because they all inherit this same
+   default.
+   This single rule re-centers all of them. It's written as `svg.spin` /
+   `svg.spinner` (element + class) rather than just `.spin` / `.spinner` so
+   it wins over the many near-duplicate `.spin`/`.spinner` rules scattered
+   across individual page stylesheets (same class name reused everywhere)
+   without needing !important.
+   Icons inside flex/inline-flex buttons (most buttons in the app) are
+   unaffected either way — vertical-align has no effect on flex children,
+   so this only touches the plain-text-flow cases that were actually
+   broken. ============================================================ */
+svg.spin,
+svg.spinner {
+  vertical-align: -0.2em;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
