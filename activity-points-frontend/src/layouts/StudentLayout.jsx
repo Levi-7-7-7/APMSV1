@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { MoreVertical, User, LogOut, X } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import '../css/StudentDashboard.css';
 
 const StudentLayout = () => {
   const navigate = useNavigate();
+  const menuRef = useRef(null);
 
   const [userName, setUserName] = useState(() => {
     // Try userData first (set after dashboard fetch), fall back to userName key
@@ -22,6 +24,10 @@ const StudentLayout = () => {
     }
     return null;
   });
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [avatarEnlarged, setAvatarEnlarged] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   // Re-read from localStorage whenever userData changes (e.g. after Dashboard fetch,
   // or after uploading a new photo on the Profile page)
@@ -42,6 +48,38 @@ const StudentLayout = () => {
     return () => { window.removeEventListener('storage', sync); clearTimeout(timer); };
   }, []);
 
+  // WhatsApp-style: the top bar stays fixed, but gains a subtle shadow once
+  // the page underneath has scrolled, giving it a sense of "elevation".
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Close the three-dot menu on outside click or Escape
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen]);
+
+  // Close the enlarged avatar on Escape
+  useEffect(() => {
+    if (!avatarEnlarged) return;
+    const onKey = (e) => { if (e.key === 'Escape') setAvatarEnlarged(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [avatarEnlarged]);
+
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
       localStorage.removeItem('token');
@@ -59,38 +97,81 @@ const StudentLayout = () => {
 
   return (
     <div className="student-dashboard">
-      {/* Header */}
+      {/* Fixed WhatsApp-style top bar: stays put while everything else scrolls */}
+      <header className={`app-topbar ${scrolled ? 'scrolled' : ''}`}>
+        <button
+          className="app-topbar-avatar"
+          onClick={() => setAvatarEnlarged(true)}
+          aria-label="View profile photo"
+          type="button"
+        >
+          {profilePhoto ? (
+            <img src={profilePhoto} alt={userName} />
+          ) : (
+            <span className="avatar-fallback">{avatarInitials}</span>
+          )}
+        </button>
+
+        <span className="app-topbar-title">{userName}</span>
+
+        <div className="app-topbar-menu" ref={menuRef}>
+          <button
+            className="app-topbar-menu-btn"
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="More options"
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+            type="button"
+          >
+            <MoreVertical size={22} />
+          </button>
+
+          {menuOpen && (
+            <div className="app-topbar-dropdown" role="menu">
+              <button
+                role="menuitem"
+                onClick={() => { setMenuOpen(false); navigate('/student/profile'); }}
+                type="button"
+              >
+                <User size={18} />
+                <span>Profile</span>
+              </button>
+              <button
+                role="menuitem"
+                className="danger"
+                onClick={() => { setMenuOpen(false); handleLogout(); }}
+                type="button"
+              >
+                <LogOut size={18} />
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Hero greeting — scrolls normally beneath the fixed top bar */}
       <header className="dashboard-header">
-                    <div className="header-top">
-                    <div className="avatar-group">
-                        <button
-                          className="avatar avatar-btn"
-                          onClick={() => navigate('/student/profile')}
-                          aria-label="View profile"
-                          type="button"
-                        >
-                        {profilePhoto ? (
-                          <img src={profilePhoto} alt={userName} />
-                        ) : (
-                          <span className="avatar-fallback">{avatarInitials}</span>
-                        )}
-                        </button>
-                        <div className="greeting">
-                        <h1>Hello, {userName}</h1>
-                        <p>Welcome back!</p>
-                        </div>
-                    </div>
-
-                    <div className="header-actions">
-                        <button
-                        onClick={handleLogout}
-                        className="logout-btn-header"
-                        >
-                        Logout
-                        </button>
-                    </div>
-                    </div>
-
+        <div className="header-top">
+          <div className="avatar-group">
+            <button
+              className="avatar avatar-btn"
+              onClick={() => setAvatarEnlarged(true)}
+              aria-label="View profile photo"
+              type="button"
+            >
+              {profilePhoto ? (
+                <img src={profilePhoto} alt={userName} />
+              ) : (
+                <span className="avatar-fallback">{avatarInitials}</span>
+              )}
+            </button>
+            <div className="greeting">
+              <h1>Hello, {userName}</h1>
+              <p>Welcome back!</p>
+            </div>
+          </div>
+        </div>
       </header>
 
       {/* Nested student pages */}
@@ -100,6 +181,33 @@ const StudentLayout = () => {
 
       {/* Bottom navigation */}
       <BottomNav />
+
+      {/* Tap-to-enlarge avatar preview, WhatsApp-style */}
+      {avatarEnlarged && (
+        <div
+          className="avatar-lightbox"
+          onClick={() => setAvatarEnlarged(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Profile photo preview"
+        >
+          <button
+            className="avatar-lightbox-close"
+            onClick={() => setAvatarEnlarged(false)}
+            aria-label="Close"
+            type="button"
+          >
+            <X size={22} />
+          </button>
+          <div className="avatar-lightbox-content" onClick={(e) => e.stopPropagation()}>
+            {profilePhoto ? (
+              <img src={profilePhoto} alt={userName} />
+            ) : (
+              <span className="avatar-fallback-lg">{avatarInitials}</span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

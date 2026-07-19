@@ -1,10 +1,10 @@
 /* Container */
 .student-dashboard {
   max-width: 720px;
-  margin: 2rem auto;
+  margin: 0 auto;
   font-family: 'Inter', sans-serif;
   color: var(--slate-700);
-  padding: 0 1rem 80px 1rem; /* Added 80px bottom padding */
+  padding: calc(56px + 1.25rem) 1rem 80px 1rem; /* room for fixed top bar + bottom nav */
 }
 
 /* Header */
@@ -78,41 +78,204 @@
   color: var(--slate-500);
 }
 
-/* Header actions */
-.header-actions {
+/* ============================================================
+   FIXED TOP BAR — WhatsApp-style: stays pinned while everything
+   else (the hero greeting, cards, etc.) scrolls underneath it.
+   ============================================================ */
+.app-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  max-width: 720px;
+  margin: 0 auto;
+  height: 56px;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
+  z-index: 300;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+.app-topbar.scrolled {
+  border-bottom-color: var(--slate-200);
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
 
-.notification-btn {
+.app-topbar-avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  background-color: var(--blue-500);
+  color: var(--on-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  transition: transform 0.15s ease;
+}
+
+.app-topbar-avatar:active {
+  transform: scale(0.92);
+}
+
+.app-topbar-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-topbar-title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--slate-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-topbar-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.app-topbar-menu-btn {
   background: transparent;
   border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
+  padding: 8px;
+  margin: -8px;
+  border-radius: 50%;
   color: var(--slate-700);
-  transition: color 0.2s ease-in-out;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
 }
 
-.notification-btn:hover {
-  color: var(--blue-500);
+.app-topbar-menu-btn:hover,
+.app-topbar-menu-btn:active {
+  background-color: var(--slate-100);
 }
 
-.logout-btn-header {
-  background-color: var(--red-500);
+.app-topbar-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px var(--shadow-color-strong);
+  border: 1px solid var(--slate-200);
+  overflow: hidden;
+  animation: dropdown-in 0.15s ease;
+  z-index: 310;
+}
+
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.app-topbar-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--slate-700);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.app-topbar-dropdown button:hover {
+  background-color: var(--slate-100);
+}
+
+.app-topbar-dropdown button.danger {
+  color: var(--red-600);
+}
+
+/* ============================================================
+   AVATAR LIGHTBOX — tap the avatar to enlarge it, WhatsApp-style
+   ============================================================ */
+.avatar-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: lightbox-fade-in 0.2s ease;
+}
+
+@keyframes lightbox-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.avatar-lightbox-close {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  background: rgba(255, 255, 255, 0.15);
   border: none;
   color: var(--on-color);
-  padding: 0.5rem 1rem;
-  border-radius: 12px;
-  font-weight: 600;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: background-color 0.25s ease-in-out;
-  user-select: none;
 }
 
-.logout-btn-header:hover {
-  background-color: var(--red-700);
+.avatar-lightbox-content {
+  width: min(70vw, 280px);
+  height: min(70vw, 280px);
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--blue-500);
+  color: var(--on-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 4rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  animation: avatar-enlarge 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.avatar-lightbox-content img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-fallback-lg {
+  line-height: 1;
+}
+
+@keyframes avatar-enlarge {
+  from { transform: scale(0.4); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 /* Points card */
