@@ -164,15 +164,35 @@ export default function Profile() {
     if (!uploading) fileInputRef.current?.click();
   };
 
-  const handleFileChange = useCallback(async e => {
+  // Selecting a file no longer uploads immediately — it opens a preview
+  // showing exactly how the photo will be cropped into the circular
+  // avatar, so the user can confirm or pick a different photo first.
+  const [pendingFile, setPendingFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  const handleFileChange = useCallback(e => {
     const file = e.target.files?.[0];
+    if (fileInputRef.current) fileInputRef.current.value = '';
     if (!file) return;
 
+    setError('');
+    setPendingFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  }, []);
+
+  const closePreview = useCallback(() => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setPendingFile(null);
+  }, [previewUrl]);
+
+  const confirmUpload = useCallback(async () => {
+    if (!pendingFile) return;
     setError('');
     setUploading(true);
 
     try {
-      const resized = await resizeImage(file);
+      const resized = await resizeImage(pendingFile);
 
       const formData = new FormData();
       formData.append('photo', resized);
@@ -186,14 +206,13 @@ export default function Profile() {
         localStorage.setItem('userData', JSON.stringify(updated));
         return updated;
       });
+      closePreview();
     } catch (err) {
       setError(err?.response?.data?.error || 'Could not upload photo. Please try again.');
     } finally {
       setUploading(false);
-      // Reset input so the same file can be re-selected later if needed
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  }, []);
+  }, [pendingFile, closePreview]);
 
   const userName = user?.name ?? 'Student';
   const registerNumber = user?.registerNumber ?? '—';
@@ -350,6 +369,48 @@ export default function Profile() {
             className="profile-viewer-img"
             onClick={e => e.stopPropagation()}
           />
+        </div>
+      )}
+
+      {/* Preview the exact circular crop before uploading */}
+      {previewUrl && (
+        <div className="profile-preview-backdrop" onClick={closePreview}>
+          <div className="profile-preview-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="profile-preview-title">Preview</h3>
+            <p className="profile-preview-subtitle">
+              This is how your photo will appear to others. Choose a different photo if you'd like a different crop.
+            </p>
+            <div className="profile-preview-circle">
+              <img src={previewUrl} alt="Selected preview" />
+            </div>
+            <div className="profile-preview-actions">
+              <button
+                type="button"
+                className="profile-preview-btn secondary"
+                onClick={handlePhotoClick}
+                disabled={uploading}
+              >
+                Choose different
+              </button>
+              <button
+                type="button"
+                className="profile-preview-btn primary"
+                onClick={confirmUpload}
+                disabled={uploading}
+              >
+                {uploading ? <Loader2 size={16} className="spin" /> : 'Use this photo'}
+              </button>
+            </div>
+            <button
+              className="profile-preview-close"
+              onClick={closePreview}
+              aria-label="Cancel"
+              type="button"
+              disabled={uploading}
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
       )}
     </div>

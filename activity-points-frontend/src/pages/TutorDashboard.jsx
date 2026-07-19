@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { MoreVertical, User, LogOut } from 'lucide-react';
+import { MoreVertical, User, LogOut, X } from 'lucide-react';
 import TutorBottomNav from '../components/TutorBottomNav';
 import tutorAxios from '../api/tutorAxios';
 import '../css/TutorDashboard.css';
-
-const ROLE_LABELS = { tutor: 'Tutor', hod: 'HOD', principal: 'Principal' };
 
 const PAGE_TITLES = {
   students: 'Students',
@@ -33,6 +31,7 @@ const TutorDashboard = () => {
   const pageTitle = PAGE_TITLES[path] || PAGE_TITLES[activeTab] || 'Dashboard';
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [avatarEnlarged, setAvatarEnlarged] = useState(false);
 
   // Close the three-dot menu on outside click or Escape
   useEffect(() => {
@@ -48,6 +47,14 @@ const TutorDashboard = () => {
       document.removeEventListener('keydown', onKey);
     };
   }, [menuOpen]);
+
+  // Close the enlarged avatar on Escape
+  useEffect(() => {
+    if (!avatarEnlarged) return;
+    const onKey = (e) => { if (e.key === 'Escape') setAvatarEnlarged(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [avatarEnlarged]);
 
   // Get tutor name from localStorage (instant paint; refined below once /tutors/me resolves)
   const [tutorName, setTutorName] = useState(localStorage.getItem('tutorName') || 'Tutor');
@@ -102,8 +109,8 @@ const TutorDashboard = () => {
       <header className="tutor-topbar">
         <button
           className="tutor-topbar-avatar"
-          onClick={() => navigate('/tutor/dashboard/profile')}
-          aria-label="View profile"
+          onClick={() => setAvatarEnlarged(true)}
+          aria-label="View profile photo"
           type="button"
         >
           {tutorPhoto ? (
@@ -153,15 +160,6 @@ const TutorDashboard = () => {
         </div>
       </header>
 
-      {/* Greeting */}
-      <div className="tutor-greeting">
-        <h1>
-          Welcome, {tutorName}!{' '}
-          <span className={`tutor-role-badge role-${tutorRole}`}>{ROLE_LABELS[tutorRole] || 'Tutor'}</span>
-        </h1>
-        <p>Manage students, CSV uploads, and certificates below.</p>
-      </div>
-
       {/* Nested pages */}
       <main className="nested-content min-h-[300px]">
         <React.Suspense fallback={<p className="loading-text">Loading...</p>}>
@@ -171,6 +169,33 @@ const TutorDashboard = () => {
 
       {/* Bottom navigation */}
       <TutorBottomNav activeTab={activeTab} />
+
+      {/* Tap-to-enlarge avatar preview, WhatsApp-style */}
+      {avatarEnlarged && (
+        <div
+          className="tutor-avatar-lightbox"
+          onClick={() => setAvatarEnlarged(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Profile photo preview"
+        >
+          <button
+            className="tutor-avatar-lightbox-close"
+            onClick={() => setAvatarEnlarged(false)}
+            aria-label="Close"
+            type="button"
+          >
+            <X size={22} />
+          </button>
+          <div className="tutor-avatar-lightbox-content" onClick={(e) => e.stopPropagation()}>
+            {tutorPhoto ? (
+              <img src={tutorPhoto} alt={tutorName} />
+            ) : (
+              <span className="tutor-avatar-fallback-lg">{avatarInitials}</span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
