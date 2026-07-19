@@ -4,7 +4,165 @@
   background: var(--slate-50);
   box-sizing: border-box;
   font-family: 'Inter', sans-serif;
-  padding: 1rem 1rem 6rem 1rem; /* 6rem bottom = clears fixed bottom nav */
+  padding: calc(56px + 1rem) 1rem 6rem 1rem; /* room for fixed top bar; 6rem bottom clears fixed bottom nav */
+}
+
+/* ============================================================
+   FIXED TOP BAR — WhatsApp-style: stays pinned while everything
+   else scrolls underneath it. Mirrors the student app-topbar but
+   kept under its own class names so the two never collide.
+   ============================================================ */
+.tutor-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--slate-200);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  z-index: 300;
+}
+
+.tutor-topbar-avatar {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--blue-500), var(--blue-600));
+  color: var(--on-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  transition: transform 0.15s ease;
+}
+
+.tutor-topbar-avatar:active {
+  transform: scale(0.92);
+}
+
+.tutor-topbar-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tutor-topbar-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--slate-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tutor-topbar-page-title {
+  flex: 0 1 auto;
+  max-width: 42vw;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--slate-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+}
+
+.tutor-topbar-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tutor-topbar-menu-btn {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  margin: -8px;
+  border-radius: 50%;
+  color: var(--slate-700);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.tutor-topbar-menu-btn:hover,
+.tutor-topbar-menu-btn:active {
+  background-color: var(--slate-100);
+}
+
+.tutor-topbar-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px var(--shadow-color-strong);
+  border: 1px solid var(--slate-200);
+  overflow: hidden;
+  animation: tutor-dropdown-in 0.15s ease;
+  z-index: 310;
+}
+
+@keyframes tutor-dropdown-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.tutor-topbar-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--slate-700);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.tutor-topbar-dropdown button:hover {
+  background-color: var(--slate-100);
+}
+
+.tutor-topbar-dropdown button.danger {
+  color: var(--red-600);
+}
+
+/* Slim greeting block under the fixed top bar (avatar/logout now live there) */
+.tutor-greeting {
+  margin-bottom: 1.5rem;
+}
+
+.tutor-greeting h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--blue-800);
+  margin: 0;
+}
+
+.tutor-greeting p {
+  color: var(--slate-500);
+  font-size: 0.95rem;
+  margin: 0.25rem 0 0 0;
 }
 
 /* Header */
@@ -114,7 +272,7 @@
 }
 
 /* Bottom nav — matches TutorBottomNav component classes */
-.bottom-nav {
+.tutor-nav-sidebar {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -129,7 +287,7 @@
   z-index: 100;
 }
 
-.nav-btn {
+.tutor-nav-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -145,15 +303,73 @@
   gap: 3px;
 }
 
-.nav-btn span {
+.tutor-nav-btn span {
   margin-top: 2px;
   line-height: 1.2;
   text-align: center;
 }
 
-.nav-btn.active {
+.tutor-nav-btn.active {
   color: var(--blue-600);
   font-weight: 700;
+}
+
+/* =================== DESKTOP / TABLET: LEFT SIDEBAR =================== */
+/* On wider screens the nav moves to a fixed left sidebar, WhatsApp/Slack
+   style, stacked from the top — same treatment as the student sidebar.
+   Phones (<=768px) keep the bottom bar. */
+@media (min-width: 769px) {
+  .tutor-nav-sidebar {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: 220px;
+    height: 100vh;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 88px 12px 24px 12px;
+    border-top: none;
+    border-right: 1px solid var(--slate-200);
+    box-shadow: 2px 0 8px var(--shadow-color);
+  }
+
+  .tutor-nav-btn {
+    flex: none;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    line-height: 1;
+  }
+
+  .tutor-nav-btn svg {
+    flex-shrink: 0;
+    display: block;
+  }
+
+  .tutor-nav-btn span {
+    margin-top: 0;
+    line-height: 1.2;
+  }
+
+  .tutor-nav-btn.active {
+    background: var(--blue-tint-100);
+  }
+
+  .tutor-topbar {
+    left: 220px;
+  }
+
+  .tutor-dashboard {
+    margin-left: 220px;
+    padding: calc(56px + 2rem) 2rem 2rem 2rem;
+  }
 }
 
 /* Keep old class names as fallback */
@@ -260,18 +476,18 @@
     border-radius: 12px;
   }
 
-  .bottom-nav,
+  .tutor-nav-sidebar,
   .tutor-bottom-nav {
     padding: 0.5rem 0;
     padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
   }
 
-  .nav-btn,
+  .tutor-nav-btn,
   .tutor-bottom-nav .nav-button {
     font-size: 0.65rem;
   }
 
-  .nav-btn svg,
+  .tutor-nav-btn svg,
   .tutor-bottom-nav .nav-button svg {
     width: 20px;
     height: 20px;

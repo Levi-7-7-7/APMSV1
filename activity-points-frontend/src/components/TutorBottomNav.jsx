@@ -13,12 +13,12 @@ export default function TutorBottomNav({ activeTab }) {
   const navigate = useNavigate();
 
   return (
-    <div className="bottom-nav">
+    <div className="tutor-nav-sidebar">
       {navItems.map(({ id, icon: Icon, label, path }) => (
         <button
           key={id}
           onClick={() => navigate(path)}
-          className={`nav-btn ${activeTab === id ? 'active' : ''}`}
+          className={`tutor-nav-btn ${activeTab === id ? 'active' : ''}`}
           type="button"
         >
           <Icon size={24} />

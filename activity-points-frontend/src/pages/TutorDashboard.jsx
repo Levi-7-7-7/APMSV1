@@ -1,14 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { MoreVertical, User, LogOut } from 'lucide-react';
 import TutorBottomNav from '../components/TutorBottomNav';
 import tutorAxios from '../api/tutorAxios';
 import '../css/TutorDashboard.css';
 
 const ROLE_LABELS = { tutor: 'Tutor', hod: 'HOD', principal: 'Principal' };
 
+const PAGE_TITLES = {
+  students: 'Students',
+  upload: 'Add Students',
+  pending: 'Pending Certificates',
+  approved: 'Approved Certificates',
+  profile: 'Profile',
+};
+
 const TutorDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const menuRef = useRef(null);
   const path = location.pathname.split('/').pop(); // get last part of URL
 
   // Determine active tab
@@ -17,6 +27,27 @@ const TutorDashboard = () => {
       ? path
       : 'students';
   }, [path]);
+
+  // Page title shown in the fixed top bar; falls back to the active tab's
+  // label for nested routes like students/:studentId.
+  const pageTitle = PAGE_TITLES[path] || PAGE_TITLES[activeTab] || 'Dashboard';
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close the three-dot menu on outside click or Escape
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen]);
 
   // Get tutor name from localStorage (instant paint; refined below once /tutors/me resolves)
   const [tutorName, setTutorName] = useState(localStorage.getItem('tutorName') || 'Tutor');
@@ -67,36 +98,69 @@ const TutorDashboard = () => {
 
   return (
     <div className="tutor-dashboard">
-      {/* Header */}
-      <header className="dashboard-header flex flex-wrap justify-between items-center gap-4 mb-4">
-        <div className="header-left flex items-center gap-3">
+      {/* Fixed WhatsApp-style top bar: stays put while everything else scrolls */}
+      <header className="tutor-topbar">
+        <button
+          className="tutor-topbar-avatar"
+          onClick={() => navigate('/tutor/dashboard/profile')}
+          aria-label="View profile"
+          type="button"
+        >
+          {tutorPhoto ? (
+            <img src={tutorPhoto} alt={tutorName} />
+          ) : (
+            <span>{avatarInitials}</span>
+          )}
+        </button>
+
+        <span className="tutor-topbar-title">{tutorName}</span>
+
+        <span className="tutor-topbar-page-title">{pageTitle}</span>
+
+        <div className="tutor-topbar-menu" ref={menuRef}>
           <button
-            className="tutor-avatar tutor-avatar-btn"
-            onClick={() => navigate('/tutor/dashboard/profile')}
-            aria-label="View profile"
+            className="tutor-topbar-menu-btn"
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="More options"
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
             type="button"
           >
-            {tutorPhoto ? (
-              <img src={tutorPhoto} alt={tutorName} className="tutor-avatar-img" />
-            ) : (
-              <span>{avatarInitials}</span>
-            )}
+            <MoreVertical size={22} />
           </button>
-          <div className="header-greeting">
-            <h1>
-              Welcome, {tutorName}!{' '}
-              <span className={`tutor-role-badge role-${tutorRole}`}>{ROLE_LABELS[tutorRole] || 'Tutor'}</span>
-            </h1>
-            <p>Manage students, CSV uploads, and certificates below.</p>
-          </div>
+
+          {menuOpen && (
+            <div className="tutor-topbar-dropdown" role="menu">
+              <button
+                role="menuitem"
+                onClick={() => { setMenuOpen(false); navigate('/tutor/dashboard/profile'); }}
+                type="button"
+              >
+                <User size={18} />
+                <span>Profile</span>
+              </button>
+              <button
+                role="menuitem"
+                className="danger"
+                onClick={() => { setMenuOpen(false); handleLogout(); }}
+                type="button"
+              >
+                <LogOut size={18} />
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
         </div>
-        <button
-          onClick={handleLogout}
-          className="btn-logout px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-        >
-          Logout
-        </button>
       </header>
+
+      {/* Greeting */}
+      <div className="tutor-greeting">
+        <h1>
+          Welcome, {tutorName}!{' '}
+          <span className={`tutor-role-badge role-${tutorRole}`}>{ROLE_LABELS[tutorRole] || 'Tutor'}</span>
+        </h1>
+        <p>Manage students, CSV uploads, and certificates below.</p>
+      </div>
 
       {/* Nested pages */}
       <main className="nested-content min-h-[300px]">
