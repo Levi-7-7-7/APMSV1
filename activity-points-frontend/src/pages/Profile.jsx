@@ -12,6 +12,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
+import PhotoCropModal from '../components/PhotoCropModal';
 import '../css/Profile.css';
 
 function getInitials(name) {
@@ -22,52 +23,6 @@ function getInitials(name) {
     .join('')
     .toUpperCase()
     .slice(0, 2);
-}
-
-// Resize/compress an image client-side before upload (matches native app:
-// 600x600 JPEG @ 80% quality) so behavior is consistent across platforms.
-function resizeImage(file, maxSize = 600, quality = 0.8) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const reader = new FileReader();
-
-    reader.onload = e => {
-      img.onload = () => {
-        let { width, height } = img;
-
-        if (width > height) {
-          if (width > maxSize) {
-            height = Math.round((height * maxSize) / width);
-            width = maxSize;
-          }
-        } else if (height > maxSize) {
-          width = Math.round((width * maxSize) / height);
-          height = maxSize;
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(
-          blob => {
-            if (!blob) {
-              reject(new Error('Could not process image.'));
-              return;
-            }
-            resolve(new File([blob], file.name || 'profile.jpg', { type: 'image/jpeg' }));
-          },
-          'image/jpeg',
-          quality
-        );
-      };
-      img.onerror = () => reject(new Error('Could not read image.'));
-      img.src = e.target.result;
-    };
-    reader.onerror = () => reject(new Error('Could not read image.'));
-    reader.readAsDataURL(file);
-  });
 }
 
 export default function Profile() {
@@ -164,11 +119,11 @@ export default function Profile() {
     if (!uploading) fileInputRef.current?.click();
   };
 
-  // Selecting a file no longer uploads immediately — it opens a preview
-  // showing exactly how the photo will be cropped into the circular
-  // avatar, so the user can confirm or pick a different photo first.
+  // Selecting a file no longer uploads immediately — it opens an
+  // interactive crop tool (drag to reposition, slider to zoom) so the
+  // user can pick exactly how their photo appears in the circular
+  // avatar before confirming.
   const [pendingFile, setPendingFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
 
   const handleFileChange = useCallback(e => {
     const file = e.target.files?.[0];
@@ -177,25 +132,19 @@ export default function Profile() {
 
     setError('');
     setPendingFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
   }, []);
 
-  const closePreview = useCallback(() => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(null);
+  const closeCropModal = useCallback(() => {
     setPendingFile(null);
-  }, [previewUrl]);
+  }, []);
 
-  const confirmUpload = useCallback(async () => {
-    if (!pendingFile) return;
+  const confirmUpload = useCallback(async croppedFile => {
     setError('');
     setUploading(true);
 
     try {
-      const resized = await resizeImage(pendingFile);
-
       const formData = new FormData();
-      formData.append('photo', resized);
+      formData.append('photo', croppedFile);
 
       const res = await axiosInstance.patch('/students/profile-photo', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -206,13 +155,13 @@ export default function Profile() {
         localStorage.setItem('userData', JSON.stringify(updated));
         return updated;
       });
-      closePreview();
+      setPendingFile(null);
     } catch (err) {
       setError(err?.response?.data?.error || 'Could not upload photo. Please try again.');
     } finally {
       setUploading(false);
     }
-  }, [pendingFile, closePreview]);
+  }, []);
 
   const userName = user?.name ?? 'Student';
   const registerNumber = user?.registerNumber ?? '—';
@@ -352,7 +301,8 @@ export default function Profile() {
         )}
       </div>
 
-      {/* Tap-to-enlarge photo viewer */}
+      {/* Tap-to-enlarge photo viewer, shown as a circle to match how the
+          photo appears everywhere else in the app */}
       {viewerImage && (
         <div className="profile-viewer-backdrop" onClick={() => setViewerImage(null)}>
           <button
@@ -363,56 +313,20 @@ export default function Profile() {
           >
             <X size={22} />
           </button>
-          <img
-            src={viewerImage}
-            alt="Enlarged profile"
-            className="profile-viewer-img"
-            onClick={e => e.stopPropagation()}
-          />
-        </div>
-      )}
-
-      {/* Preview the exact circular crop before uploading */}
-      {previewUrl && (
-        <div className="profile-preview-backdrop" onClick={closePreview}>
-          <div className="profile-preview-modal" onClick={e => e.stopPropagation()}>
-            <h3 className="profile-preview-title">Preview</h3>
-            <p className="profile-preview-subtitle">
-              This is how your photo will appear to others. Choose a different photo if you'd like a different crop.
-            </p>
-            <div className="profile-preview-circle">
-              <img src={previewUrl} alt="Selected preview" />
-            </div>
-            <div className="profile-preview-actions">
-              <button
-                type="button"
-                className="profile-preview-btn secondary"
-                onClick={handlePhotoClick}
-                disabled={uploading}
-              >
-                Choose different
-              </button>
-              <button
-                type="button"
-                className="profile-preview-btn primary"
-                onClick={confirmUpload}
-                disabled={uploading}
-              >
-                {uploading ? <Loader2 size={16} className="spin" /> : 'Use this photo'}
-              </button>
-            </div>
-            <button
-              className="profile-preview-close"
-              onClick={closePreview}
-              aria-label="Cancel"
-              type="button"
-              disabled={uploading}
-            >
-              <X size={18} />
-            </button>
+          <div className="profile-viewer-circle" onClick={e => e.stopPropagation()}>
+            <img src={viewerImage} alt="Enlarged profile" className="profile-viewer-img" />
           </div>
         </div>
       )}
+
+      {/* Interactive crop tool shown before confirming a new photo upload */}
+      <PhotoCropModal
+        file={pendingFile}
+        uploading={uploading}
+        error={error}
+        onCancel={closeCropModal}
+        onConfirm={confirmUpload}
+      />
     </div>
   );
 }
