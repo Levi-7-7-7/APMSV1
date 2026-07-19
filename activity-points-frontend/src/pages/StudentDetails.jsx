@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import tutorAxios from '../api/tutorAxios';
-import { Loader2, Award, Info, ArrowLeft, Eye, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { Loader2, Award, Info, ArrowLeft, Eye, CheckCircle, XCircle, Trash2, X } from 'lucide-react';
 import CertModal from '../components/CertModal';
 import '../css/StudentDetails.css';
 import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
@@ -138,11 +138,21 @@ const StudentDetails = () => {
 
       {avatarExpanded && studentInfo?.profilePhoto && (
         <div className="avatar-overlay" onClick={() => setAvatarExpanded(false)}>
-          <img
-            src={studentInfo.profilePhoto}
-            alt={studentName}
-            className="avatar-overlay-img"
-          />
+          <button
+            className="avatar-overlay-close"
+            onClick={() => setAvatarExpanded(false)}
+            aria-label="Close"
+            type="button"
+          >
+            <X size={22} />
+          </button>
+          <div className="avatar-overlay-circle" onClick={e => e.stopPropagation()}>
+            <img
+              src={studentInfo.profilePhoto}
+              alt={studentName}
+              className="avatar-overlay-img"
+            />
+          </div>
         </div>
       )}
 
@@ -244,7 +254,7 @@ const StudentDetails = () => {
                     <div className="cert-body">
                       <p className="subcat"><strong>Subcategory:</strong> {cert.subcategory}</p>
                       {(cert.level || cert.prizeType) && (
-                        <p className="subcat" style={{ color: '#64748b', fontSize: '0.8rem' }}>
+                        <p className="subcat" style={{ color: 'var(--slate-500)', fontSize: '0.8rem' }}>
                           {cert.level}{cert.level && cert.prizeType ? ' · ' : ''}{cert.prizeType}
                         </p>
                       )}

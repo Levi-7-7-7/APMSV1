@@ -151,19 +151,43 @@ body {
   justify-content: center;
   padding: 2rem;
   z-index: 1000;
-  cursor: zoom-out;
   animation: avatar-overlay-fade-in 0.15s ease;
 }
 
-.avatar-overlay-img {
-  max-width: min(90vw, 420px);
-  max-height: 80vh;
-  width: auto;
-  height: auto;
-  border-radius: 16px;
-  object-fit: cover;
+.avatar-overlay-close {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.avatar-overlay-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.avatar-overlay-circle {
+  width: min(78vw, 340px);
+  height: min(78vw, 340px);
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
   animation: avatar-overlay-zoom-in 0.18s ease;
+}
+
+.avatar-overlay-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 @keyframes avatar-overlay-fade-in {

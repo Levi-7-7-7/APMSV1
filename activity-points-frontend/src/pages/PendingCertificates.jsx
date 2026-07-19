@@ -363,7 +363,7 @@ const PendingCertificates = () => {
 
               {/* Duration / Date range */}
               {(cert.dateFrom || cert.dateTo) && (
-                <p style={{ fontSize: '0.82rem', color: '#475569', marginTop: '0.2rem' }}>
+                <p style={{ fontSize: '0.82rem', color: 'var(--slate-500)', marginTop: '0.2rem' }}>
                   <strong>Duration:</strong>{' '}
                   {cert.dateFrom ? new Date(cert.dateFrom).toLocaleDateString('en-IN') : '—'}
                   {cert.dateTo && cert.dateTo !== cert.dateFrom
