@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axiosInstance from '../api/axiosInstance';
 import {
   ArrowLeft, FileText, Calendar, Award,
-  Eye, Download, CheckCircle, Clock, XCircle, Package, Trash2
+  Eye, Download, CheckCircle, Clock, XCircle, Package, Trash2,
+  UploadCloud, Loader2
 } from 'lucide-react';
 import '../css/certificatespage.css';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +23,13 @@ export default function CertificatesPage() {
   const [modalFile, setModalFile]       = useState('');
   const [bulkDownloading, setBulkDownloading] = useState(false);
   const [deletingId, setDeletingId]     = useState(null);
+
+  // Re-upload (rejected certificates only): id of the cert currently being
+  // re-uploaded, plus a ref-map of hidden file inputs — one per rejected
+  // card — so each card's button opens its own file picker.
+  const [reuploadingId, setReuploadingId] = useState(null);
+  const [reuploadError, setReuploadError] = useState({});
+  const fileInputRefs = React.useRef({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,6 +122,52 @@ export default function CertificatesPage() {
       }
     } finally {
       setBulkDownloading(false);
+    }
+  };
+
+  const triggerReupload = (certId) => {
+    fileInputRefs.current[certId]?.click();
+  };
+
+  const handleReuploadFile = async (cert, e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow picking the same file again later
+    if (!file) return;
+
+    const mime = file.type;
+    const name = file.name.toLowerCase();
+    const isImage = mime.startsWith('image/');
+    const isPdf = mime === 'application/pdf' || name.endsWith('.pdf');
+    if (!isImage && !isPdf) {
+      alert('Only images (JPG, PNG, etc.) and PDF files are accepted as certificates.');
+      return;
+    }
+
+    setReuploadError(prev => ({ ...prev, [cert._id]: '' }));
+    setReuploadingId(cert._id);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await axiosInstance.put(`/certificates/${cert._id}/reupload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const updated = res.data.certificate;
+      setCertificates(prev => prev.map(c => (c._id === cert._id ? {
+        ...c,
+        fileUrl: updated.fileUrl,
+        fileId: updated.fileId,
+        status: updated.status,
+        rejectionReason: updated.rejectionReason,
+        pointsAwarded: updated.pointsAwarded,
+        updatedAt: updated.updatedAt,
+      } : c)));
+    } catch (err) {
+      setReuploadError(prev => ({
+        ...prev,
+        [cert._id]: err.response?.data?.message || 'Re-upload failed. Please try again.',
+      }));
+    } finally {
+      setReuploadingId(null);
     }
   };
 
@@ -288,8 +342,28 @@ export default function CertificatesPage() {
                     : 'No reason provided. Please contact your tutor.'}
                 </div>
                 <div className="rejected-reason-action">
-                  You can re-upload a corrected certificate if needed.
+                  You can re-upload a corrected certificate — it'll be reviewed again under the same entry.
                 </div>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  ref={el => (fileInputRefs.current[cert._id] = el)}
+                  onChange={e => handleReuploadFile(cert, e)}
+                  style={{ display: 'none' }}
+                />
+                <button
+                  className="cert-reupload-btn"
+                  onClick={() => triggerReupload(cert._id)}
+                  disabled={reuploadingId === cert._id}
+                >
+                  {reuploadingId === cert._id
+                    ? <><Loader2 size={14} className="spin" /> Re-uploading…</>
+                    : <><UploadCloud size={14} /> Re-upload Certificate</>
+                  }
+                </button>
+                {reuploadError[cert._id] && (
+                  <p className="rejected-reason-error">{reuploadError[cert._id]}</p>
+                )}
               </div>
             )}
 

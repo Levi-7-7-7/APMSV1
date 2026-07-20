@@ -7,11 +7,15 @@ const Certificate = require('../models/Certificate');
 const logActivity = require('../utils/activityLog');
 const {
   uploadCertificate,
-  getMyCertificates
+  getMyCertificates,
+  reuploadCertificate
 } = require('../controllers/uploadController');
 
 // Upload certificate
 router.post('/upload', authMiddleware, uploadCertificate);
+
+// Re-upload the file on a certificate the tutor rejected (same record, new file)
+router.put('/:id/reupload', authMiddleware, reuploadCertificate);
 
 // Get logged-in student's certificates
 router.get('/my', authMiddleware, getMyCertificates);

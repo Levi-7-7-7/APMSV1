@@ -145,6 +145,125 @@ exports.uploadCertificate = [
 ];
 
 /**
+ * PUT /api/certificates/:id/reupload
+ *
+ * Lets a student replace the certificate FILE on a certificate the tutor
+ * rejected — without creating a new certificate record. Everything else
+ * (category, subcategory, level, prizeType, eventName, dates, potentialPoints)
+ * stays exactly as it was; only fileUrl/fileId are swapped and the status
+ * goes back to 'pending' for the tutor to review again.
+ *
+ * The new file is uploaded to ImageKit BEFORE the old one is deleted, so if
+ * the upload fails partway the student still has their original file —
+ * nothing is lost. Once the new file is safely stored and the record is
+ * saved, the old ImageKit file is removed so there's no orphaned image
+ * left behind for a certificate that, from the student's point of view,
+ * no longer exists in its old form.
+ */
+exports.reuploadCertificate = [
+  upload.single('file'),
+  async (req, res) => {
+    try {
+      const studentId = req.user.id;
+      const certId = req.params.id;
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const cert = await Certificate.findById(certId);
+      if (!cert) return res.status(404).json({ message: "Certificate not found" });
+
+      if (cert.student.toString() !== studentId.toString()) {
+        return res.status(403).json({ message: "Not authorised to re-upload this certificate" });
+      }
+
+      if (cert.status !== 'rejected') {
+        return res.status(400).json({ message: "Only rejected certificates can be re-uploaded" });
+      }
+
+      const student = await Student.findById(studentId).populate('branch').populate('batch');
+      if (!student) return res.status(404).json({ message: "Student not found" });
+
+      // Same folder scheme as a fresh upload, so the new file lands right
+      // where the old one was.
+      const folderPath = buildStudentCertFolder(student.branch?.name, student.batch?.name, student.name);
+      const ext = req.file.originalname.split(".").pop();
+      const baseName = sanitizeName(cert.eventName?.trim() || cert.subcategory || req.file.originalname);
+      const certFileName = baseName + "." + ext;
+
+      const base64File = req.file.buffer.toString('base64');
+      const uploadResult = await imagekit.upload({
+        file:     base64File,
+        fileName: certFileName,
+        folder:   folderPath,
+      });
+
+      const oldFileId = cert.fileId;
+
+      // Swap in the new file, reset review state. Category/subcategory/
+      // level/prizeType/eventName/dates/potentialPoints are left untouched.
+      cert.fileUrl         = uploadResult.url;
+      cert.fileId           = uploadResult.fileId;
+      cert.status            = 'pending';
+      cert.rejectionReason  = '';
+      cert.pointsAwarded    = 0;
+      await cert.save();
+
+      // Only now remove the old file — the new one is already safely saved
+      // on the certificate, so there's no window where the record points
+      // to nothing.
+      if (oldFileId) {
+        try {
+          await imagekit.deleteFile(oldFileId);
+        } catch (ikErr) {
+          console.warn('ImageKit delete warning (old cert file):', ikErr.message);
+        }
+      }
+
+      // ── Notify the tutor, same as a fresh upload ──────────────────────
+      try {
+        const tutor = await Tutor.findOne({
+          batch:  student.batch?._id  || student.batch,
+          branch: student.branch?._id || student.branch,
+          fcmToken: { $ne: null },
+        }).select('fcmToken');
+
+        if (tutor?.fcmToken) {
+          const certLabel = cert.eventName?.trim() || cert.subcategory || 'a certificate';
+          await sendPushNotification(
+            tutor.fcmToken,
+            '📄 Certificate Re-uploaded',
+            `${student.name} re-uploaded ${certLabel} — tap to review.`,
+            { type: 'new_certificate', certId: String(cert._id), status: 'pending' },
+          );
+        }
+      } catch (notifyErr) {
+        console.warn('[FCM] Tutor notification failed:', notifyErr.message);
+      }
+      // ───────────────────────────────────────────────────────────────────
+
+      logActivity({
+        req,
+        actorType: 'student',
+        actorId: studentId,
+        actorName: student.name,
+        action: 'certificate_reuploaded',
+        description: `${student.name} re-uploaded a rejected certificate${cert.eventName ? ` ("${cert.eventName.trim()}")` : ''}`,
+        targetType: 'Certificate',
+        targetId: cert._id,
+        targetName: cert.eventName || cert.subcategory,
+      });
+
+      res.json({ message: "Certificate re-uploaded successfully", certificate: cert });
+    } catch (error) {
+      console.error("Reupload Error:", error);
+      res.status(500).json({ message: "Re-upload failed", error: error.message });
+    }
+  }
+];
+
+/**
  * GET /api/certificates/my
  *
  * Returns the student's own certificates.

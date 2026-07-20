@@ -416,6 +416,46 @@
   border-top: 1px solid #fecaca;
 }
 
+/* ── Re-upload rejected certificate button ─────────────────────── */
+.cert-reupload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 7px 14px;
+  width: 100%;
+  justify-content: center;
+  border: 1.5px solid var(--blue-500);
+  border-radius: 10px;
+  background: var(--blue-tint-50);
+  color: var(--blue-600);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cert-reupload-btn:hover:not(:disabled) {
+  background: var(--blue-tint-100);
+  border-color: var(--blue-600);
+}
+.cert-reupload-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.cert-reupload-btn .spin {
+  animation: cert-reupload-spin 1s linear infinite;
+}
+@keyframes cert-reupload-spin {
+  to { transform: rotate(360deg); }
+}
+
+.rejected-reason-error {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  color: var(--red-600);
+  font-weight: 600;
+}
+
 /* ── Cancel pending certificate button ─────────────────────────── */
 .cert-cancel-btn {
   display: inline-flex;
