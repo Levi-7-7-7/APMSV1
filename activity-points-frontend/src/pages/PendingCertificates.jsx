@@ -24,9 +24,12 @@ const PendingCertificates = () => {
   const [selectedStudentId, setSelectedStudentId] = useState(null);
 
   // Deep-link support: a "new certificate" push notification's data.link
-  // points here with ?studentId=<id> so tapping it lands the tutor
-  // directly in that student's queue instead of the generic list.
+  // points here with ?studentId=<id>&certId=<id> so tapping it lands the
+  // tutor directly in that student's queue instead of the generic list,
+  // with the specific certificate that triggered the notification
+  // visually highlighted and scrolled into view.
   const [searchParams, setSearchParams] = useSearchParams();
+  const [highlightedCertId, setHighlightedCertId] = useState(null);
 
   // Reject modal state
   const [rejectingCert, setRejectingCert] = useState(null);
@@ -103,6 +106,18 @@ const PendingCertificates = () => {
     if (!studentIdParam || loading) return;
     const exists = studentGroups.some(g => (g.student?._id || g.student) === studentIdParam);
     if (exists) setSelectedStudentId(studentIdParam);
+
+    const certIdParam = searchParams.get('certId');
+    if (certIdParam) {
+      setHighlightedCertId(certIdParam);
+      // Scroll to the card shortly after the detail view renders.
+      setTimeout(() => {
+        document.getElementById(`pending-card-${certIdParam}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+      // Drop the highlight after a few seconds so it doesn't linger forever.
+      setTimeout(() => setHighlightedCertId(null), 4000);
+    }
+
     setSearchParams({}, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, studentGroups]);
@@ -472,7 +487,11 @@ const PendingCertificates = () => {
             const points       = getPotentialPoints(cert);
 
             return (
-              <div key={cert._id} className="pending-card">
+              <div
+                key={cert._id}
+                id={`pending-card-${cert._id}`}
+                className={`pending-card${highlightedCertId === cert._id ? ' pending-card-highlighted' : ''}`}
+              >
                 <div className="card-left">
                   <p><strong>Category:</strong> {cert.category?.name || 'N/A'}</p>
                   <p><strong>Subcategory:</strong> {cert.subcategory || 'N/A'}</p>

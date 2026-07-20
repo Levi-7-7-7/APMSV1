@@ -504,7 +504,11 @@ router.post('/certificates/:id/approve', tutorAuth, async (req, res) => {
         cert.student,
         '🎉 Certificate Approved!',
         `"${certName}" has been approved. ${pointsToAward} points have been added to your account.`,
-        { status: 'approved', certId: cert._id.toString() }
+        {
+          status: 'approved',
+          certId: cert._id.toString(),
+          link: `/student/certificates?certId=${cert._id.toString()}&status=approved`,
+        }
       ); // intentionally NOT awaited — don't block the response
     }
     // ─────────────────────────────────────────────────────────────────────────

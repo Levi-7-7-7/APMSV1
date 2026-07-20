@@ -121,8 +121,9 @@ exports.uploadCertificate = [
               status: 'pending',
               // Deep-link straight to this student's queue in the pending
               // review page, instead of dropping the tutor on the generic
-              // dashboard home.
-              link: `/tutor/dashboard/pending?studentId=${studentId}`,
+              // dashboard home. certId lets the page highlight this exact
+              // certificate once the queue is open.
+              link: `/tutor/dashboard/pending?studentId=${studentId}&certId=${cert._id}`,
             },
           );
         }
@@ -249,7 +250,7 @@ exports.reuploadCertificate = [
               type: 'new_certificate',
               certId: String(cert._id),
               status: 'pending',
-              link: `/tutor/dashboard/pending?studentId=${studentId}`,
+              link: `/tutor/dashboard/pending?studentId=${studentId}&certId=${cert._id}`,
             },
           );
         }

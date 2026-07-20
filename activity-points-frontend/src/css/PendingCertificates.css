@@ -12,6 +12,13 @@
   justify-content: space-between;
   gap: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.3s ease, outline-color 0.3s ease;
+}
+
+/* Briefly highlights the certificate a notification deep-link points to */
+.pending-card-highlighted {
+  outline: 2px solid #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 .card-left {
