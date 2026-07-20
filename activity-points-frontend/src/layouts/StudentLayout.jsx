@@ -5,7 +5,7 @@ import BottomNav from '../components/BottomNav';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
-import { listenForForegroundMessages } from '../utils/pushNotifications';
+import { listenForForegroundMessages, syncPushToken } from '../utils/pushNotifications';
 import '../css/StudentDashboard.css';
 
 const PAGE_TITLES = {
@@ -61,6 +61,16 @@ const StudentLayout = () => {
       }
     });
     return unsubscribe;
+  }, []);
+
+  // Covers every login, not just the very first: if this browser already
+  // has notification permission granted (from an earlier session, or a
+  // different account on a shared device), make sure the backend still
+  // has a valid token for *this* account — the banner below only fires
+  // once, on the very first grant, so this is what keeps re-logins and
+  // pruned/expired tokens working without asking the user again.
+  useEffect(() => {
+    syncPushToken('student');
   }, []);
 
   // Re-read from localStorage whenever userData changes (e.g. after Dashboard fetch,

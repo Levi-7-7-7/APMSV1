@@ -109,6 +109,58 @@ export async function registerPushNotifications(role) {
 }
 
 /**
+ * Silent re-sync: if the browser has ALREADY granted notification
+ * permission, (re)mint a web FCM token and PATCH it to the backend —
+ * with no permission prompt, so it's safe to call on every app/login
+ * mount rather than only from a button click.
+ *
+ * Why this is needed in addition to the banner:
+ *   - The banner only renders while permission is still 'default'. Once
+ *     a user has granted permission in this browser, the banner never
+ *     shows again — so if the *server-side* token is ever missing
+ *     (account has no fcmToken yet, a previous token was pruned as
+ *     dead, or a different account logs in on the same shared browser/
+ *     device where permission was already granted for a prior account)
+ *     there was previously no path back to a registered token.
+ *   - FCM tokens can also rotate; calling getToken() again is the
+ *     documented way to keep the current one fresh, and it returns the
+ *     existing token unchanged if nothing has changed.
+ *
+ * Call this once near the top of each authenticated layout (student/
+ * tutor) so every login — not just the very first one — ends with a
+ * valid token on file for that account.
+ *
+ * @param {'student'|'tutor'} role
+ * @returns {Promise<'synced'|'skipped'|'error'>}
+ */
+export async function syncPushToken(role) {
+  if (!isPushCapable()) return 'skipped';
+  if (getPermissionState() !== 'granted') return 'skipped'; // don't prompt here
+
+  try {
+    const messaging = await getMessagingInstance();
+    if (!messaging) return 'skipped';
+
+    const registration = await navigator.serviceWorker.register(SW_URL);
+    await navigator.serviceWorker.ready;
+
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: registration,
+    });
+    if (!token) return 'error';
+
+    const { axios, endpoint } = clientFor(role);
+    await axios.patch(endpoint, { fcmToken: token, platform: 'web' });
+
+    return 'synced';
+  } catch (err) {
+    console.warn('[push] silent token sync failed:', err.message);
+    return 'error';
+  }
+}
+
+/**
  * Listens for notifications that arrive while the tab is open and
  * focused (the service worker's onBackgroundMessage doesn't fire for
  * these). Call once near app root; returns an unsubscribe function.

@@ -5,7 +5,7 @@ import TutorBottomNav from '../components/TutorBottomNav';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
-import { listenForForegroundMessages } from '../utils/pushNotifications';
+import { listenForForegroundMessages, syncPushToken } from '../utils/pushNotifications';
 import tutorAxios from '../api/tutorAxios';
 import { getTutorTicketUnreadCount } from '../utils/ticketApi';
 import '../css/TutorDashboard.css';
@@ -49,6 +49,16 @@ const TutorDashboard = () => {
       }
     });
     return unsubscribe;
+  }, []);
+
+  // Covers every login, not just the very first: if this browser already
+  // has notification permission granted (from an earlier session, or a
+  // different account on a shared device), make sure the backend still
+  // has a valid token for *this* account — the banner below only fires
+  // once, on the very first grant, so this is what keeps re-logins and
+  // pruned/expired tokens working without asking the user again.
+  useEffect(() => {
+    syncPushToken('tutor');
   }, []);
 
   // Close the three-dot menu on outside click or Escape
