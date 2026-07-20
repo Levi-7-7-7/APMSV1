@@ -649,6 +649,11 @@ button,
   color: #7c3aed;
 }
 
+.ap-card-icon.amber {
+  background: #fffbeb;
+  color: #b45309;
+}
+
 .ap-card-header h3 {
   font-size: 0.95rem;
   font-weight: 600;
@@ -1638,6 +1643,7 @@ textarea:focus {
 .ap-dashboard-card-icon.teal    { background: #f0fdfa; color: #0d9488; }
 .ap-dashboard-card-icon.pink    { background: #fdf2f8; color: #be185d; }
 .ap-dashboard-card-icon.slate   { background: var(--ap-light); color: var(--ap-muted); }
+.ap-dashboard-card-icon.amber   { background: #fffbeb; color: #b45309; }
 
 .ap-dashboard-card-label {
   font-size: 1rem;

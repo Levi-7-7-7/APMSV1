@@ -1,0 +1,362 @@
+/* ===================== PAGE ===================== */
+.tt-page {
+  padding: 20px 20px 40px;
+  max-width: 780px;
+  margin: 0 auto;
+  color: var(--slate-700);
+}
+
+/* ===================== SCOPE TOGGLE ===================== */
+.tt-scope-toggle {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+}
+
+.tt-scope-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--surface);
+  color: var(--slate-500);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.tt-scope-btn.active {
+  background: var(--blue-600);
+  color: var(--on-color);
+}
+
+.tt-scope-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.3);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.tt-scope-btn:not(.active) .tt-scope-count {
+  background: var(--red-600);
+  color: #fff;
+}
+
+/* ===================== NEW REQUEST FORM ===================== */
+.tt-new-wrap {
+  margin-bottom: 20px;
+}
+
+.tt-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--blue-600);
+  color: var(--on-color);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.tt-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--surface);
+  border-radius: 1rem;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  margin-top: 14px;
+}
+
+.tt-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--slate-600);
+}
+
+.tt-form-label input,
+.tt-form-label textarea {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--slate-800);
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200, rgba(0,0,0,0.1));
+  border-radius: 0.65rem;
+  padding: 10px 12px;
+  resize: vertical;
+  outline: none;
+}
+
+.tt-form-label input:focus,
+.tt-form-label textarea:focus {
+  border-color: var(--blue-600);
+}
+
+.tt-form-error {
+  font-size: 0.8rem;
+  color: var(--red-600);
+}
+
+.tt-form-submit {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--blue-600);
+  color: var(--on-color);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.tt-form-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.tt-spin {
+  animation: tt-spin 0.9s linear infinite;
+}
+
+@keyframes tt-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ===================== EMPTY ===================== */
+.tt-empty {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 0.9rem;
+  color: var(--slate-500);
+}
+
+.tt-empty.error {
+  color: var(--red-600);
+}
+
+/* ===================== LIST ===================== */
+.tt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tt-card {
+  background: var(--surface);
+  border-radius: 1rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.tt-card.unseen {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 0 0 2px var(--blue-600);
+}
+
+.tt-card-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tt-card-head-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tt-subject {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--slate-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tt-meta {
+  font-size: 0.75rem;
+  color: var(--slate-500);
+}
+
+.tt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tt-badge.open {
+  background: var(--amber-tint-100, rgba(245, 158, 11, 0.15));
+  color: var(--amber-600, #b45309);
+}
+
+.tt-badge.forwarded {
+  background: var(--blue-tint-100, rgba(37, 99, 235, 0.12));
+  color: var(--blue-600);
+}
+
+.tt-badge.resolved {
+  background: var(--green-tint-100);
+  color: var(--green-600, #15803d);
+}
+
+.tt-chevron {
+  flex-shrink: 0;
+  color: var(--slate-500);
+  transition: transform 0.2s ease;
+}
+
+.tt-chevron.open {
+  transform: rotate(180deg);
+}
+
+.tt-card-body {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tt-description {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--slate-600);
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.tt-attachment-link {
+  display: inline-block;
+  width: fit-content;
+}
+
+.tt-attachment-img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 0.65rem;
+  display: block;
+}
+
+.tt-note {
+  font-size: 0.8rem;
+  color: var(--slate-500);
+  font-style: italic;
+}
+
+.tt-resolution {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--green-600, #15803d);
+  background: var(--green-tint-100);
+  border-radius: 0.65rem;
+  padding: 10px 12px;
+}
+
+/* ===================== ACTIONS ===================== */
+.tt-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tt-btn-resolve,
+.tt-btn-forward,
+.tt-btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 0.65rem;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tt-btn-resolve {
+  background: var(--green-600);
+  color: var(--on-color);
+}
+
+.tt-btn-forward {
+  background: var(--blue-600);
+  color: var(--on-color);
+}
+
+.tt-btn-cancel {
+  background: var(--slate-100, rgba(0,0,0,0.06));
+  color: var(--slate-600);
+}
+
+.tt-btn-resolve:disabled,
+.tt-btn-forward:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.tt-note-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.tt-note-input {
+  font-family: inherit;
+  font-size: 0.85rem;
+  border: 1px solid var(--slate-200, rgba(0,0,0,0.1));
+  border-radius: 0.65rem;
+  padding: 8px 10px;
+  resize: vertical;
+  outline: none;
+  background: var(--slate-50);
+  color: var(--slate-800);
+}
+
+.tt-note-input:focus {
+  border-color: var(--blue-600);
+}
+
+.tt-note-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

@@ -7,6 +7,7 @@ import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import { listenForForegroundMessages } from '../utils/pushNotifications';
 import tutorAxios from '../api/tutorAxios';
+import { getTutorTicketUnreadCount } from '../utils/ticketApi';
 import '../css/TutorDashboard.css';
 
 const PAGE_TITLES = {
@@ -14,6 +15,7 @@ const PAGE_TITLES = {
   upload: 'Add Students',
   pending: 'Pending Certificates',
   approved: 'Approved Certificates',
+  tickets: 'Tickets',
   profile: 'Profile',
 };
 
@@ -25,7 +27,7 @@ const TutorDashboard = () => {
 
   // Determine active tab
   const activeTab = React.useMemo(() => {
-    return ['students', 'upload', 'pending', 'approved'].includes(path)
+    return ['students', 'upload', 'pending', 'approved', 'tickets'].includes(path)
       ? path
       : 'students';
   }, [path]);
@@ -106,6 +108,23 @@ const TutorDashboard = () => {
     const interval = setInterval(refreshPendingCount, 30000);
     return () => clearInterval(interval);
   }, [refreshPendingCount]);
+
+  // Count of resolved-and-unseen tickets (own requests + forwarded student
+  // tickets), shown as a badge on the "Tickets" nav icon — same pattern as
+  // pendingCount above.
+  const [ticketUnreadCount, setTicketUnreadCount] = useState(0);
+
+  const refreshTicketUnreadCount = React.useCallback(() => {
+    getTutorTicketUnreadCount()
+      .then(res => setTicketUnreadCount(res.data?.count || 0))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refreshTicketUnreadCount();
+    const interval = setInterval(refreshTicketUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [refreshTicketUnreadCount]);
 
   // Fetch the tutor's real profile (name + photo + role) so the header
   // matches what's shown on the full Profile page, instead of always
@@ -216,12 +235,12 @@ const TutorDashboard = () => {
       <main className="nested-content min-h-[300px]">
         <NotificationPermissionBanner role="tutor" />
         <React.Suspense fallback={<p className="loading-text">Loading...</p>}>
-          <Outlet context={{ refreshPendingCount }} />
+          <Outlet context={{ refreshPendingCount, refreshTicketUnreadCount }} />
         </React.Suspense>
       </main>
 
       {/* Bottom navigation */}
-      <TutorBottomNav activeTab={activeTab} pendingCount={pendingCount} />
+      <TutorBottomNav activeTab={activeTab} pendingCount={pendingCount} ticketUnreadCount={ticketUnreadCount} />
 
       {/* First-login nudge to change the admin-set password — auto-hides once firstTimePasswordSet flips to true */}
       <PasswordSetupPrompt show={firstTimePasswordSet === false} resetPath="/tutor/forgot-password" />

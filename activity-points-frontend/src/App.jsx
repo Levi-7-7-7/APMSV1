@@ -20,6 +20,7 @@ import StudentDetails from './pages/StudentDetails';
 import UploadCSV from './pages/UploadCSV';
 import PendingCertificates from './pages/PendingCertificates';
 import ApprovedCertificates from './pages/ApprovedCertificates';
+import TutorTickets from './pages/TutorTickets';
 import TutorForgotPassword from './pages/TutorForgotPassword';
 import TutorProfile from './pages/TutorProfile';
 
@@ -64,6 +65,7 @@ function App() {
           <Route path="upload" element={<UploadCSV />} />
           <Route path="pending" element={<PendingCertificates />} />
           <Route path="approved" element={<ApprovedCertificates />} />
+          <Route path="tickets" element={<TutorTickets />} />
           <Route path="profile" element={<TutorProfile />} />
         </Route>
 
