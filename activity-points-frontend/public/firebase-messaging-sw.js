@@ -1,10 +1,12 @@
 /**
  * public/firebase-messaging-sw.js
  *
- * Dedicated service worker for Firebase Cloud Messaging web push. Kept
- * separate from the app's main service worker (sw.js) — Firebase docs
- * recommend a standalone file, and it avoids any interference with
- * whatever caching/PWA logic sw.js does.
+ * Dedicated service worker for Firebase Cloud Messaging web push, and
+ * the app's only service worker — Firebase docs recommend a standalone
+ * file for this rather than folding it into a general-purpose one.
+ * Registered early at app startup (see main.jsx) so the app is
+ * installable on Android/Chrome regardless of whether the user has
+ * opted into push notifications yet.
  *
  * This file is served as-is from /public (Vite does NOT process it), so
  * it can't read import.meta.env. Instead, the app registers it with the

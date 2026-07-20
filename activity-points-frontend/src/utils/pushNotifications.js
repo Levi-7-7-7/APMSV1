@@ -16,7 +16,7 @@ import { getMessagingInstance, firebaseConfig, VAPID_KEY } from './firebase';
 import axiosInstance from '../api/axiosInstance';
 import tutorAxios from '../api/tutorAxios';
 
-const SW_URL = `/firebase-messaging-sw.js?${new URLSearchParams(firebaseConfig).toString()}`;
+export const SW_URL = `/firebase-messaging-sw.js?${new URLSearchParams(firebaseConfig).toString()}`;
 
 function clientFor(role) {
   return role === 'tutor'
@@ -38,6 +38,33 @@ export function isPushCapable() {
     !!firebaseConfig.apiKey &&
     !!VAPID_KEY
   );
+}
+
+/**
+ * Registers the service worker at app startup, with no permission
+ * prompt and no user gesture required. This is what makes the app
+ * installable on Android/Chrome (Chrome requires a registered SW
+ * before it will offer the "Install app" prompt) — previously the SW
+ * was only registered inside registerPushNotifications(), which meant
+ * a user who hadn't opted into notifications yet couldn't install the
+ * app either. Safe to call unconditionally: registering the same
+ * scriptURL twice is a no-op that resolves to the existing
+ * registration, so this doesn't conflict with the later
+ * navigator.serviceWorker.register(SW_URL) call in
+ * registerPushNotifications().
+ *
+ * Call once, near app root (see main.jsx). Fails silently — push/
+ * installability just won't be available, nothing else breaks.
+ */
+export async function registerServiceWorkerForInstallability() {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+  if (!firebaseConfig.apiKey) return; // Firebase not configured yet
+
+  try {
+    await navigator.serviceWorker.register(SW_URL);
+  } catch (err) {
+    console.warn('[push] service worker registration failed:', err.message);
+  }
 }
 
 /**
