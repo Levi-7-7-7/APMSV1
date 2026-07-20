@@ -105,8 +105,6 @@ export default function ApprovedCertificates() {
         </div>
       )}
 
-      <h2 className="approved-heading">Approved Certificates</h2>
-
       <input
         type="text"
         placeholder="Search by student name or reg. number..."

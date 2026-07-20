@@ -57,27 +57,16 @@
   object-fit: cover;
 }
 
-.tutor-topbar-title {
+.tutor-topbar-page-title {
   flex: 1 1 auto;
   min-width: 0;
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 700;
+  font-size: 1.05rem;
   color: var(--slate-800);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.tutor-topbar-page-title {
-  flex: 0 1 auto;
-  max-width: 42vw;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: var(--slate-600);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: right;
+  text-align: center;
 }
 
 .tutor-topbar-menu {
@@ -312,6 +301,34 @@
 .tutor-nav-btn.active {
   color: var(--blue-600);
   font-weight: 700;
+}
+
+.tutor-nav-btn .tutor-nav-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+}
+
+.tutor-nav-btn .tutor-nav-badge {
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--red-600);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--surface);
+  margin-top: 0;
 }
 
 /* =================== DESKTOP / TABLET: LEFT SIDEBAR =================== */

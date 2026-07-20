@@ -145,7 +145,6 @@ export default function CertificatesPage() {
         <button onClick={() => navigate('/student')} className="back-button" aria-label="Back to dashboard">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="title">My Certificates</h1>
       </div>
 
       <div className="summary-card">

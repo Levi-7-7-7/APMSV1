@@ -1,16 +1,27 @@
-import React, { useEffect, useState } from 'react';
-import { Loader2, Award, Eye, AlertCircle, X, Edit2, Check } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { Loader2, Award, Eye, AlertCircle, X, Edit2, Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import tutorAxios from '../api/tutorAxios';
 import CertModal from '../components/CertModal';
 import '../css/PendingCertificates.css';
 
 const PendingCertificates = () => {
+  // Provided by TutorDashboard via <Outlet context={...}> — lets us nudge
+  // the bottom-nav badge count to refresh immediately after an
+  // approve/reject/reassign, instead of waiting for its own poll.
+  const { refreshPendingCount } = useOutletContext() || {};
+
   const [pendingCerts, setPendingCerts]   = useState([]);
   const [loading, setLoading]             = useState(true);
   const [processingId, setProcessingId]   = useState(null);
   const [modalUrl, setModalUrl]           = useState(null);
   const [modalFile, setModalFile]         = useState('');
   const [categories, setCategories]       = useState([]);
+
+  // Which student's certificate queue is currently open. null = show the
+  // student list (grouped, WhatsApp-chat-list style) instead of every
+  // single certificate card flattened out.
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
 
   // Reject modal state
   const [rejectingCert, setRejectingCert] = useState(null);
@@ -57,6 +68,52 @@ const PendingCertificates = () => {
 
   useEffect(() => { fetchPending(); }, []);
 
+  // Group flat pendingCerts (already oldest-first from the backend) into
+  // per-student queues. Iterating in that order and pushing each student's
+  // first appearance to `order` means: whichever student has been waiting
+  // the longest (oldest single pending certificate) appears first in the
+  // list — "whoever posted first is first" — while every certificate for
+  // that student, old and new, is collected in their own queue.
+  const studentGroups = useMemo(() => {
+    const byId = new Map();
+    const order = [];
+    for (const cert of pendingCerts) {
+      const sid = cert.student?._id || cert.student;
+      if (!sid) continue;
+      if (!byId.has(sid)) {
+        byId.set(sid, { student: cert.student, certs: [] });
+        order.push(sid);
+      }
+      byId.get(sid).certs.push(cert);
+    }
+    return order.map(sid => byId.get(sid));
+  }, [pendingCerts]);
+
+  const selectedGroup = selectedStudentId
+    ? studentGroups.find(g => (g.student?._id || g.student) === selectedStudentId)
+    : null;
+
+  // If the student currently open no longer has any pending certificates
+  // (e.g. the tutor just approved/rejected their last one), automatically
+  // drop back to the student list instead of showing an empty detail view.
+  useEffect(() => {
+    if (selectedStudentId && !loading && !selectedGroup) {
+      setSelectedStudentId(null);
+    }
+  }, [selectedStudentId, selectedGroup, loading]);
+
+  const timeAgo = (dateStr) => {
+    if (!dateStr) return '';
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  };
+
   const getPotentialPoints = (cert) => {
     if (!cert?.category) return 0;
     const sub = cert.category.subcategories?.find(
@@ -79,6 +136,7 @@ const PendingCertificates = () => {
     try {
       await tutorAxios.post(`/tutors/certificates/${certId}/approve`);
       await fetchPending();
+      refreshPendingCount?.();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to approve certificate');
     } finally {
@@ -109,6 +167,7 @@ const PendingCertificates = () => {
         reason: rejectReason.trim(),
       });
       await fetchPending();
+      refreshPendingCount?.();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to reject certificate');
     } finally {
@@ -336,83 +395,136 @@ const PendingCertificates = () => {
         </div>
       )}
 
-      {/* Certificate cards */}
-      {pendingCerts.map(cert => {
-        const isProcessing = processingId === cert._id;
-        const points       = getPotentialPoints(cert);
+      {/* Student list (default view) or a single student's certificate queue */}
+      {!selectedGroup ? (
+        <div className="pending-student-list">
+          {studentGroups.map(group => {
+            const sid = group.student?._id || group.student;
+            const oldest = group.certs[0];
+            const initials = (group.student?.name || '?')
+              .split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
-        return (
-          <div key={cert._id} className="pending-card">
-            <div className="card-left">
-              <h3 className="student-name">{cert.student?.name || 'N/A'}</h3>
-              <p className="reg-no">{cert.student?.registerNumber}</p>
-
-              <p><strong>Category:</strong> {cert.category?.name || 'N/A'}</p>
-              <p><strong>Subcategory:</strong> {cert.subcategory || 'N/A'}</p>
-
-              {cert.eventName && (
-                <p><strong>Event / Competition:</strong> {cert.eventName}</p>
-              )}
-
-              {(cert.level || cert.prizeType) && (
-                <p className="level-info">
-                  <Award size={14}/>
-                  {cert.level ?? ''}{cert.level && cert.prizeType ? ' · ' : ''}{cert.prizeType ?? ''}
-                </p>
-              )}
-
-              {/* Duration / Date range */}
-              {(cert.dateFrom || cert.dateTo) && (
-                <p style={{ fontSize: '0.82rem', color: 'var(--slate-500)', marginTop: '0.2rem' }}>
-                  <strong>Duration:</strong>{' '}
-                  {cert.dateFrom ? new Date(cert.dateFrom).toLocaleDateString('en-IN') : '—'}
-                  {cert.dateTo && cert.dateTo !== cert.dateFrom
-                    ? ` → ${new Date(cert.dateTo).toLocaleDateString('en-IN')}`
-                    : ''}
-                </p>
-              )}
-
-              <p className="points"><strong>Points:</strong> {points} pts</p>
-
-              <div className="cert-file-actions">
-                <button className="view-link" onClick={() => openModal(cert)}>
-                  <Eye size={14}/> View Certificate
-                </button>
-                <button
-                  className="view-link"
-                  style={{ color: '#2563eb', marginLeft: '0.5rem' }}
-                  onClick={() => openEditModal(cert)}
-                >
-                  <Edit2 size={14}/> Edit Assignment
-                </button>
-              </div>
-            </div>
-
-            <div className="card-right">
+            return (
               <button
-                className="btn-approve"
-                onClick={() => handleApprove(cert._id)}
-                disabled={isProcessing}
+                key={sid}
+                type="button"
+                className="pending-student-row"
+                onClick={() => setSelectedStudentId(sid)}
               >
-                {isProcessing
-                  ? <><Loader2 size={14} className="spinner"/> Processing…</>
-                  : 'Approve'
-                }
+                <span className="pending-student-avatar">{initials}</span>
+
+                <span className="pending-student-info">
+                  <span className="pending-student-name">{group.student?.name || 'N/A'}</span>
+                  <span className="pending-student-reg">{group.student?.registerNumber}</span>
+                  <span className="pending-student-preview">
+                    <Clock size={12} />
+                    Waiting since {timeAgo(oldest?.createdAt)} · {oldest?.category?.name || oldest?.subcategory || 'Certificate'}
+                  </span>
+                </span>
+
+                <span className="pending-student-meta">
+                  <span className="pending-student-badge">{group.certs.length}</span>
+                  <ChevronRight size={18} className="pending-student-chevron" />
+                </span>
               </button>
-              <button
-                className="btn-reject"
-                onClick={() => openRejectModal(cert)}
-                disabled={isProcessing}
-              >
-                {isProcessing
-                  ? <><Loader2 size={14} className="spinner"/> Processing…</>
-                  : 'Reject'
-                }
-              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="pending-detail">
+          <button type="button" className="pending-back-btn" onClick={() => setSelectedStudentId(null)}>
+            <ChevronLeft size={18} /> All students
+          </button>
+
+          <div className="pending-detail-header">
+            <span className="pending-student-avatar lg">
+              {(selectedGroup.student?.name || '?').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+            </span>
+            <div>
+              <h3 className="pending-detail-name">{selectedGroup.student?.name || 'N/A'}</h3>
+              <p className="pending-detail-reg">
+                {selectedGroup.student?.registerNumber} · {selectedGroup.certs.length} pending certificate{selectedGroup.certs.length !== 1 ? 's' : ''}
+              </p>
             </div>
           </div>
-        );
-      })}
+
+          {/* Certificate cards for this student, oldest upload first */}
+          {selectedGroup.certs.map(cert => {
+            const isProcessing = processingId === cert._id;
+            const points       = getPotentialPoints(cert);
+
+            return (
+              <div key={cert._id} className="pending-card">
+                <div className="card-left">
+                  <p><strong>Category:</strong> {cert.category?.name || 'N/A'}</p>
+                  <p><strong>Subcategory:</strong> {cert.subcategory || 'N/A'}</p>
+
+                  {cert.eventName && (
+                    <p><strong>Event / Competition:</strong> {cert.eventName}</p>
+                  )}
+
+                  {(cert.level || cert.prizeType) && (
+                    <p className="level-info">
+                      <Award size={14}/>
+                      {cert.level ?? ''}{cert.level && cert.prizeType ? ' · ' : ''}{cert.prizeType ?? ''}
+                    </p>
+                  )}
+
+                  {/* Duration / Date range */}
+                  {(cert.dateFrom || cert.dateTo) && (
+                    <p style={{ fontSize: '0.82rem', color: 'var(--slate-500)', marginTop: '0.2rem' }}>
+                      <strong>Duration:</strong>{' '}
+                      {cert.dateFrom ? new Date(cert.dateFrom).toLocaleDateString('en-IN') : '—'}
+                      {cert.dateTo && cert.dateTo !== cert.dateFrom
+                        ? ` → ${new Date(cert.dateTo).toLocaleDateString('en-IN')}`
+                        : ''}
+                    </p>
+                  )}
+
+                  <p className="points"><strong>Points:</strong> {points} pts</p>
+                  <p className="pending-uploaded-at"><Clock size={12}/> Uploaded {timeAgo(cert.createdAt)}</p>
+
+                  <div className="cert-file-actions">
+                    <button className="view-link" onClick={() => openModal(cert)}>
+                      <Eye size={14}/> View Certificate
+                    </button>
+                    <button
+                      className="view-link"
+                      style={{ color: '#2563eb', marginLeft: '0.5rem' }}
+                      onClick={() => openEditModal(cert)}
+                    >
+                      <Edit2 size={14}/> Edit Assignment
+                    </button>
+                  </div>
+                </div>
+
+                <div className="card-right">
+                  <button
+                    className="btn-approve"
+                    onClick={() => handleApprove(cert._id)}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing
+                      ? <><Loader2 size={14} className="spinner"/> Processing…</>
+                      : 'Approve'
+                    }
+                  </button>
+                  <button
+                    className="btn-reject"
+                    onClick={() => openRejectModal(cert)}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing
+                      ? <><Loader2 size={14} className="spinner"/> Processing…</>
+                      : 'Reject'
+                    }
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

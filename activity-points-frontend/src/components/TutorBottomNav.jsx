@@ -9,7 +9,7 @@ const navItems = [
   { id: 'approved', icon: BookOpen, label: 'Approved Certificates', path: '/tutor/dashboard/approved' },
 ];
 
-export default function TutorBottomNav({ activeTab }) {
+export default function TutorBottomNav({ activeTab, pendingCount = 0 }) {
   const navigate = useNavigate();
 
   return (
@@ -21,7 +21,14 @@ export default function TutorBottomNav({ activeTab }) {
           className={`tutor-nav-btn ${activeTab === id ? 'active' : ''}`}
           type="button"
         >
-          <Icon size={24} />
+          <span className="tutor-nav-icon-wrap">
+            <Icon size={24} />
+            {id === 'pending' && pendingCount > 0 && (
+              <span className="tutor-nav-badge" aria-label={`${pendingCount} pending certificates`}>
+                {pendingCount > 99 ? '99+' : pendingCount}
+              </span>
+            )}
+          </span>
           <span>{label}</span>
         </button>
       ))}

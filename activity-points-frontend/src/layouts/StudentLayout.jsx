@@ -122,8 +122,6 @@ const StudentLayout = () => {
           )}
         </button>
 
-        <span className="app-topbar-title">{userName}</span>
-
         <span className="app-topbar-page-title">{pageTitle}</span>
 
         <div className="app-topbar-menu" ref={menuRef}>

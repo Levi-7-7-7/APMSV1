@@ -62,6 +62,28 @@ const TutorDashboard = () => {
   const [tutorPhoto, setTutorPhoto] = useState(null);
   const [tutorRole, setTutorRole] = useState(localStorage.getItem('tutorRole') || 'tutor');
 
+  // Count of pending certificates, shown as a WhatsApp-style badge on the
+  // "Pending Certificates" nav icon. Fetched independently of the Pending
+  // Certificates page itself (so the badge stays accurate even when the
+  // tutor is on a different tab), and refreshed on a light poll. The
+  // PendingCertificates page also calls refreshPendingCount() (passed down
+  // via Outlet context) right after an approve/reject/reassign so the
+  // badge updates instantly instead of waiting for the next poll.
+  const [pendingCount, setPendingCount] = useState(0);
+
+  const refreshPendingCount = React.useCallback(() => {
+    tutorAxios
+      .get('/tutors/certificates/pending')
+      .then(res => setPendingCount(Array.isArray(res.data) ? res.data.length : 0))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refreshPendingCount();
+    const interval = setInterval(refreshPendingCount, 30000);
+    return () => clearInterval(interval);
+  }, [refreshPendingCount]);
+
   // Fetch the tutor's real profile (name + photo + role) so the header
   // matches what's shown on the full Profile page, instead of always
   // falling back to initials/stale role like before.
@@ -121,8 +143,6 @@ const TutorDashboard = () => {
           )}
         </button>
 
-        <span className="tutor-topbar-title">{tutorName}</span>
-
         <span className="tutor-topbar-page-title">{pageTitle}</span>
 
         <div className="tutor-topbar-menu" ref={menuRef}>
@@ -167,12 +187,12 @@ const TutorDashboard = () => {
       {/* Nested pages */}
       <main className="nested-content min-h-[300px]">
         <React.Suspense fallback={<p className="loading-text">Loading...</p>}>
-          <Outlet />
+          <Outlet context={{ refreshPendingCount }} />
         </React.Suspense>
       </main>
 
       {/* Bottom navigation */}
-      <TutorBottomNav activeTab={activeTab} />
+      <TutorBottomNav activeTab={activeTab} pendingCount={pendingCount} />
 
       {/* Tap-to-enlarge avatar preview, WhatsApp-style */}
       {avatarEnlarged && (

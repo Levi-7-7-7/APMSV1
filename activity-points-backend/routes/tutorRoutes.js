@@ -401,7 +401,8 @@ router.get('/certificates/pending', tutorAuth, async (req, res) => {
 
     const certs = await Certificate.find({ status: 'pending', student: { $in: studentIds } })
       .populate('student', 'name registerNumber email batch branch')
-      .populate('category');
+      .populate('category')
+      .sort({ createdAt: 1 });
 
     res.json(certs);
   } catch (err) {

@@ -258,7 +258,6 @@ export default function CertificateUploadScreen() {
         <button className="back-button" onClick={() => navigate('/student')}>
           <ArrowLeft />
         </button>
-        <h2 className="title">Upload Certificate</h2>
       </header>
 
       <main>
