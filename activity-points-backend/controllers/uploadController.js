@@ -8,7 +8,19 @@ const { sendPushToUser } = require('../utils/fcm');
 const { sanitizeName, buildStudentCertFolder } = require('../utils/imagekitPaths');
 const logActivity = require('../utils/activityLog');
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const isImage = (file.mimetype || '').startsWith('image/');
+    const isPdf = file.mimetype === 'application/pdf';
+    if (isImage || isPdf) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF or image files are allowed'));
+    }
+  },
+});
 
 exports.uploadCertificate = [
   upload.single('file'),
@@ -24,6 +36,12 @@ exports.uploadCertificate = [
       // Handle "Others" — student described a certificate not in the category list
       const isOthers = categoryId === 'others';
       let potentialPoints = 0;
+
+      // eventName is required except in "others" mode, where subcategoryName
+      // (othersDescription from the frontend) already serves as the name.
+      if (!isOthers && !eventName?.trim()) {
+        return res.status(400).json({ message: "Event name is required" });
+      }
 
       if (!isOthers) {
         const category = await Category.findById(categoryId);

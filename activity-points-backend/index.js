@@ -79,5 +79,30 @@ app.use('/api/admin', adminLogRoutes);
 // Support tickets — student complaints, tutor requests, admin resolution
 app.use('/api/tickets', ticketRoutes);
 
+// ── Global error handler ────────────────────────────────────────────────
+// Catches multer errors (bad file type from a fileFilter, oversized file,
+// etc.) and any other error passed to next(err) from route handlers, and
+// always responds with JSON instead of falling through to Express's
+// default HTML error page.
+const multer = require('multer');
+app.use((err, req, res, next) => {
+  if (!err) return next();
+
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: 'File exceeds the maximum allowed size' });
+    }
+    return res.status(400).json({ message: err.message });
+  }
+
+  // fileFilter callbacks reject with a plain Error — treat those as 400s too
+  if (err.message && /only .*(pdf|image)/i.test(err.message)) {
+    return res.status(400).json({ message: err.message });
+  }
+
+  console.error('Unhandled error:', err);
+  res.status(err.status || 500).json({ message: err.message || 'Something went wrong' });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

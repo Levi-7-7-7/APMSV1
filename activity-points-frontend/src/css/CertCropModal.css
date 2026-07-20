@@ -1,0 +1,187 @@
+/* ===================== CERTIFICATE CROP MODAL ===================== */
+/* Same tokens/styling as PhotoCropModal, but with a rectangular stage
+   (matching the certificate's own aspect ratio) instead of a circle. */
+
+.ccm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+  animation: ccm-fade-in 0.15s ease;
+}
+
+@keyframes ccm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ccm-modal {
+  position: relative;
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 28px 24px 24px 24px;
+  max-width: 380px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.ccm-title {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--slate-800);
+}
+
+.ccm-subtitle {
+  margin: 0 0 18px 0;
+  font-size: 0.85rem;
+  color: var(--slate-500);
+  line-height: 1.4;
+}
+
+/* Crop stage: shows the full image, draggable, with a rectangular mask
+   overlay so the user can see exactly what will be kept. */
+.ccm-stage {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--slate-100);
+  border: 3px solid var(--blue-tint-100);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.ccm-stage:active {
+  cursor: grabbing;
+}
+
+.ccm-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  pointer-events: none;
+}
+
+/* Subtle frame drawn on top so the crop rectangle edge stays visible
+   against any certificate. Doesn't intercept pointer events. */
+.ccm-frame-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.ccm-zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 18px;
+}
+
+.ccm-zoom-icon {
+  color: var(--slate-400);
+  flex-shrink: 0;
+}
+
+.ccm-zoom-slider {
+  flex: 1;
+  accent-color: var(--blue-600);
+  cursor: pointer;
+}
+
+.ccm-error {
+  margin-top: 14px;
+  width: 100%;
+  background: #fee2e2;
+  color: var(--red-700);
+  padding: 0.55rem 0.8rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.ccm-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 22px;
+}
+
+.ccm-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.ccm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ccm-btn.secondary {
+  background: var(--slate-100);
+  color: var(--slate-700);
+}
+
+.ccm-btn.secondary:hover:not(:disabled) {
+  background: var(--slate-200);
+}
+
+.ccm-btn.primary {
+  background: var(--blue-600);
+  color: var(--on-color);
+}
+
+.ccm-btn.primary:hover:not(:disabled) {
+  background: var(--blue-700);
+}
+
+.ccm-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: var(--slate-100);
+  color: var(--slate-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ccm-close:hover:not(:disabled) {
+  background: var(--slate-200);
+}
+
+.ccm-btn .spin {
+  animation: ccm-spin 1s linear infinite;
+}
+
+@keyframes ccm-spin {
+  to { transform: rotate(360deg); }
+}

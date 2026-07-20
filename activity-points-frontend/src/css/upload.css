@@ -83,7 +83,15 @@
 .certificate-upload-container .upload-input-wrapper {
   position: relative;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.certificate-upload-container .upload-optimized-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--slate-500);
 }
 
 .certificate-upload-container .upload-input {

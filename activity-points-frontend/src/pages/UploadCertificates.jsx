@@ -2,9 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { ArrowLeft, Award, Paperclip, Search, X, Calendar } from 'lucide-react';
+import CertCropModal from '../components/CertCropModal';
+import { compressCertImage } from '../utils/compressCertImage';
 import '../css/upload.css';
 
 const MAX_FILE_SIZE_MB = 5;
+const MAX_IMAGE_BYTES_BEFORE_COMPRESSION = 2 * 1024 * 1024; // auto-optimized above this
 
 function buildSearchIndex(categories) {
   const items = [];
@@ -41,6 +44,14 @@ export default function CertificateUploadScreen() {
 
   const [isOthers, setIsOthers] = useState(false);
   const [othersDescription, setOthersDescription] = useState('');
+
+  // Image certificates go through an optional crop step (matching the
+  // profile photo flow) before being compressed if still over 2MB.
+  // PDFs skip both and go straight to the size check below.
+  const [pendingImageFile, setPendingImageFile] = useState(null);
+  const [processingImage, setProcessingImage] = useState(false);
+  const [wasOptimized, setWasOptimized] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Prevents categoryId useEffect from wiping subcategoryName
   // when both are set together via selectSearchResult (mirrors RN behaviour)
@@ -164,7 +175,43 @@ export default function CertificateUploadScreen() {
       setUploadedFile(null);
       return;
     }
-    setUploadedFile(file);
+
+    setWasOptimized(false);
+
+    if (isPdf) {
+      // PDFs bypass cropping entirely — already validated against the 5MB cap above.
+      setUploadedFile(file);
+      return;
+    }
+
+    // Images open the crop modal (optional — the student can confirm
+    // without adjusting to use it as-is). Compression happens after crop.
+    setPendingImageFile(file);
+  };
+
+  const closeCropModal = () => {
+    setPendingImageFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const confirmCrop = async croppedFile => {
+    setProcessingImage(true);
+    try {
+      // Shrink dimensions (not quality) if still over 2MB, so certificates
+      // don't get rejected outright for being a large photo.
+      const { blob: finalBlob, wasCompressed } = croppedFile.size > MAX_IMAGE_BYTES_BEFORE_COMPRESSION
+        ? await compressCertImage(croppedFile)
+        : { blob: croppedFile, wasCompressed: false };
+      const finalFile = finalBlob instanceof File
+        ? finalBlob
+        : new File([finalBlob], croppedFile.name, { type: 'image/jpeg' });
+      setUploadedFile(finalFile);
+      setWasOptimized(wasCompressed);
+    } finally {
+      setProcessingImage(false);
+      setPendingImageFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const currentSub = !isOthers && subcategoryName
@@ -180,6 +227,7 @@ export default function CertificateUploadScreen() {
         // If the subcategory has levels (e.g. Professional Body Competitions),
         // both a level AND a prize type must be selected before submitting.
         (!hasLevels || (levelSelected && prizeType)) &&
+        eventName.trim() &&
         uploadedFile &&
         !uploading
       );
@@ -396,10 +444,11 @@ export default function CertificateUploadScreen() {
               <input
                 type="text"
                 className="upload-select"
-                placeholder="Event / Competition / Course name (e.g. NPTEL Python 2024, Hackathon MTI)"
+                placeholder="Event / Competition / Course name * (e.g. NPTEL Python 2024, Hackathon MTI)"
                 value={eventName}
                 onChange={e => setEventName(e.target.value)}
                 maxLength={120}
+                required
               />
             )}
 
@@ -449,17 +498,24 @@ export default function CertificateUploadScreen() {
         <div className="upload-input-wrapper">
           <label htmlFor="file-upload" className="upload-input-btn">
             <Paperclip size={16} />
-            {uploadedFile
-              ? `${uploadedFile.name} (${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)`
-              : `Attach Certificate — Image or PDF (Max ${MAX_FILE_SIZE_MB} MB)`}
+            {processingImage
+              ? 'Processing image…'
+              : uploadedFile
+                ? `${uploadedFile.name} (${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)`
+                : `Attach Certificate — Image or PDF (Max ${MAX_FILE_SIZE_MB} MB)`}
           </label>
           <input
             id="file-upload"
+            ref={fileInputRef}
             type="file"
             accept="image/*,.pdf"
             onChange={handleFileUpload}
             className="upload-input"
+            disabled={processingImage}
           />
+          {wasOptimized && (
+            <p className="upload-optimized-note">Image was auto-optimized to fit the size limit.</p>
+          )}
         </div>
 
         {/* Submit */}
@@ -472,6 +528,12 @@ export default function CertificateUploadScreen() {
         </button>
       </main>
 
+      <CertCropModal
+        file={pendingImageFile}
+        busy={processingImage}
+        onCancel={closeCropModal}
+        onConfirm={confirmCrop}
+      />
     </div>
   );
 }
