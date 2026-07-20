@@ -224,6 +224,7 @@ router.post('/tutor', tutorAuth, async (req, res) => {
       description: description.trim(),
       status: 'open',
       currentOwner: 'admin',
+      adminSeen: false,
       timeline: [{ action: 'created', byRole: 'tutor', byName: tutor.name, note: '' }],
     });
 
@@ -327,6 +328,7 @@ router.patch('/tutor/:id/forward', tutorAuth, async (req, res) => {
     ticket.forwardedBy = { id: tutor._id, name: tutor.name };
     ticket.forwardedAt = new Date();
     ticket.forwardNote = note;
+    ticket.adminSeen = false;
     await pushTimelineAndSave(ticket, { action: 'forwarded', byRole: 'tutor', byName: tutor.name, note });
 
     logActivity({
@@ -409,6 +411,47 @@ router.get('/admin', adminAuth, async (req, res) => {
   }
 });
 
+// Bell-icon badge count — new tickets that have landed in the admin queue
+// (forwarded by a tutor, or a tutor's own direct request) that no admin has
+// opened yet. Mirrors /tutor/unread-count and /student/unread-count, but
+// keyed on arrival rather than resolution since it's admin's turn to act.
+router.get('/admin/unread-count', adminAuth, async (req, res) => {
+  try {
+    const count = await Ticket.countDocuments({ currentOwner: 'admin', adminSeen: false });
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Lightweight feed backing the bell-icon dropdown — just enough per ticket
+// to render a notification row and jump straight to that ticket.
+router.get('/admin/notifications', adminAuth, async (req, res) => {
+  try {
+    const tickets = await Ticket.find({ currentOwner: 'admin', adminSeen: false })
+      .select('subject raisedByName raisedByRole forwardedBy status createdAt')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Mark a single admin-queue ticket as seen — called the moment an admin
+// opens that ticket's detail (either from the list or from a notification).
+router.patch('/admin/:id/seen', adminAuth, async (req, res) => {
+  try {
+    const ticket = await Ticket.findOne({ _id: req.params.id, currentOwner: 'admin' });
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    ticket.adminSeen = true;
+    await ticket.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.patch('/admin/:id/resolve', adminAuth, async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id);
@@ -424,6 +467,7 @@ router.patch('/admin/:id/resolve', adminAuth, async (req, res) => {
     ticket.status = 'resolved';
     ticket.resolution = { byRole: 'admin', byId: req.admin.id, byName: req.admin.email, note, at: new Date() };
     ticket.raiserSeen = false;
+    ticket.adminSeen = true;
     if (ticket.forwardedBy?.id) ticket.forwarderSeen = false;
     await pushTimelineAndSave(ticket, { action: 'resolved', byRole: 'admin', byName: req.admin.email, note });
 

@@ -26,3 +26,6 @@ export const getTutorTicketUnreadCount = () => tutorAxios.get('/tickets/tutor/un
 export const getAdminTicketQueue = (status) =>
   adminAxios.get('/tickets/admin', { params: status ? { status } : {} });
 export const resolveTicketAsAdmin = (id, note) => adminAxios.patch(`/tickets/admin/${id}/resolve`, { note });
+export const getAdminTicketUnreadCount = () => adminAxios.get('/tickets/admin/unread-count');
+export const getAdminTicketNotifications = () => adminAxios.get('/tickets/admin/notifications');
+export const markAdminTicketSeen = (id) => adminAxios.patch(`/tickets/admin/${id}/seen`);

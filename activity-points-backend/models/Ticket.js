@@ -85,6 +85,13 @@ const TicketSchema = new mongoose.Schema(
     // once that person opens the ticket detail.
     raiserSeen:    { type: Boolean, default: true },
     forwarderSeen: { type: Boolean, default: true }, // only meaningful if forwardedBy is set
+
+    // Admin-side notification flag — the mirror image of the two above.
+    // Flips to false the moment a ticket *lands* in the admin queue (a
+    // tutor's own request created straight to admin, or a student ticket
+    // forwarded to admin), driving the bell-icon badge on the admin panel.
+    // Flips back to true once an admin opens that ticket's detail view.
+    adminSeen: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

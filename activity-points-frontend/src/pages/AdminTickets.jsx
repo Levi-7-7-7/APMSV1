@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Clock, CheckCircle2, ChevronDown, Loader2, Check, X, Forward } from 'lucide-react';
-import { getAdminTicketQueue, resolveTicketAsAdmin } from '../utils/ticketApi';
+import { getAdminTicketQueue, resolveTicketAsAdmin, markAdminTicketSeen } from '../utils/ticketApi';
 import '../css/AdminTickets.css';
 
 function StatusBadge({ status }) {
@@ -11,7 +11,7 @@ function StatusBadge({ status }) {
   );
 }
 
-export default function AdminTickets({ flash }) {
+export default function AdminTickets({ flash, focusTicketId, onFocusHandled, onSeenChange }) {
   const [statusFilter, setStatusFilter] = useState('open'); // 'open' | 'resolved'
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +19,7 @@ export default function AdminTickets({ flash }) {
   const [actioningId, setActioningId] = useState(null);
   const [noteMode, setNoteMode] = useState(null); // ticket id currently being resolved with a note
   const [noteDraft, setNoteDraft] = useState('');
+  const cardRefs = useRef({});
 
   const load = async (status) => {
     setLoading(true);
@@ -34,9 +35,38 @@ export default function AdminTickets({ flash }) {
 
   useEffect(() => { load(statusFilter); }, [statusFilter]);
 
-  const toggleExpand = (id) => {
+  // Arrived here via a bell-icon notification — new tickets are always
+  // still open, so make sure we're looking at the right queue.
+  useEffect(() => {
+    if (focusTicketId && statusFilter !== 'open') setStatusFilter('open');
+  }, [focusTicketId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Once the notified ticket shows up in the loaded list, expand it,
+  // scroll it into view, and mark it seen so the badge clears.
+  useEffect(() => {
+    if (!focusTicketId || loading) return;
+    const target = tickets.find((t) => t._id === focusTicketId);
+    if (!target) { onFocusHandled?.(); return; }
+
+    setExpandedId(focusTicketId);
+    setTickets((prev) => prev.map((t) => (t._id === focusTicketId ? { ...t, adminSeen: true } : t)));
+    setTimeout(() => {
+      cardRefs.current[focusTicketId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
+
+    markAdminTicketSeen(focusTicketId).then(() => onSeenChange?.()).catch(() => {});
+    onFocusHandled?.();
+  }, [focusTicketId, loading, tickets]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleExpand = (id, ticket) => {
+    const opening = expandedId !== id;
     setExpandedId((prev) => (prev === id ? null : id));
     setNoteMode(null);
+
+    if (opening && ticket?.adminSeen === false) {
+      setTickets((prev) => prev.map((t) => (t._id === id ? { ...t, adminSeen: true } : t)));
+      markAdminTicketSeen(id).then(() => onSeenChange?.()).catch(() => {});
+    }
   };
 
   const handleResolve = async (ticket) => {
@@ -94,8 +124,13 @@ export default function AdminTickets({ flash }) {
       ) : (
         <div className="adt-list">
           {tickets.map((t) => (
-            <div key={t._id} className="ap-card adt-card">
-              <button type="button" className="adt-card-head" onClick={() => toggleExpand(t._id)}>
+            <div
+              key={t._id}
+              className={`ap-card adt-card ${t.adminSeen === false ? 'unseen' : ''}`}
+              ref={(el) => { cardRefs.current[t._id] = el; }}
+            >
+              <button type="button" className="adt-card-head" onClick={() => toggleExpand(t._id, t)}>
+                {t.adminSeen === false && <span className="adt-new-dot" aria-label="New ticket" />}
                 <div className="adt-card-head-text">
                   <span className="adt-subject">{t.subject}</span>
                   <span className="adt-meta">

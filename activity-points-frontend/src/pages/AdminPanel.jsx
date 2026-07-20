@@ -5,11 +5,12 @@ import * as XLSX from "xlsx";
 import {
   UserPlus, FilePlus, Download, Edit2, Trash2, Plus,
   LogOut, Link2, Users, Layers, GitBranch, Tag, Shield, Search, ArrowRightLeft,
-  History, Filter, ChevronLeft, ChevronRight, MoreVertical, Camera, Loader2, X, MessageSquare
+  History, Filter, ChevronLeft, ChevronRight, MoreVertical, Camera, Loader2, X, MessageSquare, Bell
 } from "lucide-react";
 import PhotoCropModal from "../components/PhotoCropModal";
 import ThemeSwitcher from "../components/ThemeSwitcher";
 import AdminTickets from "./AdminTickets";
+import { getAdminTicketUnreadCount, getAdminTicketNotifications } from "../utils/ticketApi";
 import "../css/AdminPanel.css";
 
 // Small circular avatar used throughout the panel (admin/tutor/student
@@ -88,6 +89,54 @@ export default function AdminPanel() {
       document.removeEventListener("keydown", onKey);
     };
   }, [menuOpen]);
+
+  // ── Ticket notifications: bell icon + badge on the Tickets card/tab ──
+  // Same polling pattern as the tutor panel's ticket badge (see
+  // TutorDashboard.jsx) but keyed on *arrival* (new tickets landing in the
+  // admin queue) rather than resolution, since it's admin's turn to act.
+  const [ticketUnreadCount, setTicketUnreadCount] = useState(0);
+  const [ticketNotifications, setTicketNotifications] = useState([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [focusTicketId, setFocusTicketId] = useState(null);
+  const notifRef = useRef(null);
+
+  const refreshTicketNotifications = React.useCallback(() => {
+    getAdminTicketNotifications()
+      .then(res => setTicketNotifications(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+    getAdminTicketUnreadCount()
+      .then(res => setTicketUnreadCount(res.data?.count || 0))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refreshTicketNotifications();
+    const interval = setInterval(refreshTicketNotifications, 20000);
+    return () => clearInterval(interval);
+  }, [refreshTicketNotifications]);
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    const onClick = (e) => { if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setNotifOpen(false); };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [notifOpen]);
+
+  // Jump straight to the ticket a notification was about: open the Tickets
+  // section, hand AdminTickets the id to auto-expand/scroll to, and drop it
+  // from the bell dropdown right away so the badge count feels instant.
+  const goToTicketFromNotification = (ticketId) => {
+    setNotifOpen(false);
+    setFocusTicketId(ticketId);
+    setTicketNotifications(prev => prev.filter(t => t._id !== ticketId));
+    setTicketUnreadCount(prev => Math.max(0, prev - 1));
+    openSection("tickets");
+  };
 
   // ── Admin's own profile photo ──
   const [adminPhoto, setAdminPhoto] = useState(null);
@@ -810,6 +859,46 @@ export default function AdminPanel() {
 
         <span className="ap-topbar-title">{tab === null ? adminEmail : currentTabLabel}</span>
 
+        <div className="ap-topbar-notif" ref={notifRef}>
+          <button
+            className="ap-topbar-notif-btn"
+            onClick={() => setNotifOpen(o => !o)}
+            aria-label={ticketUnreadCount > 0 ? `${ticketUnreadCount} new tickets` : "Notifications"}
+            aria-haspopup="true"
+            aria-expanded={notifOpen}
+            type="button"
+          >
+            <Bell size={20}/>
+            {ticketUnreadCount > 0 && (
+              <span className="ap-topbar-notif-badge">{ticketUnreadCount > 99 ? "99+" : ticketUnreadCount}</span>
+            )}
+          </button>
+
+          {notifOpen && (
+            <div className="ap-topbar-dropdown ap-notif-dropdown" role="menu">
+              <div className="ap-notif-dropdown-header">New Tickets</div>
+              {ticketNotifications.length === 0 ? (
+                <div className="ap-notif-empty">No new tickets right now.</div>
+              ) : (
+                ticketNotifications.map(n => (
+                  <button
+                    key={n._id}
+                    role="menuitem"
+                    type="button"
+                    className="ap-notif-item"
+                    onClick={() => goToTicketFromNotification(n._id)}
+                  >
+                    <span className="ap-notif-item-subject">{n.subject}</span>
+                    <span className="ap-notif-item-meta">
+                      {n.raisedByName} ({n.raisedByRole}){n.forwardedBy?.name ? ` · forwarded by ${n.forwardedBy.name}` : ''}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="ap-topbar-menu" ref={menuRef}>
           <button
             className="ap-topbar-menu-btn"
@@ -851,7 +940,15 @@ export default function AdminPanel() {
         <nav className="ap-nav">
           {tabs.map(t => (
             <button key={t.id} className={`ap-tab ${tab === t.id ? "active" : ""}`} onClick={() => openSection(t.id)}>
-              {t.icon} <span>{t.label}</span>
+              <span className="ap-tab-icon-wrap">
+                {t.icon}
+                {t.id === "tickets" && ticketUnreadCount > 0 && (
+                  <span className="ap-tab-badge" aria-label={`${ticketUnreadCount} new tickets`}>
+                    {ticketUnreadCount > 99 ? "99+" : ticketUnreadCount}
+                  </span>
+                )}
+              </span>
+              <span>{t.label}</span>
             </button>
           ))}
         </nav>
@@ -908,7 +1005,14 @@ export default function AdminPanel() {
               <div className="ap-dashboard-grid">
                 {visibleDashboardCards.map(t => (
                   <button key={t.id} className="ap-dashboard-card" onClick={() => openSection(t.id)} type="button">
-                    <div className={`ap-dashboard-card-icon ${t.cls}`}>{t.bigIcon}</div>
+                    <div className={`ap-dashboard-card-icon ${t.cls}`}>
+                      {t.bigIcon}
+                      {t.id === "tickets" && ticketUnreadCount > 0 && (
+                        <span className="ap-dashboard-card-badge" aria-label={`${ticketUnreadCount} new tickets`}>
+                          {ticketUnreadCount > 99 ? "99+" : ticketUnreadCount}
+                        </span>
+                      )}
+                    </div>
                     <span className="ap-dashboard-card-label">{t.label}</span>
                     <span className="ap-dashboard-card-desc">{t.desc}</span>
                   </button>
@@ -1804,7 +1908,14 @@ export default function AdminPanel() {
         )}
 
         {/* ══════════════ TICKETS ══════════════ */}
-        {tab === "tickets" && <AdminTickets flash={flash} />}
+        {tab === "tickets" && (
+          <AdminTickets
+            flash={flash}
+            focusTicketId={focusTicketId}
+            onFocusHandled={() => setFocusTicketId(null)}
+            onSeenChange={refreshTicketNotifications}
+          />
+        )}
 
       </div>
 
