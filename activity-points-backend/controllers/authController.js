@@ -81,6 +81,7 @@ exports.resetPassword = async (req, res) => {
     student.password = await bcrypt.hash(newPassword, 10);
     student.resetPasswordToken = null;
     student.resetPasswordExpires = null;
+    student.firstTimePasswordSet = true; // they've set their own password now — stop nagging them
     await student.save();
 
     logActivity({

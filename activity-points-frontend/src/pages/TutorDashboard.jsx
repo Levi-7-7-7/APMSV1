@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { MoreVertical, User, LogOut, X } from 'lucide-react';
 import TutorBottomNav from '../components/TutorBottomNav';
 import ThemeSwitcher from '../components/ThemeSwitcher';
+import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import tutorAxios from '../api/tutorAxios';
 import '../css/TutorDashboard.css';
 
@@ -62,6 +63,14 @@ const TutorDashboard = () => {
   const [tutorPhoto, setTutorPhoto] = useState(null);
   const [tutorRole, setTutorRole] = useState(localStorage.getItem('tutorRole') || 'tutor');
 
+  // Whether the tutor is still on their original admin-set password.
+  // Starts from the flag stashed at login (instant paint), refined once
+  // /tutors/me resolves below.
+  const [firstTimePasswordSet, setFirstTimePasswordSet] = useState(() => {
+    const stored = localStorage.getItem('tutorFirstTimePasswordSet');
+    return stored === null ? null : stored === 'true';
+  });
+
   // Count of pending certificates, shown as a WhatsApp-style badge on the
   // "Pending Certificates" nav icon. Fetched independently of the Pending
   // Certificates page itself (so the badge stays accurate even when the
@@ -102,6 +111,10 @@ const TutorDashboard = () => {
         const role = res.data?.role || 'tutor';
         setTutorRole(role);
         localStorage.setItem('tutorRole', role);
+        if (typeof res.data?.firstTimePasswordSet === 'boolean') {
+          setFirstTimePasswordSet(res.data.firstTimePasswordSet);
+          localStorage.setItem('tutorFirstTimePasswordSet', String(res.data.firstTimePasswordSet));
+        }
       })
       .catch(() => {});
 
@@ -115,6 +128,7 @@ const TutorDashboard = () => {
     if (window.confirm('Are you sure you want to logout?')) {
       localStorage.removeItem('tutorToken');
       localStorage.removeItem('tutorName');
+      localStorage.removeItem('tutorFirstTimePasswordSet');
       navigate('/'); // redirect to login
     }
   };
@@ -193,6 +207,9 @@ const TutorDashboard = () => {
 
       {/* Bottom navigation */}
       <TutorBottomNav activeTab={activeTab} pendingCount={pendingCount} />
+
+      {/* First-login nudge to change the admin-set password — auto-hides once firstTimePasswordSet flips to true */}
+      <PasswordSetupPrompt show={firstTimePasswordSet === false} resetPath="/tutor/forgot-password" />
 
       {/* Tap-to-enlarge avatar preview, WhatsApp-style */}
       {avatarEnlarged && (

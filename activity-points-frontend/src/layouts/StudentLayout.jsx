@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { MoreVertical, User, LogOut, X } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import ThemeSwitcher from '../components/ThemeSwitcher';
+import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import '../css/StudentDashboard.css';
 
 const PAGE_TITLES = {
@@ -39,6 +40,14 @@ const StudentLayout = () => {
   const [avatarEnlarged, setAvatarEnlarged] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  // Whether the student is still on their original system-assigned password.
+  // Starts from the flag stashed at login (instant paint), refined once the
+  // Dashboard's /students/me fetch resolves and writes fresh userData.
+  const [firstTimePasswordSet, setFirstTimePasswordSet] = useState(() => {
+    const stored = localStorage.getItem('firstTimePasswordSet');
+    return stored === null ? null : stored === 'true';
+  });
+
   // Re-read from localStorage whenever userData changes (e.g. after Dashboard fetch,
   // or after uploading a new photo on the Profile page)
   useEffect(() => {
@@ -49,6 +58,10 @@ const StudentLayout = () => {
           const parsed = JSON.parse(ud);
           if (parsed?.name) setUserName(parsed.name);
           setProfilePhoto(parsed?.profilePhoto || null);
+          if (typeof parsed?.firstTimePasswordSet === 'boolean') {
+            setFirstTimePasswordSet(parsed.firstTimePasswordSet);
+            localStorage.setItem('firstTimePasswordSet', String(parsed.firstTimePasswordSet));
+          }
         } catch (_) {}
       }
     };
@@ -95,6 +108,7 @@ const StudentLayout = () => {
       localStorage.removeItem('token');
       localStorage.removeItem('userData');
       localStorage.removeItem('userName');
+      localStorage.removeItem('firstTimePasswordSet');
       navigate('/');
     }
   };
@@ -170,6 +184,9 @@ const StudentLayout = () => {
 
       {/* Bottom navigation */}
       <BottomNav />
+
+      {/* First-login nudge to change the default password — auto-hides once firstTimePasswordSet flips to true */}
+      <PasswordSetupPrompt show={firstTimePasswordSet === false} resetPath="/forgot-password" />
 
       {/* Tap-to-enlarge avatar preview, WhatsApp-style */}
       {avatarEnlarged && (

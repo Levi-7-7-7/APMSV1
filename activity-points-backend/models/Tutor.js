@@ -17,6 +17,12 @@ const tutorSchema = new mongoose.Schema({
   resetPasswordToken:   { type: String,  default: null },
   resetPasswordExpires: { type: Number,  default: null },
 
+  // Security flag: prompts the tutor to change their (admin-set) password
+  // the moment they land on the dashboard after login. Flips to true the
+  // first time they successfully complete the "Reset / Forgot Password"
+  // flow — after that the dashboard popup never shows again.
+  firstTimePasswordSet: { type: Boolean, default: false },
+
   // FCM device token for push notifications (new certificate uploaded alerts)
   fcmToken: { type: String, default: null },
 

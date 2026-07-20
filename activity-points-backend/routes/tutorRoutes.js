@@ -175,6 +175,7 @@ router.post('/login', async (req, res) => {
         role:   tutor.role || 'tutor',
         batch:  tutor.batch  ? { _id: tutor.batch._id,  name: tutor.batch.name  } : null,
         branch: tutor.branch ? { _id: tutor.branch._id, name: tutor.branch.name } : null,
+        firstTimePasswordSet: tutor.firstTimePasswordSet,
       },
     });
   } catch (err) {
@@ -733,6 +734,7 @@ router.post('/reset-password', async (req, res) => {
     tutor.password             = newPassword; // pre-save hook hashes it
     tutor.resetPasswordToken   = null;
     tutor.resetPasswordExpires = null;
+    tutor.firstTimePasswordSet = true; // they've set their own password now — stop nagging them
     await tutor.save();
 
     logActivity({

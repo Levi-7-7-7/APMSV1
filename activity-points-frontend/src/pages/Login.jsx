@@ -102,6 +102,7 @@ export default function Login() {
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('role', 'student');
         localStorage.setItem('userName', res.data.student?.name || 'Student');
+        localStorage.setItem('firstTimePasswordSet', String(!!res.data.student?.firstTimePasswordSet));
         setSuccess(res.data.message || 'Login successful');
         navigate('/student');
 
@@ -115,6 +116,7 @@ export default function Login() {
         // Store assigned batch/branch so frontend can show it in header
         localStorage.setItem('tutorBatch',  JSON.stringify(res.data.tutor?.batch  || null));
         localStorage.setItem('tutorBranch', JSON.stringify(res.data.tutor?.branch || null));
+        localStorage.setItem('tutorFirstTimePasswordSet', String(!!res.data.tutor?.firstTimePasswordSet));
         setSuccess(res.data.message || 'Login successful');
         navigate('/tutor/dashboard/students');
 

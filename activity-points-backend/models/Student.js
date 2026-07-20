@@ -29,6 +29,13 @@ const StudentSchema = new mongoose.Schema({
   resetPasswordToken:   { type: String, default: null },
   resetPasswordExpires: { type: Date,   default: null },
 
+  // Security flag: every student account starts with a predictable default
+  // password (firstName + "12345"), so we prompt them to change it the
+  // moment they land on the dashboard after login. Flips to true the first
+  // time they successfully complete the "Reset / Forgot Password" flow —
+  // after that the dashboard popup never shows again.
+  firstTimePasswordSet: { type: Boolean, default: false },
+
   totalPoints: { type: Number, default: 0 },
 
   fcmToken: { type: String, default: null },
