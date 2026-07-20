@@ -114,7 +114,18 @@ async function sendToTokens(tokens, title, body, data = {}) {
 
     const deadTokens = [];
     response.responses.forEach((r, i) => {
-      if (!r.success && DEAD_TOKEN_ERROR_CODES.has(r.error?.code)) {
+      if (r.success) return;
+
+      // Always log the failure — previously only dead-token codes were
+      // logged, so any other reason a send failed (mismatched Firebase
+      // project/sender ID, bad payload, quota, auth issue, etc.) was
+      // completely silent and impossible to diagnose.
+      console.warn(
+        `[FCM] Send failed for token ...${uniqueTokens[i].slice(-8)}: ` +
+        `${r.error?.code || 'unknown code'} — ${r.error?.message || 'no message'}`
+      );
+
+      if (DEAD_TOKEN_ERROR_CODES.has(r.error?.code)) {
         deadTokens.push(uniqueTokens[i]);
       }
     });
@@ -142,12 +153,19 @@ async function sendToTokens(tokens, title, body, data = {}) {
  *                          { type: 'new_certificate', certId, status, link }
  */
 async function sendPushToUser(Model, userId, title, body, data = {}) {
-  if (!admin.apps.length || !userId) return;
+  if (!userId) return;
+  if (!admin.apps.length) {
+    console.warn('[FCM] sendPushToUser skipped — Firebase Admin was never initialised (check credentials env vars).');
+    return;
+  }
 
   try {
     const user = await Model.findById(userId).select('fcmTokens');
     const tokens = (user?.fcmTokens || []).map((t) => t.token);
-    if (tokens.length === 0) return;
+    if (tokens.length === 0) {
+      console.warn(`[FCM] sendPushToUser skipped — ${Model.modelName} ${userId} has no registered fcmTokens.`);
+      return;
+    }
 
     const { deadTokens } = await sendToTokens(tokens, title, body, data);
 
