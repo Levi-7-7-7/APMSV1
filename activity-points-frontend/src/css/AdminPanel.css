@@ -101,7 +101,7 @@ button,
   top: 0;
   left: 0;
   right: 0;
-  height: 56px;
+  height: 64px;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -118,8 +118,8 @@ button,
 }
 
 .ap-topbar-avatar {
-  width: 34px;
-  height: 34px;
+  width: 46px;
+  height: 46px;
   flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
@@ -129,7 +129,7 @@ button,
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 1rem;
   border: none;
   padding: 0;
   cursor: pointer;
@@ -146,28 +146,6 @@ button,
   object-fit: cover;
 }
 
-.ap-topbar-avatar-camera {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--ap-primary);
-  color: var(--on-color);
-  border: 2px solid var(--ap-surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0;
-}
-
-.ap-topbar-avatar-camera:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
 .spin {
   animation: ap-spin 0.8s linear infinite;
 }
@@ -180,8 +158,8 @@ button,
 /* ── Small circular avatar thumbnails used in the students/tutors/admins
    tables — click to enlarge via the shared lightbox ── */
 .ap-avatar-thumb {
-  width: 34px;
-  height: 34px;
+  width: 46px;
+  height: 46px;
   flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
@@ -322,7 +300,7 @@ button,
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  min-width: 180px;
+  min-width: 210px;
   background: var(--ap-surface);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,.18);
@@ -440,7 +418,7 @@ button,
     align-items: stretch;
     justify-content: flex-start;
     gap: 4px;
-    padding: 88px 12px 24px 12px;
+    padding: 96px 12px 24px 12px;
     border-top: none;
     border-right: 1px solid var(--ap-border);
     box-shadow: 2px 0 8px rgba(0,0,0,.06);
@@ -547,7 +525,7 @@ button,
 .ap-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: calc(56px + 1.5rem) 1.5rem 2.5rem 1.5rem; /* clear fixed top bar */
+  padding: calc(64px + 1.5rem) 1.5rem 2.5rem 1.5rem; /* clear fixed top bar */
   width: 100%;
   box-sizing: border-box;
 }
@@ -558,7 +536,7 @@ button,
   }
 
   .ap-content {
-    padding: calc(56px + 2rem) 2rem 2rem 2rem;
+    padding: calc(64px + 2rem) 2rem 2rem 2rem;
   }
 }
 
@@ -1337,7 +1315,7 @@ textarea:focus {
   }
 
   .ap-content {
-    padding: calc(56px + 0.85rem) 0.85rem 2rem 0.85rem;
+    padding: calc(64px + 0.85rem) 0.85rem 2rem 0.85rem;
   }
 
   .ap-grid-2 {

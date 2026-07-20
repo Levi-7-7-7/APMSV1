@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { MoreVertical, User, LogOut, X } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
+import ThemeSwitcher from '../components/ThemeSwitcher';
 import '../css/StudentDashboard.css';
 
 const PAGE_TITLES = {
@@ -147,6 +148,9 @@ const StudentLayout = () => {
                 <User size={18} />
                 <span>Profile</span>
               </button>
+              <div className="app-topbar-dropdown-divider" role="separator" />
+              <ThemeSwitcher />
+              <div className="app-topbar-dropdown-divider" role="separator" />
               <button
                 role="menuitem"
                 className="danger"

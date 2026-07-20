@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { MoreVertical, User, LogOut, X } from 'lucide-react';
 import TutorBottomNav from '../components/TutorBottomNav';
+import ThemeSwitcher from '../components/ThemeSwitcher';
 import tutorAxios from '../api/tutorAxios';
 import '../css/TutorDashboard.css';
 
@@ -146,6 +147,9 @@ const TutorDashboard = () => {
                 <User size={18} />
                 <span>Profile</span>
               </button>
+              <div className="tutor-topbar-dropdown-divider" role="separator" />
+              <ThemeSwitcher />
+              <div className="tutor-topbar-dropdown-divider" role="separator" />
               <button
                 role="menuitem"
                 className="danger"

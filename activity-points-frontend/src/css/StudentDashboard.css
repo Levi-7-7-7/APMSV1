@@ -4,7 +4,7 @@
   margin: 0 auto;
   font-family: 'Inter', sans-serif;
   color: var(--slate-700);
-  padding: calc(56px + 1.25rem) 1rem 80px 1rem; /* room for fixed top bar + bottom nav */
+  padding: calc(64px + 1.25rem) 1rem 80px 1rem; /* room for fixed top bar + bottom nav */
 }
 
 /* Header */
@@ -89,7 +89,7 @@
   right: 0;
   max-width: 720px;
   margin: 0 auto;
-  height: 56px;
+  height: 64px;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -107,8 +107,8 @@
 }
 
 .app-topbar-avatar {
-  width: 34px;
-  height: 34px;
+  width: 46px;
+  height: 46px;
   flex-shrink: 0;
   border-radius: 50%;
   border: none;
@@ -121,7 +121,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 1rem;
   transition: transform 0.15s ease;
 }
 
@@ -186,7 +186,7 @@
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  min-width: 160px;
+  min-width: 210px;
   background: var(--surface);
   border-radius: 12px;
   box-shadow: 0 8px 24px var(--shadow-color-strong);
@@ -484,7 +484,7 @@
     align-items: stretch;
     justify-content: flex-start;
     gap: 4px;
-    padding: 88px 12px 24px 12px;
+    padding: 96px 12px 24px 12px;
     border-top: none;
     border-right: 1px solid var(--slate-200);
     box-shadow: 2px 0 8px var(--shadow-color);
@@ -516,8 +516,12 @@
     background: var(--blue-tint-100);
   }
 
+  /* Topbar spans the FULL width and sits visually above the sidebar
+     (it already has a higher z-index than .student-bottom-nav), instead
+     of starting after it and leaving a "hole" where the sidebar's top
+     used to be — same treatment as the admin section. */
   .app-topbar {
-    left: 220px;
+    left: 0;
     max-width: none;
     margin: 0;
     padding: 0 2rem;
@@ -526,7 +530,7 @@
   .student-dashboard {
     max-width: 760px;
     margin: 0 auto 0 220px;
-    padding: calc(56px + 2rem) 2rem 2rem 2rem;
+    padding: calc(64px + 2rem) 2rem 2rem 2rem;
   }
 }
 
@@ -535,7 +539,7 @@
 @media (max-width: 768px) {
   .student-dashboard {
     margin: 0 1rem;
-    padding: calc(56px + 1rem) 0.5rem 100px 0.5rem; /* keep clearance for the fixed top bar */
+    padding: calc(64px + 1rem) 0.5rem 100px 0.5rem; /* keep clearance for the fixed top bar */
   }
 
 

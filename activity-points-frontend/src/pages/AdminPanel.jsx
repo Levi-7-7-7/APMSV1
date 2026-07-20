@@ -8,6 +8,7 @@ import {
   History, Filter, ChevronLeft, ChevronRight, MoreVertical, Camera, Loader2, X
 } from "lucide-react";
 import PhotoCropModal from "../components/PhotoCropModal";
+import ThemeSwitcher from "../components/ThemeSwitcher";
 import "../css/AdminPanel.css";
 
 // Small circular avatar used throughout the panel (admin/tutor/student
@@ -790,15 +791,6 @@ export default function AdminPanel() {
           >
             {adminPhoto ? <img src={adminPhoto} alt={adminEmail}/> : <span>{adminInitials}</span>}
           </button>
-          <button
-            className="ap-topbar-avatar-camera"
-            onClick={handleAdminPhotoClick}
-            disabled={photoUploading}
-            aria-label="Change profile photo"
-            type="button"
-          >
-            {photoUploading ? <Loader2 size={10} className="spin"/> : <Camera size={10}/>}
-          </button>
           <input ref={adminPhotoInputRef} type="file" accept="image/*" hidden onChange={handleAdminPhotoFileChange}/>
         </div>
 
@@ -837,6 +829,9 @@ export default function AdminPanel() {
                 <Download size={16}/>
                 <span>Export Tutors</span>
               </button>
+              <div className="ap-topbar-dropdown-divider" role="separator" />
+              <ThemeSwitcher />
+              <div className="ap-topbar-dropdown-divider" role="separator" />
               <button role="menuitem" type="button" className="danger" onClick={() => { setMenuOpen(false); handleLogout(); }}>
                 <LogOut size={16}/>
                 <span>Logout</span>

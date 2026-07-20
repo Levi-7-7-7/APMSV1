@@ -122,3 +122,139 @@ svg.spinner {
     --shadow-color-strong: rgba(0, 0, 0, 0.55);
   }
 }
+
+/* ============================================================
+   EXPLICIT THEME OVERRIDE
+   ThemeContext sets data-theme="light"/"dark" on <html> whenever the
+   user picks an explicit option in the Appearance switcher (instead
+   of "System"). These rules use an attribute selector, which is more
+   specific than the plain `:root` used above, so they win over the
+   OS-driven @media block regardless of source order — letting the
+   user's explicit choice override their device's preference.
+   No data-theme attribute (i.e. "System") falls back to the @media
+   block above and simply follows the OS setting, as before.
+   ============================================================ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #1e293b;
+  --on-color: #ffffff;
+  --slate-50: #0f172a;
+  --slate-100: #16213a;
+  --slate-200: #334155;
+  --slate-300: #475569;
+  --slate-400: #94a3b8;
+  --slate-500: #a8b6c9;
+  --slate-600: #cbd5e1;
+  --slate-700: #e2e8f0;
+  --slate-800: #f1f5f9;
+  --slate-900: #f8fafc;
+  --blue-tint-25: rgba(59, 130, 246, 0.05);
+  --blue-tint-50: rgba(59, 130, 246, 0.08);
+  --blue-tint-75: rgba(59, 130, 246, 0.06);
+  --blue-tint-100: rgba(59, 130, 246, 0.12);
+  --green-tint-100: rgba(34, 197, 94, 0.12);
+  --glass-surface-strong: rgba(30, 41, 59, 0.94);
+  --glass-surface: rgba(30, 41, 59, 0.85);
+  --glass-overlay: rgba(255, 255, 255, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.4);
+  --shadow-color-strong: rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --surface: #ffffff;
+  --on-color: #ffffff;
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --blue-tint-25: #f0f4f8;
+  --blue-tint-50: #eff6ff;
+  --blue-tint-75: #f0f9ff;
+  --blue-tint-100: #dbeafe;
+  --green-tint-100: #d1fae5;
+  --glass-surface-strong: rgba(255, 255, 255, 0.94);
+  --glass-surface: rgba(255, 255, 255, 0.85);
+  --glass-overlay: rgba(255, 255, 255, 0.7);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --shadow-color-strong: rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================================
+   APPEARANCE / THEME SWITCHER
+   Shared by the three-dot dropdown menus on the student, tutor and
+   admin dashboards (see components/ThemeSwitcher.jsx). Kept here so
+   all three menus stay visually consistent without duplicating CSS
+   in each page's stylesheet.
+   ============================================================ */
+.theme-switcher {
+  padding: 0.55rem 1rem 0.7rem;
+}
+
+.theme-switcher-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--slate-500);
+  margin-bottom: 0.5rem;
+}
+
+.theme-switcher-label-icon {
+  flex-shrink: 0;
+}
+
+.theme-switcher-options {
+  display: flex;
+  gap: 0.4rem;
+  background: var(--slate-100);
+  border-radius: 10px;
+  padding: 0.25rem;
+}
+
+.theme-switcher-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.45rem 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--slate-500);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.theme-switcher-option:hover {
+  color: var(--slate-700);
+}
+
+.theme-switcher-option.active {
+  background: var(--surface);
+  color: var(--blue-600);
+  box-shadow: 0 1px 4px var(--shadow-color);
+}
+
+/* Thin dividers separating the Appearance section from the rest of
+   each three-dot dropdown menu. */
+.app-topbar-dropdown-divider,
+.tutor-topbar-dropdown-divider,
+.ap-topbar-dropdown-divider {
+  height: 1px;
+  margin: 0.15rem 0;
+  background: var(--slate-200);
+  border: none;
+}
