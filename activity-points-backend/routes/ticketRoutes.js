@@ -82,6 +82,7 @@ router.post('/student', auth, upload.single('image'), async (req, res) => {
       imageFileId,
       status: 'open',
       currentOwner: 'tutor',
+      tutorSeen: false,
       timeline: [{ action: 'created', byRole: 'student', byName: student.name, note: '' }],
     });
 
@@ -272,6 +273,7 @@ router.patch('/tutor/:id/resolve', tutorAuth, async (req, res) => {
     ticket.status = 'resolved';
     ticket.resolution = { byRole: 'tutor', byId: tutor._id, byName: tutor.name, note, at: new Date() };
     ticket.raiserSeen = false;
+    ticket.tutorSeen = true;
     await pushTimelineAndSave(ticket, { action: 'resolved', byRole: 'tutor', byName: tutor.name, note });
 
     sendPushToUser(
@@ -329,6 +331,7 @@ router.patch('/tutor/:id/forward', tutorAuth, async (req, res) => {
     ticket.forwardedAt = new Date();
     ticket.forwardNote = note;
     ticket.adminSeen = false;
+    ticket.tutorSeen = true;
     await pushTimelineAndSave(ticket, { action: 'forwarded', byRole: 'tutor', byName: tutor.name, note });
 
     logActivity({
@@ -388,6 +391,71 @@ router.get('/tutor/unread-count', tutorAuth, async (req, res) => {
       ],
     });
     res.json({ count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Bell-icon badge count — brand-new tickets a student has just raised into
+// this tutor's inbox that the tutor hasn't opened yet. Mirrors
+// /admin/unread-count, but one step earlier in the chain: keyed on arrival
+// into the tutor's queue rather than resolution.
+router.get('/tutor/new-count', tutorAuth, async (req, res) => {
+  try {
+    const tutor = await fetchTutor(req, res);
+    if (!tutor) return;
+
+    const filter = { currentOwner: 'tutor', raisedByModel: 'Student', tutorSeen: false };
+    if (tutor.batch) filter.batch = tutor.batch;
+    if (tutor.branch) filter.branch = tutor.branch;
+
+    const count = await Ticket.countDocuments(filter);
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Lightweight feed backing the tutor's bell-icon dropdown — enough per
+// ticket to render a notification row and jump straight to it.
+router.get('/tutor/notifications', tutorAuth, async (req, res) => {
+  try {
+    const tutor = await fetchTutor(req, res);
+    if (!tutor) return;
+
+    const filter = { currentOwner: 'tutor', raisedByModel: 'Student', tutorSeen: false };
+    if (tutor.batch) filter.batch = tutor.batch;
+    if (tutor.branch) filter.branch = tutor.branch;
+
+    const tickets = await Ticket.find(filter)
+      .select('subject raisedByName createdAt')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Mark a single incoming student ticket as seen — called the moment a
+// tutor opens that ticket's detail (from the inbox list or a notification).
+router.patch('/tutor/:id/seen-new', tutorAuth, async (req, res) => {
+  try {
+    const tutor = await fetchTutor(req, res);
+    if (!tutor) return;
+
+    const ticket = await Ticket.findOne({ _id: req.params.id, currentOwner: 'tutor', raisedByModel: 'Student' });
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+    if (tutor.batch && ticket.batch && String(ticket.batch) !== String(tutor.batch)) {
+      return res.status(403).json({ error: 'Ticket not in your assigned batch' });
+    }
+    if (tutor.branch && ticket.branch && String(ticket.branch) !== String(tutor.branch)) {
+      return res.status(403).json({ error: 'Ticket not in your assigned branch' });
+    }
+
+    ticket.tutorSeen = true;
+    await ticket.save();
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -465,11 +533,13 @@ router.patch('/admin/:id/resolve', adminAuth, async (req, res) => {
 
     const note = req.body.note || '';
     ticket.status = 'resolved';
-    ticket.resolution = { byRole: 'admin', byId: req.admin.id, byName: req.admin.email, note, at: new Date() };
+    // Students/tutors only ever see `resolution.byName` — never expose the
+    // admin's actual email address to them, just the generic role name.
+    ticket.resolution = { byRole: 'admin', byId: req.admin.id, byName: 'Admin', note, at: new Date() };
     ticket.raiserSeen = false;
     ticket.adminSeen = true;
     if (ticket.forwardedBy?.id) ticket.forwarderSeen = false;
-    await pushTimelineAndSave(ticket, { action: 'resolved', byRole: 'admin', byName: req.admin.email, note });
+    await pushTimelineAndSave(ticket, { action: 'resolved', byRole: 'admin', byName: 'Admin', note });
 
     // Notify whoever originally raised it...
     const RaiserModel = ticket.raisedByModel === 'Student' ? Student : Tutor;

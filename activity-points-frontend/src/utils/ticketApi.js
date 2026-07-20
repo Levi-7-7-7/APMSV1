@@ -21,6 +21,9 @@ export const resolveTicketAsTutor = (id, note) => tutorAxios.patch(`/tickets/tut
 export const forwardTicketToAdmin = (id, note) => tutorAxios.patch(`/tickets/tutor/${id}/forward`, { note });
 export const markTutorTicketSeen = (id) => tutorAxios.patch(`/tickets/tutor/${id}/seen`);
 export const getTutorTicketUnreadCount = () => tutorAxios.get('/tickets/tutor/unread-count');
+export const getTutorTicketNewCount = () => tutorAxios.get('/tickets/tutor/new-count');
+export const getTutorTicketNotifications = () => tutorAxios.get('/tickets/tutor/notifications');
+export const markTutorTicketSeenNew = (id) => tutorAxios.patch(`/tickets/tutor/${id}/seen-new`);
 
 // ── Admin ────────────────────────────────────────────────────────────────
 export const getAdminTicketQueue = (status) =>

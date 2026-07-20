@@ -176,6 +176,14 @@
   box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 0 0 2px var(--blue-600);
 }
 
+.tt-new-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue-600);
+}
+
 .tt-card-head {
   width: 100%;
   display: flex;

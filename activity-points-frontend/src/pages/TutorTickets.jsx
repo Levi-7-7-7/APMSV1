@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import {
   Plus, Clock, CheckCircle2, ChevronDown, Loader2, Forward, Check, X, Inbox, Send,
 } from 'lucide-react';
 import {
   getTutorTicketInbox, getTutorOwnTickets, createTutorTicket,
-  resolveTicketAsTutor, forwardTicketToAdmin, markTutorTicketSeen,
+  resolveTicketAsTutor, forwardTicketToAdmin, markTutorTicketSeen, markTutorTicketSeenNew,
 } from '../utils/ticketApi';
 import '../css/TutorTickets.css';
 
@@ -20,7 +20,9 @@ function StatusBadge({ status, forwarded }) {
 }
 
 export default function TutorTickets() {
-  const { refreshTicketUnreadCount } = useOutletContext() || {};
+  const { refreshTicketUnreadCount, refreshNewTicketCount } = useOutletContext() || {};
+  const location = useLocation();
+  const navigate = useNavigate();
   const [scope, setScope] = useState('inbox'); // 'inbox' | 'mine'
   const [inbox, setInbox] = useState([]);
   const [mine, setMine] = useState([]);
@@ -31,6 +33,7 @@ export default function TutorTickets() {
   const [actioningId, setActioningId] = useState(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [noteMode, setNoteMode] = useState(null); // { id, kind: 'resolve' | 'forward' }
+  const cardRefs = useRef({});
 
   const [showForm, setShowForm] = useState(false);
   const [subject, setSubject] = useState('');
@@ -60,6 +63,35 @@ export default function TutorTickets() {
   };
 
   useEffect(() => { loadAll(); }, []);
+
+  // Arrived here via a bell-icon notification about a new student ticket —
+  // those always sit in the inbox, so switch there, then once it's loaded
+  // expand it, scroll it into view, and mark it seen.
+  const focusTicketId = location.state?.focusTicketId || null;
+
+  useEffect(() => {
+    if (focusTicketId) setScope('inbox');
+  }, [focusTicketId]);
+
+  useEffect(() => {
+    if (!focusTicketId || loading) return;
+    const target = inbox.find((t) => t._id === focusTicketId);
+    if (!target) return;
+
+    setExpandedId(focusTicketId);
+    setTimeout(() => {
+      cardRefs.current[focusTicketId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
+
+    if (target.tutorSeen === false) {
+      setInbox((prev) => prev.map((t) => (t._id === focusTicketId ? { ...t, tutorSeen: true } : t)));
+      markTutorTicketSeenNew(focusTicketId).then(() => refreshNewTicketCount?.()).catch(() => {});
+    }
+
+    // Clear the router state so re-mounting this page (e.g. via the bottom
+    // nav) doesn't keep re-triggering the same jump.
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [focusTicketId, loading, inbox]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openInboxCount = useMemo(
     () => inbox.filter((t) => t.status !== 'resolved').length,
@@ -91,6 +123,15 @@ export default function TutorTickets() {
     const opening = expandedId !== ticket._id;
     setExpandedId(opening ? ticket._id : null);
     setNoteMode(null);
+
+    // Brand-new student ticket, not yet opened — clear the tutor bell badge.
+    if (opening && ticket.raisedByModel === 'Student' && ticket.currentOwner === 'tutor' && ticket.tutorSeen === false) {
+      try {
+        await markTutorTicketSeenNew(ticket._id);
+        setInbox((prev) => prev.map((t) => (t._id === ticket._id ? { ...t, tutorSeen: true } : t)));
+        refreshNewTicketCount?.();
+      } catch (_) {}
+    }
 
     // Own request or forwarded ticket, resolved and not yet seen — clear it.
     const isOwn = ticket.raisedByModel === 'Tutor';
@@ -209,14 +250,20 @@ export default function TutorTickets() {
           {list.map((t) => {
             const isOwn = t.raisedByModel === 'Tutor';
             const isForwarder = t.forwardedBy && t.forwardedToAdmin;
-            const unseen = t.status === 'resolved' && (
+            const unseenResolved = t.status === 'resolved' && (
               (isOwn && t.raiserSeen === false) || (isForwarder && t.forwarderSeen === false)
             );
+            const isNew = scope === 'inbox' && t.currentOwner === 'tutor' && t.tutorSeen === false;
             const actionable = scope === 'inbox' && t.currentOwner === 'tutor' && t.status !== 'resolved';
 
             return (
-              <div key={t._id} className={`tt-card ${unseen ? 'unseen' : ''}`}>
+              <div
+                key={t._id}
+                className={`tt-card ${(unseenResolved || isNew) ? 'unseen' : ''}`}
+                ref={(el) => { cardRefs.current[t._id] = el; }}
+              >
                 <button type="button" className="tt-card-head" onClick={() => toggleExpand(t)}>
+                  {isNew && <span className="tt-new-dot" aria-label="New ticket" />}
                   <div className="tt-card-head-text">
                     <span className="tt-subject">{t.subject}</span>
                     <span className="tt-meta">

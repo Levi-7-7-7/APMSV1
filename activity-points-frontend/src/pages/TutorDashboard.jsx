@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { MoreVertical, User, LogOut, X } from 'lucide-react';
+import { MoreVertical, User, LogOut, X, Bell } from 'lucide-react';
 import TutorBottomNav from '../components/TutorBottomNav';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import { listenForForegroundMessages, syncPushToken } from '../utils/pushNotifications';
 import tutorAxios from '../api/tutorAxios';
-import { getTutorTicketUnreadCount } from '../utils/ticketApi';
+import { getTutorTicketUnreadCount, getTutorTicketNewCount, getTutorTicketNotifications } from '../utils/ticketApi';
 import '../css/TutorDashboard.css';
 
 const PAGE_TITLES = {
@@ -142,6 +142,51 @@ const TutorDashboard = () => {
     return () => clearInterval(interval);
   }, [refreshTicketUnreadCount]);
 
+  // Bell-icon notifications for brand-new tickets a student has just
+  // raised into this tutor's inbox — same pattern as the admin panel's
+  // bell, one step earlier in the chain (arrival, not resolution).
+  const [newTicketCount, setNewTicketCount] = useState(0);
+  const [ticketNotifications, setTicketNotifications] = useState([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef(null);
+
+  const refreshNewTicketCount = React.useCallback(() => {
+    getTutorTicketNewCount()
+      .then(res => setNewTicketCount(res.data?.count || 0))
+      .catch(() => {});
+    getTutorTicketNotifications()
+      .then(res => setTicketNotifications(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refreshNewTicketCount();
+    const interval = setInterval(refreshNewTicketCount, 20000);
+    return () => clearInterval(interval);
+  }, [refreshNewTicketCount]);
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    const onClick = (e) => { if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false); };
+    const onKey = (e) => { if (e.key === 'Escape') setNotifOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [notifOpen]);
+
+  // Jump straight to the ticket a notification was about: navigate to the
+  // Tickets page carrying the id in router state, so TutorTickets can
+  // auto-expand/scroll to it and mark it seen once it loads.
+  const goToTicketFromNotification = (ticketId) => {
+    setNotifOpen(false);
+    setTicketNotifications(prev => prev.filter(t => t._id !== ticketId));
+    setNewTicketCount(prev => Math.max(0, prev - 1));
+    navigate('/tutor/dashboard/tickets', { state: { focusTicketId: ticketId } });
+  };
+
   // Fetch the tutor's real profile (name + photo + role) so the header
   // matches what's shown on the full Profile page, instead of always
   // falling back to initials/stale role like before.
@@ -208,6 +253,44 @@ const TutorDashboard = () => {
 
         <span className="tutor-topbar-page-title">{pageTitle}</span>
 
+        <div className="tutor-topbar-notif" ref={notifRef}>
+          <button
+            className="tutor-topbar-notif-btn"
+            onClick={() => setNotifOpen(o => !o)}
+            aria-label={newTicketCount > 0 ? `${newTicketCount} new tickets` : 'Notifications'}
+            aria-haspopup="true"
+            aria-expanded={notifOpen}
+            type="button"
+          >
+            <Bell size={20} />
+            {newTicketCount > 0 && (
+              <span className="tutor-topbar-notif-badge">{newTicketCount > 99 ? '99+' : newTicketCount}</span>
+            )}
+          </button>
+
+          {notifOpen && (
+            <div className="tutor-topbar-dropdown tutor-notif-dropdown" role="menu">
+              <div className="tutor-notif-dropdown-header">New Tickets</div>
+              {ticketNotifications.length === 0 ? (
+                <div className="tutor-notif-empty">No new tickets right now.</div>
+              ) : (
+                ticketNotifications.map(n => (
+                  <button
+                    key={n._id}
+                    role="menuitem"
+                    type="button"
+                    className="tutor-notif-item"
+                    onClick={() => goToTicketFromNotification(n._id)}
+                  >
+                    <span className="tutor-notif-item-subject">{n.subject}</span>
+                    <span className="tutor-notif-item-meta">{n.raisedByName}</span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="tutor-topbar-menu" ref={menuRef}>
           <button
             className="tutor-topbar-menu-btn"
@@ -251,12 +334,16 @@ const TutorDashboard = () => {
       <main className="nested-content min-h-[300px]">
         <NotificationPermissionBanner role="tutor" />
         <React.Suspense fallback={<p className="loading-text">Loading...</p>}>
-          <Outlet context={{ refreshPendingCount, refreshTicketUnreadCount }} />
+          <Outlet context={{ refreshPendingCount, refreshTicketUnreadCount, refreshNewTicketCount }} />
         </React.Suspense>
       </main>
 
       {/* Bottom navigation */}
-      <TutorBottomNav activeTab={activeTab} pendingCount={pendingCount} ticketUnreadCount={ticketUnreadCount} />
+      <TutorBottomNav
+        activeTab={activeTab}
+        pendingCount={pendingCount}
+        ticketUnreadCount={ticketUnreadCount + newTicketCount}
+      />
 
       {/* First-login nudge to change the admin-set password — auto-hides once firstTimePasswordSet flips to true */}
       <PasswordSetupPrompt show={firstTimePasswordSet === false} resetPath="/tutor/forgot-password" />

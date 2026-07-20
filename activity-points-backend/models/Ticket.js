@@ -92,6 +92,12 @@ const TicketSchema = new mongoose.Schema(
     // forwarded to admin), driving the bell-icon badge on the admin panel.
     // Flips back to true once an admin opens that ticket's detail view.
     adminSeen: { type: Boolean, default: true },
+
+    // Tutor-side notification flag — same idea, one step earlier in the
+    // chain: flips to false the moment a student raises a new ticket into
+    // that tutor's inbox, driving the bell-icon badge on the tutor panel.
+    // Flips back to true once the tutor opens, resolves, or forwards it.
+    tutorSeen: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
