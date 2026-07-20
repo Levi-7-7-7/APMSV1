@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import axiosInstance from '../api/axiosInstance';
+import adminAxios from '../api/adminAxios';
 import { useNavigate } from 'react-router-dom';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 
-export default function ForgotPassword() {
+export default function AdminForgotPassword() {
   const navigate = useNavigate();
 
-  // Step 1: enter register number
+  // Step 1: enter email
   // Step 2: enter OTP + new password
   const [step, setStep] = useState(1);
-  const [registerNumber, setRegisterNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [maskedEmail, setMaskedEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -22,12 +22,11 @@ export default function ForgotPassword() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const passwordsMatch = confirmPassword.length > 0 && newPassword === confirmPassword;
+  const passwordsMatch    = confirmPassword.length > 0 && newPassword === confirmPassword;
   const passwordsMismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
 
-  // 40x40 tap target (well above the ~44px mobile-accessibility guideline
-  // once you count the input's own padding) instead of just the bare icon,
-  // so it's easy to hit on a phone without missing and tapping into the text.
+  // 40x40 tap target instead of just the bare icon, so it's easy to hit on
+  // a phone without missing and tapping into the text.
   const eyeBtnStyle = {
     position: 'absolute',
     right: '2px',
@@ -49,10 +48,10 @@ export default function ForgotPassword() {
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setError('');
-    if (!registerNumber.trim()) { setError('Please enter your register number'); return; }
+    if (!email.trim()) { setError('Please enter your email address'); return; }
     setLoading(true);
     try {
-      const res = await axiosInstance.post('/auth/forgot-password', { registerNumber: registerNumber.trim() });
+      const res = await adminAxios.post('/admin/auth/forgot-password', { email: email.trim().toLowerCase() });
       setMaskedEmail(res.data.maskedEmail || '');
       setStep(2);
     } catch (err) {
@@ -71,8 +70,8 @@ export default function ForgotPassword() {
     if (newPassword.length < 6) { setError('Password must be at least 6 characters'); return; }
     setLoading(true);
     try {
-      const res = await axiosInstance.post('/auth/reset-password', {
-        registerNumber: registerNumber.trim(),
+      const res = await adminAxios.post('/admin/auth/reset-password', {
+        email: email.trim().toLowerCase(),
         otp,
         newPassword,
       });
@@ -90,9 +89,8 @@ export default function ForgotPassword() {
     setOtp('');
     setLoading(true);
     try {
-      const res = await axiosInstance.post('/auth/forgot-password', { registerNumber: registerNumber.trim() });
+      const res = await adminAxios.post('/admin/auth/forgot-password', { email: email.trim().toLowerCase() });
       setMaskedEmail(res.data.maskedEmail || maskedEmail);
-      setError('');
     } catch (err) {
       setError(err.response?.data?.message || 'Could not resend OTP.');
     } finally {
@@ -107,34 +105,44 @@ export default function ForgotPassword() {
           <h1>{step === 1 ? 'Forgot Password' : 'Reset Password'}</h1>
           <p>
             {step === 1
-              ? 'Enter your register number to receive an OTP on your registered email'
+              ? 'Enter your registered admin email address to receive an OTP'
               : <>OTP sent to <strong>{maskedEmail}</strong></>}
           </p>
         </div>
 
-        {/* ── STEP 1: Register number ── */}
+        {/* ── STEP 1: Email ── */}
         {step === 1 && (
           <form onSubmit={handleSendOtp}>
             <div className="form-group">
-              <label className="form-label">Register Number</label>
+              <label className="form-label">Email Address</label>
               <input
-                type="text"
-                value={registerNumber}
+                type="email"
+                value={email}
                 required
-                onChange={e => setRegisterNumber(e.target.value)}
-                placeholder="e.g. ABC123456"
+                onChange={e => setEmail(e.target.value)}
+                placeholder="e.g. admin@college.edu"
                 className="form-input"
                 disabled={loading}
-                autoCapitalize="characters"
+                autoCapitalize="none"
               />
             </div>
 
             {error && <p className="error-message">{error}</p>}
 
-            <button type="submit" className="btn-primary" disabled={loading || !registerNumber.trim()} style={{ marginTop: '1rem' }}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={loading || !email.trim()}
+              style={{ marginTop: '1rem' }}
+            >
               {loading ? 'Sending OTP...' : 'Send OTP'}
             </button>
-            <button type="button" className="forgot-password" onClick={() => navigate('/')} style={{ marginTop: '0.5rem', width: '100%' }}>
+            <button
+              type="button"
+              className="forgot-password"
+              onClick={() => navigate('/')}
+              style={{ marginTop: '0.5rem', width: '100%' }}
+            >
               ← Back to Login
             </button>
           </form>
@@ -176,7 +184,8 @@ export default function ForgotPassword() {
                   type="button"
                   onClick={() => setShowPassword(v => !v)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  style={eyeBtnStyle}>
+                  style={eyeBtnStyle}
+                >
                   {showPassword ? <VisibilityOffRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
                 </button>
               </div>
@@ -202,15 +211,16 @@ export default function ForgotPassword() {
                   type="button"
                   onClick={() => setShowConfirm(v => !v)}
                   aria-label={showConfirm ? 'Hide password' : 'Show password'}
-                  style={eyeBtnStyle}>
+                  style={eyeBtnStyle}
+                >
                   {showConfirm ? <VisibilityOffRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
                 </button>
               </div>
               {passwordsMismatch && <p className="error-message" style={{ marginTop: '4px' }}>Passwords do not match</p>}
-              {passwordsMatch && <p style={{ color: '#16a34a', fontSize: '13px', marginTop: '4px' }}>✓ Passwords match</p>}
+              {passwordsMatch    && <p style={{ color: '#16a34a', fontSize: '13px', marginTop: '4px' }}>✓ Passwords match</p>}
             </div>
 
-            {error && <p className="error-message">{error}</p>}
+            {error   && <p className="error-message">{error}</p>}
             {success && (
               <p className="success-message" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <CheckCircleRoundedIcon fontSize="small" /> {success} Redirecting to login...
@@ -221,13 +231,14 @@ export default function ForgotPassword() {
               type="submit"
               className="btn-primary"
               disabled={loading || passwordsMismatch || !otp || !newPassword}
-              style={{ marginTop: '1rem' }}>
+              style={{ marginTop: '1rem' }}
+            >
               {loading ? 'Resetting...' : 'Reset Password'}
             </button>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.75rem' }}>
               <button type="button" className="forgot-password" onClick={() => { setStep(1); setError(''); setOtp(''); }}>
-                ← Change Register No.
+                ← Change Email
               </button>
               <button type="button" className="forgot-password" onClick={handleResend} disabled={loading}>
                 Resend OTP

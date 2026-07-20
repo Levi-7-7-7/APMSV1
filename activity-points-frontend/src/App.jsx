@@ -25,6 +25,7 @@ import TutorProfile from './pages/TutorProfile';
 /* ===================== ADMIN PAGES ===================== */
 import AdminPanel from './pages/AdminPanel';
 import AdminPrivateRoute from './components/AdminPrivateRoute';
+import AdminForgotPassword from './pages/AdminForgotPassword';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/tutor/forgot-password" element={<TutorForgotPassword />} />
+        <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
 
         {/* Legacy URL redirects */}
         <Route path="/dashboard" element={<Navigate to="/student" replace />} />

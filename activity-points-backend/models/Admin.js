@@ -6,6 +6,10 @@ const adminSchema = new mongoose.Schema({
   password: { type: String, required: true },
   profilePhoto: { type: String, default: null },
   profilePhotoFileId: { type: String, default: null },
+
+  // Password reset via OTP (mirrors Student/Tutor models)
+  resetPasswordToken:   { type: String, default: null },
+  resetPasswordExpires: { type: Number, default: null },
 });
 
 // hash password

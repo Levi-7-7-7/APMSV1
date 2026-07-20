@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import tutorAxios from '../api/tutorAxios';
 import { useNavigate } from 'react-router-dom';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 
 export default function TutorForgotPassword() {
   const navigate = useNavigate();
@@ -21,6 +24,25 @@ export default function TutorForgotPassword() {
 
   const passwordsMatch    = confirmPassword.length > 0 && newPassword === confirmPassword;
   const passwordsMismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
+
+  // 40x40 tap target instead of just the bare icon, so it's easy to hit on
+  // a phone without missing and tapping into the text.
+  const eyeBtnStyle = {
+    position: 'absolute',
+    right: '2px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: '40px',
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#6b7280',
+    padding: 0,
+  };
 
   // Step 1 — send OTP
   const handleSendOtp = async (e) => {
@@ -161,9 +183,10 @@ export default function TutorForgotPassword() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(v => !v)}
-                  style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: '18px' }}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  style={eyeBtnStyle}
                 >
-                  {showPassword ? '🙈' : '👁️'}
+                  {showPassword ? <VisibilityOffRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
                 </button>
               </div>
             </div>
@@ -187,9 +210,10 @@ export default function TutorForgotPassword() {
                 <button
                   type="button"
                   onClick={() => setShowConfirm(v => !v)}
-                  style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280', fontSize: '18px' }}
+                  aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                  style={eyeBtnStyle}
                 >
-                  {showConfirm ? '🙈' : '👁️'}
+                  {showConfirm ? <VisibilityOffRoundedIcon fontSize="small" /> : <VisibilityRoundedIcon fontSize="small" />}
                 </button>
               </div>
               {passwordsMismatch && <p className="error-message" style={{ marginTop: '4px' }}>Passwords do not match</p>}
@@ -197,7 +221,11 @@ export default function TutorForgotPassword() {
             </div>
 
             {error   && <p className="error-message">{error}</p>}
-            {success && <p className="success-message">✅ {success} Redirecting to login...</p>}
+            {success && (
+              <p className="success-message" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CheckCircleRoundedIcon fontSize="small" /> {success} Redirecting to login...
+              </p>
+            )}
 
             <button
               type="submit"

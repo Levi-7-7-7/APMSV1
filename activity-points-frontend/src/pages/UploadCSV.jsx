@@ -138,7 +138,7 @@ const UploadCSV = () => {
           {/* Template download */}
           <div className="csv-template-box">
             <div className="csv-template-left">
-              <strong>📥 Download Template First</strong>
+              <strong><Download size={14} style={{ verticalAlign: '-2px', marginRight: '4px' }} />Download Template First</strong>
               <p>Use this pre-formatted CSV as your starting point. Fill in the student details and re-upload.</p>
             </div>
             <button className="csv-template-btn" onClick={downloadTemplate}>

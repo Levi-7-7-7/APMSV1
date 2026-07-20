@@ -7,6 +7,7 @@ const Admin = require("../models/Admin");
 const adminAuth = require("../middleware/adminAuth");
 const logActivity = require("../utils/activityLog");
 const imagekit = require("../utils/imagekit");
+const SibApiV3Sdk = require("sib-api-v3-sdk");
 
 const router = express.Router();
 
@@ -18,6 +19,101 @@ const photoUpload = multer({
     if (file.mimetype.startsWith("image/")) cb(null, true);
     else cb(new Error("Only image files are allowed"));
   },
+});
+
+// ─── BREVO EMAIL CLIENT (same pattern as student/tutor reset flows) ──────────
+const brevoClient = SibApiV3Sdk.ApiClient.instance;
+brevoClient.authentications["api-key"].apiKey = process.env.BREVO_API_KEY;
+const emailApi = new SibApiV3Sdk.TransactionalEmailsApi();
+
+async function sendAdminResetOTPEmail(toEmail, otp) {
+  await emailApi.sendTransacEmail({
+    sender: {
+      email: process.env.FROM_EMAIL,
+      name: process.env.FROM_NAME || "Activity Points System",
+    },
+    to: [{ email: toEmail }],
+    subject: "Password Reset OTP - Activity Points System",
+    htmlContent: `
+      <div style="font-family: Arial, sans-serif; padding: 24px; max-width: 480px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px;">
+        <h2 style="color: #1e3a8a; margin-bottom: 8px;">Password Reset</h2>
+        <p style="color: #374151;">Hi Admin,</p>
+        <p style="color: #374151;">Use the OTP below to reset your password. It expires in <strong>10 minutes</strong>.</p>
+        <div style="background: #eff6ff; border-radius: 10px; padding: 20px; text-align: center; margin: 20px 0;">
+          <span style="font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #1e3a8a;">${otp}</span>
+        </div>
+        <p style="color: #6b7280; font-size: 13px;">If you did not request this, please ignore this email. Your password will remain unchanged.</p>
+      </div>
+    `,
+  });
+}
+
+// ─── FORGOT PASSWORD — send OTP to the admin's registered email ─────────────
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  try {
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    const admin = await Admin.findOne({ email: email.trim().toLowerCase() });
+    if (!admin) return res.status(404).json({ message: "No admin account found with that email" });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    admin.resetPasswordToken = otp;
+    admin.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await admin.save();
+
+    await sendAdminResetOTPEmail(admin.email, otp);
+
+    const masked = admin.email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "*".repeat(b.length) + c);
+    res.json({ message: "OTP sent to your registered email", maskedEmail: masked });
+  } catch (err) {
+    console.error("Admin forgot-password error:", err.response?.body || err);
+    res.status(500).json({ message: "Server error. Please try again." });
+  }
+});
+
+// ─── RESET PASSWORD — verify OTP and set new password ───────────────────────
+router.post("/reset-password", async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  try {
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const admin = await Admin.findOne({
+      email: email.trim().toLowerCase(),
+      resetPasswordToken: otp,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!admin) return res.status(400).json({ message: "Invalid or expired OTP" });
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    admin.password = newPassword; // pre-save hook hashes it
+    admin.resetPasswordToken = null;
+    admin.resetPasswordExpires = null;
+    await admin.save();
+
+    logActivity({
+      req,
+      actorType: "admin",
+      actorId: admin._id,
+      actorEmail: admin.email,
+      action: "admin_password_reset",
+      description: `Admin ${admin.email} reset their password`,
+      targetType: "Admin",
+      targetId: admin._id,
+      targetName: admin.email,
+    });
+
+    res.json({ message: "Password reset successfully. You can now log in." });
+  } catch (err) {
+    console.error("Admin reset-password error:", err);
+    res.status(500).json({ message: "Server error. Please try again." });
+  }
 });
 
 // Admin Login

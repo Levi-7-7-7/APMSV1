@@ -198,18 +198,20 @@ export default function Login() {
           </button>
         </div>
 
-        {role !== 'admin' && (
-          <div className="form-footer">
-            <button
-              type="button"
-              className="forgot-password"
-              onClick={() => navigate(role === 'tutor' ? '/tutor/forgot-password' : '/forgot-password')}
-              disabled={loading}
-            >
-              Reset / Forgot Password?
-            </button>
-          </div>
-        )}
+        <div className="form-footer">
+          <button
+            type="button"
+            className="forgot-password"
+            onClick={() => navigate(
+              role === 'tutor' ? '/tutor/forgot-password'
+                : role === 'admin' ? '/admin/forgot-password'
+                : '/forgot-password'
+            )}
+            disabled={loading}
+          >
+            Reset / Forgot Password?
+          </button>
+        </div>
 
         <button
           className={`btn-primary ${isAdmin ? 'btn-admin' : ''}`}
