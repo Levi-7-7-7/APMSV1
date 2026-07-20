@@ -765,7 +765,7 @@ router.get('/me', tutorAuth, async (req, res) => {
     const tutor = await Tutor.findById(req.tutor.id)
       .populate('batch',  'name')
       .populate('branch', 'name')
-      .select('-password -resetPasswordToken -resetPasswordExpires -fcmTokens');
+      .select('-password -resetPasswordToken -resetPasswordExpires -fcmToken');
     if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
     res.json(tutor);
   } catch (err) {

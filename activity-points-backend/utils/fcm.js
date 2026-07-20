@@ -2,14 +2,15 @@
  * utils/fcm.js
  *
  * Sends Firebase Cloud Messaging push notifications — to native app
- * devices (Android/iOS) AND web push subscriptions — with multi-device
- * fan-out and automatic pruning of dead tokens.
+ * devices (Android/iOS) AND web push subscriptions — with automatic
+ * clearing of dead tokens.
  *
- * A Student or Tutor document can now hold several tokens at once
- * (fcmTokens[]) — e.g. one phone + one browser tab. sendPushToUser()
- * sends to all of them in a single multicast call and removes any token
- * Firebase reports as invalid/unregistered, so the array never grows
- * stale.
+ * A Student or Tutor document holds a single token at a time (fcmToken).
+ * Registering a token on a new device overwrites whatever was stored
+ * before, so only the most recently logged-in device receives pushes
+ * for that account — logging in elsewhere effectively "signs out" the
+ * previous device from notifications. sendPushToUser() sends to that
+ * one token and clears it if Firebase reports it invalid/unregistered.
  *
  * Requires:
  *   - npm install firebase-admin
@@ -137,8 +138,9 @@ async function sendToTokens(tokens, title, body, data = {}) {
 }
 
 /**
- * High-level: send a notification to every device belonging to a
- * Student or Tutor, and auto-prune any tokens Firebase reports as dead.
+ * High-level: send a notification to the single device currently
+ * registered for a Student or Tutor, and clear the token if Firebase
+ * reports it as dead.
  *
  * @param {import('mongoose').Model} Model   - the Student or Tutor model
  * @param {string} userId                    - the document's _id
@@ -151,15 +153,16 @@ async function sendPushToUser(Model, userId, title, body, data = {}) {
   if (!admin.apps.length || !userId) return;
 
   try {
-    const user = await Model.findById(userId).select('fcmTokens');
-    const tokens = (user?.fcmTokens || []).map((t) => t.token);
-    if (tokens.length === 0) return;
+    const user = await Model.findById(userId).select('fcmToken');
+    const token = user?.fcmToken?.token;
+    if (!token) return;
 
-    const { deadTokens } = await sendToTokens(tokens, title, body, data);
+    const { deadTokens } = await sendToTokens([token], title, body, data);
 
     if (deadTokens.length) {
+      // Only one token to begin with — if it's dead, just clear it.
       await Model.findByIdAndUpdate(userId, {
-        $pull: { fcmTokens: { token: { $in: deadTokens } } },
+        $set: { 'fcmToken.token': null },
       });
     }
   } catch (err) {
@@ -168,10 +171,11 @@ async function sendPushToUser(Model, userId, title, body, data = {}) {
 }
 
 /**
- * Register (or refresh) a device token for a Student/Tutor. Called from
- * the `PATCH /fcm-token` routes. Dedupes by token string — if the same
- * token is already stored (e.g. the same browser refreshing its
- * subscription), it just bumps `updatedAt` instead of adding a duplicate.
+ * Register (or refresh) the device token for a Student/Tutor. Called from
+ * the `PATCH /fcm-token` routes — typically at login. Overwrites whatever
+ * token was previously stored, so only this device receives pushes for
+ * the account going forward; if the user was already logged in elsewhere,
+ * that other device is implicitly de-registered.
  *
  * @param {import('mongoose').Model} Model
  * @param {string} userId
@@ -181,12 +185,10 @@ async function sendPushToUser(Model, userId, title, body, data = {}) {
 async function registerDeviceToken(Model, userId, token, platform = 'android') {
   if (!token) throw new Error('token is required');
 
-  // Remove any existing identical entry, then re-add fresh (dedupe + bump
-  // updatedAt in one round trip without a second query).
-  await Model.updateOne({ _id: userId }, { $pull: { fcmTokens: { token } } });
-
   await Model.findByIdAndUpdate(userId, {
-    $push: { fcmTokens: { token, platform, updatedAt: new Date() } },
+    $set: {
+      fcmToken: { token, platform, updatedAt: new Date() },
+    },
   });
 }
 

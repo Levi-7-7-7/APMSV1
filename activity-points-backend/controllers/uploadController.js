@@ -105,7 +105,7 @@ exports.uploadCertificate = [
         const tutor = await Tutor.findOne({
           batch:  student.batch?._id  || student.batch,
           branch: student.branch?._id || student.branch,
-          'fcmTokens.0': { $exists: true },
+          'fcmToken.token': { $exists: true, $ne: null },
         }).select('_id');
 
         if (tutor) {
@@ -227,7 +227,7 @@ exports.reuploadCertificate = [
         const tutor = await Tutor.findOne({
           batch:  student.batch?._id  || student.batch,
           branch: student.branch?._id || student.branch,
-          'fcmTokens.0': { $exists: true },
+          'fcmToken.token': { $exists: true, $ne: null },
         }).select('_id');
 
         if (tutor) {

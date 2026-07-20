@@ -23,20 +23,15 @@ const tutorSchema = new mongoose.Schema({
   // flow — after that the dashboard popup never shows again.
   firstTimePasswordSet: { type: Boolean, default: false },
 
-  // ── Push notification device tokens (multi-device) ───────────────────────
-  // A tutor may be logged in on their phone (native app) and a browser
-  // (web push) at once — each device gets its own token, and both should
-  // receive "new certificate uploaded" / ticket alerts.
-  fcmTokens: {
-    type: [
-      {
-        _id:       false,
-        token:     { type: String, required: true },
-        platform:  { type: String, enum: ['android', 'ios', 'web'], default: 'android' },
-        updatedAt: { type: Date, default: Date.now },
-      },
-    ],
-    default: [],
+  // ── Push notification device token (single-device) ────────────────────────
+  // Only one token is kept per tutor. Logging in (or re-registering for
+  // push) on a new device overwrites this field, so the previous device
+  // stops receiving "new certificate uploaded" / ticket alerts — only the
+  // most recently logged-in device gets pushes at any given time.
+  fcmToken: {
+    token:     { type: String, default: null },
+    platform:  { type: String, enum: ['android', 'ios', 'web'], default: 'android' },
+    updatedAt: { type: Date, default: null },
   },
 
   // ── Profile photo (stored on ImageKit) ───────────────────────
