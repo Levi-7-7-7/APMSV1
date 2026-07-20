@@ -12,6 +12,7 @@ const PAGE_TITLES = {
   '/student': 'Dashboard',
   '/student/upload-certificate': 'Upload Certificate',
   '/student/certificates': 'My Certificates',
+  '/student/tickets': 'Tickets',
   '/student/profile': 'Profile',
 };
 

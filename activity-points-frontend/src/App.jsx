@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UploadCertificates from './pages/UploadCertificates';
 import CertificatesPage from './pages/CertificatesPage';
+import Tickets from './pages/Tickets';
 import Profile from './pages/Profile';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -51,6 +52,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="upload-certificate" element={<UploadCertificates />} />
           <Route path="certificates" element={<CertificatesPage />} />
+          <Route path="tickets" element={<Tickets />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 
