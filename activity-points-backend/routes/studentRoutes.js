@@ -34,6 +34,7 @@ const { buildStudentCertFolder } = require('../utils/imagekitPaths');
 const auth = require('../middleware/auth');
 const Tutor = require('../models/Tutor');
 const logActivity = require('../utils/activityLog');
+const { registerDeviceToken } = require('../utils/fcm');
 
 const router = express.Router();
 
@@ -120,7 +121,7 @@ router.get('/me', auth, async (req, res) => {
 
 router.patch('/fcm-token', auth, async (req, res) => {
   try {
-    const {fcmToken} = req.body;
+    const { fcmToken, platform } = req.body;
 
     if (!fcmToken || typeof fcmToken !== 'string') {
       return res.status(400).json({
@@ -128,9 +129,10 @@ router.patch('/fcm-token', auth, async (req, res) => {
       });
     }
 
-    await Student.findByIdAndUpdate(req.user.id, {
-      fcmToken,
-    });
+    // platform defaults to 'android' so the existing native app (which
+    // never sends this field) keeps working unchanged; the web app
+    // passes platform: 'web' explicitly.
+    await registerDeviceToken(Student, req.user.id, fcmToken, platform);
 
     res.json({
       success: true,

@@ -38,7 +38,22 @@ const StudentSchema = new mongoose.Schema({
 
   totalPoints: { type: Number, default: 0 },
 
-  fcmToken: { type: String, default: null },
+  // ── Push notification device tokens (multi-device) ───────────────────────
+  // One student can be logged in on a phone (native app) AND a browser
+  // (web push) at the same time — each gets its own FCM token, and both
+  // should receive notifications. `platform` lets sendPushNotification pick
+  // the right payload shape (webpush vs android/apns).
+  fcmTokens: {
+    type: [
+      {
+        _id:       false,
+        token:     { type: String, required: true },
+        platform:  { type: String, enum: ['android', 'ios', 'web'], default: 'android' },
+        updatedAt: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  },
 
   // ── Profile photo (stored on ImageKit) ───────────────────────────────────
   // Full public URL returned by ImageKit, e.g.:

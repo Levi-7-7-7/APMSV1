@@ -4,6 +4,8 @@ import { MoreVertical, User, LogOut, X } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
+import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
+import { listenForForegroundMessages } from '../utils/pushNotifications';
 import '../css/StudentDashboard.css';
 
 const PAGE_TITLES = {
@@ -47,6 +49,18 @@ const StudentLayout = () => {
     const stored = localStorage.getItem('firstTimePasswordSet');
     return stored === null ? null : stored === 'true';
   });
+
+  // Foreground push notifications (tab open + focused) — the service
+  // worker only fires for background/closed-tab pushes, so this covers
+  // the gap using the same browser Notification UI.
+  useEffect(() => {
+    const unsubscribe = listenForForegroundMessages(({ title, body }) => {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '/icon-192.png' });
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   // Re-read from localStorage whenever userData changes (e.g. after Dashboard fetch,
   // or after uploading a new photo on the Profile page)
@@ -179,6 +193,7 @@ const StudentLayout = () => {
 
       {/* Nested student pages */}
       <main className="dashboard-main">
+        <NotificationPermissionBanner role="student" />
         <Outlet />
       </main>
 

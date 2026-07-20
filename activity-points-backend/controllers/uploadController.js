@@ -4,7 +4,7 @@ const Certificate = require('../models/Certificate');
 const Category    = require('../models/Category');
 const Student     = require('../models/Student');
 const Tutor       = require('../models/Tutor');
-const { sendPushNotification } = require('../utils/fcm');
+const { sendPushToUser } = require('../utils/fcm');
 const { sanitizeName, buildStudentCertFolder } = require('../utils/imagekitPaths');
 const logActivity = require('../utils/activityLog');
 
@@ -105,13 +105,14 @@ exports.uploadCertificate = [
         const tutor = await Tutor.findOne({
           batch:  student.batch?._id  || student.batch,
           branch: student.branch?._id || student.branch,
-          fcmToken: { $ne: null },
-        }).select('fcmToken');
+          'fcmTokens.0': { $exists: true },
+        }).select('_id');
 
-        if (tutor?.fcmToken) {
+        if (tutor) {
           const certLabel = eventName?.trim() || subcategoryName || 'a certificate';
-          await sendPushNotification(
-            tutor.fcmToken,
+          await sendPushToUser(
+            Tutor,
+            tutor._id,
             '📄 New Certificate Uploaded',
             `${student.name} submitted ${certLabel} — tap to review.`,
             { type: 'new_certificate', certId: String(cert._id), status: 'pending' },
@@ -226,13 +227,14 @@ exports.reuploadCertificate = [
         const tutor = await Tutor.findOne({
           batch:  student.batch?._id  || student.batch,
           branch: student.branch?._id || student.branch,
-          fcmToken: { $ne: null },
-        }).select('fcmToken');
+          'fcmTokens.0': { $exists: true },
+        }).select('_id');
 
-        if (tutor?.fcmToken) {
+        if (tutor) {
           const certLabel = cert.eventName?.trim() || cert.subcategory || 'a certificate';
-          await sendPushNotification(
-            tutor.fcmToken,
+          await sendPushToUser(
+            Tutor,
+            tutor._id,
             '📄 Certificate Re-uploaded',
             `${student.name} re-uploaded ${certLabel} — tap to review.`,
             { type: 'new_certificate', certId: String(cert._id), status: 'pending' },

@@ -15,7 +15,7 @@ const generateDefaultPassword = require('../utils/defaultPassword');
 const deleteStudentCascade = require('../utils/deleteStudentCascade');
 const { validateTutorRoleConfig } = require('../utils/tutorRoleRules');
 
-const { sendPushNotification } = require('../utils/fcm');
+const { sendPushToUser, registerDeviceToken } = require('../utils/fcm');
 
 
 const { calcCappedPoints, syncStudentTotalPoints } = require('../utils/calcPoints');
@@ -188,9 +188,12 @@ router.post('/login', async (req, res) => {
 // "new certificate uploaded" alerts to their device.
 router.patch('/fcm-token', tutorAuth, async (req, res) => {
   try {
-    const { fcmToken } = req.body;
+    const { fcmToken, platform } = req.body;
     if (!fcmToken) return res.status(400).json({ error: 'fcmToken is required' });
-    await Tutor.findByIdAndUpdate(req.tutor.id, { fcmToken });
+    // platform defaults to 'android' so the existing native app (which
+    // never sends this field) keeps working unchanged; the web app
+    // passes platform: 'web' explicitly.
+    await registerDeviceToken(Tutor, req.tutor.id, fcmToken, platform);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -493,12 +496,12 @@ router.post('/certificates/:id/approve', tutorAuth, async (req, res) => {
       meta: { pointsAwarded: pointsToAward, student: authz.student.name },
     });
 
-    // ── Push notification (non-blocking) ─────────────────────────────────────
-    const student = await Student.findById(cert.student).select('fcmToken');
-    if (student?.fcmToken) {
+    // ── Push notification (non-blocking, fans out to every device) ───────────
+    {
       const certName = cert.eventName || cert.subcategory || 'Your certificate';
-      sendPushNotification(
-        student.fcmToken,
+      sendPushToUser(
+        Student,
+        cert.student,
         '🎉 Certificate Approved!',
         `"${certName}" has been approved. ${pointsToAward} points have been added to your account.`,
         { status: 'approved', certId: cert._id.toString() }
@@ -545,15 +548,15 @@ router.post('/certificates/:id/reject', tutorAuth, async (req, res) => {
       meta: { reason: cert.rejectionReason, student: authz.student.name },
     });
 
-    // ── Push notification (non-blocking) ─────────────────────────────────────
-    const student = await Student.findById(cert.student).select('fcmToken');
-    if (student?.fcmToken) {
+    // ── Push notification (non-blocking, fans out to every device) ───────────
+    {
       const certName = cert.eventName || cert.subcategory || 'Your certificate';
       const reason   = cert.rejectionReason
         ? `: ${cert.rejectionReason}`
         : '. Please check the app for details.';
-      sendPushNotification(
-        student.fcmToken,
+      sendPushToUser(
+        Student,
+        cert.student,
         '❌ Certificate Rejected',
         `"${certName}" was rejected${reason}`,
         { status: 'rejected', certId: cert._id.toString() }
@@ -667,12 +670,12 @@ router.post('/certificates/:id/revert-to-pending', tutorAuth, async (req, res) =
       meta: { student: authz.student.name },
     });
 
-    // ── Push notification (non-blocking) ─────────────────────────────────────
-    const student = await Student.findById(cert.student).select('fcmToken');
-    if (student?.fcmToken) {
+    // ── Push notification (non-blocking, fans out to every device) ───────────
+    {
       const certName = cert.eventName || cert.subcategory || 'Your certificate';
-      sendPushNotification(
-        student.fcmToken,
+      sendPushToUser(
+        Student,
+        cert.student,
         '🔄 Certificate Under Review',
         `"${certName}" has been moved back to pending review.`,
         { status: 'pending', certId: cert._id.toString() }
@@ -762,7 +765,7 @@ router.get('/me', tutorAuth, async (req, res) => {
     const tutor = await Tutor.findById(req.tutor.id)
       .populate('batch',  'name')
       .populate('branch', 'name')
-      .select('-password -resetPasswordToken -resetPasswordExpires -fcmToken');
+      .select('-password -resetPasswordToken -resetPasswordExpires -fcmTokens');
     if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
     res.json(tutor);
   } catch (err) {

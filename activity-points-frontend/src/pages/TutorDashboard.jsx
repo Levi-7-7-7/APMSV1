@@ -4,6 +4,8 @@ import { MoreVertical, User, LogOut, X } from 'lucide-react';
 import TutorBottomNav from '../components/TutorBottomNav';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
+import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
+import { listenForForegroundMessages } from '../utils/pushNotifications';
 import tutorAxios from '../api/tutorAxios';
 import '../css/TutorDashboard.css';
 
@@ -34,6 +36,18 @@ const TutorDashboard = () => {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [avatarEnlarged, setAvatarEnlarged] = useState(false);
+
+  // Foreground push notifications (tab open + focused) — the service
+  // worker only fires for background/closed-tab pushes, so this covers
+  // the gap using the same browser Notification UI.
+  useEffect(() => {
+    const unsubscribe = listenForForegroundMessages(({ title, body }) => {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '/icon-192.png' });
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   // Close the three-dot menu on outside click or Escape
   useEffect(() => {
@@ -200,6 +214,7 @@ const TutorDashboard = () => {
 
       {/* Nested pages */}
       <main className="nested-content min-h-[300px]">
+        <NotificationPermissionBanner role="tutor" />
         <React.Suspense fallback={<p className="loading-text">Loading...</p>}>
           <Outlet context={{ refreshPendingCount }} />
         </React.Suspense>

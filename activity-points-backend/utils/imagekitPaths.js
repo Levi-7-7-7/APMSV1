@@ -35,4 +35,9 @@ function buildBatchCertFolder(branchName, batchName) {
   return `/certificates/${department}/${batch}`;
 }
 
-module.exports = { sanitizeName, buildStudentCertFolder, buildBatchCertFolder };
+// Folder for ticket/complaint attachment images: /tickets/{raiserName}
+function buildTicketFolder(raiserName) {
+  return `/tickets/${sanitizeName(raiserName)}`;
+}
+
+module.exports = { sanitizeName, buildStudentCertFolder, buildBatchCertFolder, buildTicketFolder };
