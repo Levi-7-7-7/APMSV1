@@ -59,14 +59,31 @@ const DEAD_TOKEN_ERROR_CODES = new Set([
  * Build the full cross-platform message payload (minus the token itself).
  * `link` (in data) is used as the URL to open on tap for both web push
  * and native deep-linking.
+ *
+ * `platform` ('web' | 'android' | 'ios') controls whether a top-level
+ * `notification` block (and, for web, `webpush.notification`) is included:
+ *
+ *   - For 'web' we deliberately send a DATA-ONLY message. If a
+ *     `notification` field is present, the browser's push service shows
+ *     its own system notification automatically the instant the push
+ *     arrives — and our service worker's onBackgroundMessage handler ALSO
+ *     calls self.registration.showNotification() to build one with the
+ *     right icon and click data. Both fire, so the user gets two
+ *     notifications per event (the auto one even used a broken icon path
+ *     — /icons/icon-192.png doesn't exist, only /icons/icon-192x192.png.png
+ *     does — which is why it fell back to a generic grey "A" avatar
+ *     instead of the app icon). Shipping data-only for web means our SW
+ *     code is the ONLY thing that ever displays anything.
+ *   - For 'android'/'ios' we keep `notification` — those are native
+ *     targets with no service-worker equivalent in this codebase, so the
+ *     OS needs it to display something when the app isn't foregrounded.
  */
-function buildPayload(title, body, data = {}) {
+function buildPayload(title, body, data = {}, platform = 'web') {
   const stringData = Object.fromEntries(
     Object.entries(data).map(([k, v]) => [k, String(v)])
   );
 
-  return {
-    notification: { title, body },
+  const payload = {
     data: stringData,
     android: {
       priority: 'high',
@@ -86,19 +103,19 @@ function buildPayload(title, body, data = {}) {
         },
       },
     },
-    webpush: {
-      notification: {
-        title,
-        body,
-        icon: '/icons/icon-192.png',
-        badge: '/icons/badge-72.png',
-      },
-      fcmOptions: {
-        // Where the browser should navigate on notification click.
-        link: data.link || '/',
-      },
-    },
   };
+
+  if (platform === 'web') {
+    // Data-only for web — see comment above. The service worker
+    // (onBackgroundMessage) and the foreground listener both read
+    // title/body from `data`, not `payload.notification`.
+    stringData.title = title;
+    stringData.body = body;
+  } else {
+    payload.notification = { title, body };
+  }
+
+  return payload;
 }
 
 /**
@@ -108,13 +125,13 @@ function buildPayload(title, body, data = {}) {
  *   deadTokens are tokens Firebase confirmed are permanently invalid —
  *   the caller should remove these from the DB.
  */
-async function sendToTokens(tokens, title, body, data = {}) {
+async function sendToTokens(tokens, title, body, data = {}, platform = 'web') {
   const uniqueTokens = [...new Set(tokens.filter(Boolean))];
   if (!admin.apps.length || uniqueTokens.length === 0) {
     return { successCount: 0, deadTokens: [] };
   }
 
-  const message = { ...buildPayload(title, body, data), tokens: uniqueTokens };
+  const message = { ...buildPayload(title, body, data, platform), tokens: uniqueTokens };
 
   try {
     const response = await admin.messaging().sendEachForMulticast(message);
@@ -156,8 +173,9 @@ async function sendPushToUser(Model, userId, title, body, data = {}) {
     const user = await Model.findById(userId).select('fcmToken');
     const token = user?.fcmToken?.token;
     if (!token) return;
+    const platform = user.fcmToken?.platform || 'web';
 
-    const { deadTokens } = await sendToTokens([token], title, body, data);
+    const { deadTokens } = await sendToTokens([token], title, body, data, platform);
 
     if (deadTokens.length) {
       // Only one token to begin with — if it's dead, just clear it.

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { Loader2, Award, Eye, AlertCircle, X, Edit2, Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import tutorAxios from '../api/tutorAxios';
 import CertModal from '../components/CertModal';
@@ -22,6 +22,11 @@ const PendingCertificates = () => {
   // student list (grouped, WhatsApp-chat-list style) instead of every
   // single certificate card flattened out.
   const [selectedStudentId, setSelectedStudentId] = useState(null);
+
+  // Deep-link support: a "new certificate" push notification's data.link
+  // points here with ?studentId=<id> so tapping it lands the tutor
+  // directly in that student's queue instead of the generic list.
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Reject modal state
   const [rejectingCert, setRejectingCert] = useState(null);
@@ -88,6 +93,19 @@ const PendingCertificates = () => {
     }
     return order.map(sid => byId.get(sid));
   }, [pendingCerts]);
+
+  // One-time consumption of ?studentId= from a notification tap. Runs
+  // once pending certs have loaded (so the group actually exists to
+  // select), then removes the param so it doesn't override manual
+  // "All students" navigation afterwards.
+  useEffect(() => {
+    const studentIdParam = searchParams.get('studentId');
+    if (!studentIdParam || loading) return;
+    const exists = studentGroups.some(g => (g.student?._id || g.student) === studentIdParam);
+    if (exists) setSelectedStudentId(studentIdParam);
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, studentGroups]);
 
   const selectedGroup = selectedStudentId
     ? studentGroups.find(g => (g.student?._id || g.student) === selectedStudentId)

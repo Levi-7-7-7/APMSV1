@@ -6,17 +6,21 @@ import {
   UploadCloud, Loader2
 } from 'lucide-react';
 import '../css/certificatespage.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import CertModal from '../components/CertModal';
 import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
 
 export default function CertificatesPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [certificates, setCertificates] = useState([]);
   const [categories, setCategories]     = useState([]);
   const [user, setUser]                 = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
+  // Set from ?certId= on a notification deep-link, so the matching card
+  // can be visually highlighted and scrolled to once the list renders.
+  const [highlightedCertId, setHighlightedCertId] = useState(null);
   const [loading, setLoading]           = useState(true);
   const [error, setError]               = useState(null);
   const [modalUrl, setModalUrl]         = useState(null);
@@ -51,6 +55,33 @@ export default function CertificatesPage() {
     };
     fetchData();
   }, []);
+
+  // Deep-link support: a certificate-status push notification's data.link
+  // points here with ?certId=<id>&status=<status>. Once the list has
+  // loaded, switch to that status tab, highlight the matching card, and
+  // scroll it into view — then strip the params so they don't reapply on
+  // later manual tab clicks.
+  useEffect(() => {
+    if (loading) return;
+    const certId = searchParams.get('certId');
+    const status = searchParams.get('status');
+    if (!certId) return;
+
+    if (status && ['all', 'approved', 'pending', 'rejected'].includes(status)) {
+      setActiveFilter(status);
+    }
+    setHighlightedCertId(certId);
+    setSearchParams({}, { replace: true });
+
+    // Scroll to the card shortly after the filter/render settles.
+    const t = setTimeout(() => {
+      document.getElementById(`cert-card-${certId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 150);
+    // Drop the highlight after a few seconds so it doesn't linger forever.
+    const clearHighlight = setTimeout(() => setHighlightedCertId(null), 4000);
+    return () => { clearTimeout(t); clearTimeout(clearHighlight); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   // Helpers
   const getCategoryById = (id) => {
@@ -265,7 +296,11 @@ export default function CertificatesPage() {
         )}
 
         {!loading && filteredCertificates.map(cert => (
-          <div key={cert._id} className="certificate-card">
+          <div
+            key={cert._id}
+            id={`cert-card-${cert._id}`}
+            className={`certificate-card${highlightedCertId === cert._id ? ' cert-card-highlighted' : ''}`}
+          >
             <div className="cert-header">
               <h3>{cert.subcategory || 'Certificate'}</h3>
               {getStatusIcon(cert.status)}

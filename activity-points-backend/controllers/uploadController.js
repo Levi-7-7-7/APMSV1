@@ -115,7 +115,15 @@ exports.uploadCertificate = [
             tutor._id,
             '📄 New Certificate Uploaded',
             `${student.name} submitted ${certLabel} — tap to review.`,
-            { type: 'new_certificate', certId: String(cert._id), status: 'pending' },
+            {
+              type: 'new_certificate',
+              certId: String(cert._id),
+              status: 'pending',
+              // Deep-link straight to this student's queue in the pending
+              // review page, instead of dropping the tutor on the generic
+              // dashboard home.
+              link: `/tutor/dashboard/pending?studentId=${studentId}`,
+            },
           );
         }
       } catch (notifyErr) {
@@ -237,7 +245,12 @@ exports.reuploadCertificate = [
             tutor._id,
             '📄 Certificate Re-uploaded',
             `${student.name} re-uploaded ${certLabel} — tap to review.`,
-            { type: 'new_certificate', certId: String(cert._id), status: 'pending' },
+            {
+              type: 'new_certificate',
+              certId: String(cert._id),
+              status: 'pending',
+              link: `/tutor/dashboard/pending?studentId=${studentId}`,
+            },
           );
         }
       } catch (notifyErr) {

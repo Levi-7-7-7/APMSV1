@@ -175,10 +175,11 @@ export function listenForForegroundMessages(onNotification) {
     if (!messaging) return;
 
     unsubscribe = onMessage(messaging, (payload) => {
+      const data = payload.data || {};
       onNotification({
-        title: payload.notification?.title || 'Activity Points',
-        body: payload.notification?.body || '',
-        data: payload.data || {},
+        title: payload.notification?.title || data.title || 'Activity Points',
+        body: payload.notification?.body || data.body || '',
+        data,
       });
     });
   })();

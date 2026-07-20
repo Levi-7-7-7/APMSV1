@@ -41,9 +41,14 @@ const messaging = firebase.messaging();
 // open and focused — are handled instead in src/utils/pushNotifications.js
 // via onMessage(), since a background handler doesn't run for those.
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'Activity Points';
-  const body = payload.notification?.body || '';
   const data = payload.data || {};
+  // The backend now sends data-only messages for web (see utils/fcm.js on
+  // the server) precisely so this handler is the ONLY thing that ever
+  // displays a notification — title/body live in `data`, not
+  // `payload.notification`, which is intentionally left empty to stop the
+  // browser auto-displaying its own duplicate notification.
+  const title = payload.notification?.title || data.title || 'Activity Points';
+  const body = payload.notification?.body || data.body || '';
 
   self.registration.showNotification(title, {
     body,

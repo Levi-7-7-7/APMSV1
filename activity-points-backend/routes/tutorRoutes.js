@@ -559,7 +559,11 @@ router.post('/certificates/:id/reject', tutorAuth, async (req, res) => {
         cert.student,
         '❌ Certificate Rejected',
         `"${certName}" was rejected${reason}`,
-        { status: 'rejected', certId: cert._id.toString() }
+        {
+          status: 'rejected',
+          certId: cert._id.toString(),
+          link: `/student/certificates?certId=${cert._id.toString()}&status=rejected`,
+        }
       ); // intentionally NOT awaited
     }
     // ─────────────────────────────────────────────────────────────────────────
@@ -678,7 +682,11 @@ router.post('/certificates/:id/revert-to-pending', tutorAuth, async (req, res) =
         cert.student,
         '🔄 Certificate Under Review',
         `"${certName}" has been moved back to pending review.`,
-        { status: 'pending', certId: cert._id.toString() }
+        {
+          status: 'pending',
+          certId: cert._id.toString(),
+          link: `/student/certificates?certId=${cert._id.toString()}&status=pending`,
+        }
       );
     }
     // ─────────────────────────────────────────────────────────────────────────

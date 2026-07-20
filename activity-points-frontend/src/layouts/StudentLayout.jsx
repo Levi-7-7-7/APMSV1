@@ -55,13 +55,19 @@ const StudentLayout = () => {
   // worker only fires for background/closed-tab pushes, so this covers
   // the gap using the same browser Notification UI.
   useEffect(() => {
-    const unsubscribe = listenForForegroundMessages(({ title, body }) => {
+    const unsubscribe = listenForForegroundMessages(({ title, body, data }) => {
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        new Notification(title, { body, icon: '/icon-192.png' });
+        const notif = new Notification(title, { body, icon: '/icon-192.png' });
+        if (data?.link) {
+          notif.onclick = () => {
+            window.focus();
+            navigate(data.link);
+          };
+        }
       }
     });
     return unsubscribe;
-  }, []);
+  }, [navigate]);
 
   // Covers every login, not just the very first: if this browser already
   // has notification permission granted (from an earlier session, or a
