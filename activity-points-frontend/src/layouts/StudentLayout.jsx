@@ -6,6 +6,7 @@ import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import { listenForForegroundMessages, syncPushToken } from '../utils/pushNotifications';
+import { getStudentTicketUnreadCount } from '../utils/ticketApi';
 import '../css/StudentDashboard.css';
 
 const PAGE_TITLES = {
@@ -78,6 +79,23 @@ const StudentLayout = () => {
   useEffect(() => {
     syncPushToken('student');
   }, []);
+
+  // "Ticket solved" badge on the bottom-nav Tickets icon — same pattern as
+  // the tutor panel's ticket badge (see TutorDashboard.jsx): a resolved
+  // ticket the student hasn't opened yet.
+  const [ticketUnreadCount, setTicketUnreadCount] = useState(0);
+
+  const refreshTicketUnreadCount = React.useCallback(() => {
+    getStudentTicketUnreadCount()
+      .then(res => setTicketUnreadCount(res.data?.count || 0))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refreshTicketUnreadCount();
+    const interval = setInterval(refreshTicketUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [refreshTicketUnreadCount]);
 
   // Re-read from localStorage whenever userData changes (e.g. after Dashboard fetch,
   // or after uploading a new photo on the Profile page)
@@ -211,11 +229,11 @@ const StudentLayout = () => {
       {/* Nested student pages */}
       <main className="dashboard-main">
         <NotificationPermissionBanner role="student" />
-        <Outlet />
+        <Outlet context={{ refreshTicketUnreadCount }} />
       </main>
 
       {/* Bottom navigation */}
-      <BottomNav />
+      <BottomNav ticketUnreadCount={ticketUnreadCount} />
 
       {/* First-login nudge to change the default password — auto-hides once firstTimePasswordSet flips to true */}
       <PasswordSetupPrompt show={firstTimePasswordSet === false} resetPath="/forgot-password" />

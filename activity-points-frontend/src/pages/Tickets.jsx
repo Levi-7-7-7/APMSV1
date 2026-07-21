@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Plus, Image as ImageIcon, X, Clock, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react';
 import { createStudentTicket, getMyTickets, markStudentTicketSeen } from '../utils/ticketApi';
 import '../css/Tickets.css';
@@ -12,6 +13,7 @@ function StatusBadge({ status }) {
 }
 
 export default function Tickets() {
+  const { refreshTicketUnreadCount } = useOutletContext() || {};
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -95,6 +97,7 @@ export default function Tickets() {
       try {
         await markStudentTicketSeen(ticket._id);
         setTickets((prev) => prev.map((t) => (t._id === ticket._id ? { ...t, raiserSeen: true } : t)));
+        refreshTicketUnreadCount?.();
       } catch (_) {}
     }
   };

@@ -9,7 +9,7 @@ const navItems = [
   { id: 'tickets',   icon: MessageSquare,   label: 'Tickets',   path: '/student/tickets' },
 ];
 
-export default function BottomNav() {
+export default function BottomNav({ ticketUnreadCount = 0 }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -23,7 +23,14 @@ export default function BottomNav() {
           type="button"
           aria-label={label}
         >
-          <Icon size={24} />
+          <span className="student-nav-icon-wrap">
+            <Icon size={24} />
+            {id === 'tickets' && ticketUnreadCount > 0 && (
+              <span className="student-nav-badge" aria-label={`${ticketUnreadCount} resolved tickets`}>
+                {ticketUnreadCount > 99 ? '99+' : ticketUnreadCount}
+              </span>
+            )}
+          </span>
           <span>{label}</span>
         </button>
       ))}

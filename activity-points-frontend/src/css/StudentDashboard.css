@@ -453,6 +453,34 @@
   line-height: 1.1;
 }
 
+.student-nav-btn .student-nav-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+}
+
+.student-nav-btn .student-nav-badge {
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--red-600);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--surface);
+  margin-top: 0;
+}
+
 .student-nav-btn.active {
   color: var(--blue-600);
   font-weight: 700;

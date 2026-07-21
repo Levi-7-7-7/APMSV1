@@ -103,10 +103,12 @@
   flex: 1;
   overflow: auto;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: var(--slate-800);
   min-height: 300px;
+  position: relative;
 }
 
 .cert-modal-img {
@@ -122,4 +124,75 @@
   height: 75vh;
   border: none;
   display: block;
+}
+
+.cert-modal-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--slate-300);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.cert-modal-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--slate-200);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.cert-modal-error svg {
+  color: #f59e0b;
+}
+
+.cert-modal-fallback-note {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--slate-100);
+  font-size: 0.78rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.3);
+  white-space: nowrap;
+}
+
+.cert-modal-fallback-note svg {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.cert-modal-fallback-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--blue-400, #60a5fa);
+  font-weight: 700;
+  font-size: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.cert-modal-error .cert-modal-fallback-link {
+  color: var(--blue-300, #93c5fd);
+}
+
+.cert-modal-loading .spin {
+  animation: cert-modal-spin 0.9s linear infinite;
+}
+
+@keyframes cert-modal-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
