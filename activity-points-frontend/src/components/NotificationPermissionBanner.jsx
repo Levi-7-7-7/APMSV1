@@ -24,12 +24,21 @@ import { Bell, X } from 'lucide-react';
 import { isPushCapable, getPermissionState, registerPushNotifications } from '../utils/pushNotifications';
 import '../css/NotificationPermissionBanner.css';
 
+// Both keys store the *permission value that was active when the user
+// dismissed*, not a plain boolean. A dismissal only suppresses the banner
+// for that specific permission state — if permission later changes (user
+// re-enables in OS settings, then later disables again; or the reverse),
+// the stored value no longer matches getPermissionState() and the banner
+// reappears instead of staying suppressed forever. A plain 'true' flag
+// broke exactly this way: once dismissed one time, localStorage persists
+// across reinstalls and OS-level toggles, so the banner would never
+// re-render even after permission genuinely changed again.
 const DISMISS_KEY = 'pushPromptDismissed';
 const BLOCKED_DISMISS_KEY = 'pushBlockedNoticeDismissed';
 
 export default function NotificationPermissionBanner({ role }) {
   // 'default' → show the opt-in nudge; 'denied' → show the blocked notice;
-  // null → capable/dismissed/granted, render nothing.
+  // null → capable/dismissed-for-this-state/granted, render nothing.
   const [mode, setMode] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | asking | error
 
@@ -39,15 +48,16 @@ export default function NotificationPermissionBanner({ role }) {
 
     const permission = getPermissionState();
 
-    if (permission === 'default' && localStorage.getItem(DISMISS_KEY) !== 'true') {
+    if (permission === 'default' && localStorage.getItem(DISMISS_KEY) !== 'default') {
       setMode('default');
-    } else if (permission === 'denied' && localStorage.getItem(BLOCKED_DISMISS_KEY) !== 'true') {
+    } else if (permission === 'denied' && localStorage.getItem(BLOCKED_DISMISS_KEY) !== 'denied') {
       setMode('denied');
     }
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem(mode === 'denied' ? BLOCKED_DISMISS_KEY : DISMISS_KEY, 'true');
+    const permission = getPermissionState();
+    localStorage.setItem(mode === 'denied' ? BLOCKED_DISMISS_KEY : DISMISS_KEY, permission);
     setMode(null);
   };
 
