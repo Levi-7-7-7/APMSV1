@@ -66,10 +66,19 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      for (const client of windowClients) {
-        if (client.url.includes(link) && 'focus' in client) {
-          return client.focus();
-        }
+      // Reuse any already-open tab of the app, rather than requiring it to
+      // already be sitting on `link` — the previous version only focused an
+      // existing tab if its *current* URL happened to already contain the
+      // target link, which almost never held (e.g. sitting on /student
+      // when a ticket notification for /student/tickets arrives). That
+      // mismatch meant it fell through to clients.openWindow() nearly
+      // every time, which looked like the app relaunching even though it
+      // was already open in front of you. Now we just navigate whichever
+      // tab we find to the right page and focus it.
+      const existing = windowClients.find((c) => 'focus' in c);
+      if (existing) {
+        const goTo = existing.navigate ? existing.navigate(link).catch(() => existing) : Promise.resolve(existing);
+        return goTo.then((client) => (client || existing).focus());
       }
       if (clients.openWindow) return clients.openWindow(link);
     })
