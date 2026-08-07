@@ -189,6 +189,59 @@ async function sendPushToUser(Model, userId, title, body, data = {}) {
 }
 
 /**
+ * High-level: send a notification to EVERY Admin account that has a
+ * device token on file, and clear any tokens Firebase reports as dead.
+ *
+ * Unlike sendPushToUser() (one specific student/tutor), admin tickets
+ * land in one shared queue that any admin can act on — there's no single
+ * "owner" to target, so this fans the push out to all of them.
+ *
+ * @param {import('mongoose').Model} AdminModel
+ * @param {string} title
+ * @param {string} body
+ * @param {object} data
+ */
+async function sendPushToAdmins(AdminModel, title, body, data = {}) {
+  if (!admin.apps.length) return;
+
+  try {
+    const admins = await AdminModel.find({ 'fcmToken.token': { $ne: null } })
+      .select('fcmToken');
+    if (!admins.length) return;
+
+    // Web-only for now (admin has no native app), but group by platform
+    // the same way sendPushToUser implicitly does, in case that changes.
+    const byPlatform = new Map(); // platform -> [{ id, token }]
+    for (const a of admins) {
+      const platform = a.fcmToken?.platform || 'web';
+      const token = a.fcmToken?.token;
+      if (!token) continue;
+      if (!byPlatform.has(platform)) byPlatform.set(platform, []);
+      byPlatform.get(platform).push({ id: a._id, token });
+    }
+
+    for (const [platform, entries] of byPlatform) {
+      const { deadTokens } = await sendToTokens(
+        entries.map(e => e.token),
+        title,
+        body,
+        data,
+        platform
+      );
+      if (deadTokens.length) {
+        const deadIds = entries.filter(e => deadTokens.includes(e.token)).map(e => e.id);
+        await AdminModel.updateMany(
+          { _id: { $in: deadIds } },
+          { $set: { 'fcmToken.token': null } }
+        );
+      }
+    }
+  } catch (err) {
+    console.error('[FCM] sendPushToAdmins failed:', err.message);
+  }
+}
+
+/**
  * Register (or refresh) the device token for a Student/Tutor. Called from
  * the `PATCH /fcm-token` routes — typically at login. Overwrites whatever
  * token was previously stored, so only this device receives pushes for
@@ -224,6 +277,7 @@ async function sendPushNotification(fcmToken, title, body, data = {}) {
 module.exports = {
   sendPushNotification,
   sendPushToUser,
+  sendPushToAdmins,
   sendToTokens,
   registerDeviceToken,
 };

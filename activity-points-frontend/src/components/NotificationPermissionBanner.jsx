@@ -18,6 +18,7 @@
  * Usage:
  *   <NotificationPermissionBanner role="student" />
  *   <NotificationPermissionBanner role="tutor" />
+ *   <NotificationPermissionBanner role="admin" />
  */
 import React, { useEffect, useState } from 'react';
 import { Bell, X } from 'lucide-react';
@@ -101,7 +102,7 @@ export default function NotificationPermissionBanner({ role }) {
         <div className="push-banner-text">
           <strong>Notifications are blocked</strong>
           <span>
-            You won't get alerts for {role === 'tutor' ? 'new uploads or tickets' : 'certificate or ticket updates'} until
+            You won't get alerts for {role === 'tutor' ? 'new uploads or tickets' : role === 'admin' ? 'tickets that need your attention' : 'certificate or ticket updates'} until
             you re-enable notifications for this site in your browser's settings.
           </span>
         </div>
@@ -124,6 +125,8 @@ export default function NotificationPermissionBanner({ role }) {
         <span>
           {role === 'tutor'
             ? "Get notified the moment a student uploads a certificate or raises a ticket."
+            : role === 'admin'
+            ? "Get notified the moment a tutor raises or forwards a ticket to you."
             : "Get notified when your certificate is approved/rejected or your ticket is updated."}
         </span>
         {status === 'error' && <span className="push-banner-error">Something went wrong — try again.</span>}

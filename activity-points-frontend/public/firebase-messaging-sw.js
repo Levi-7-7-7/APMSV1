@@ -36,6 +36,18 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Without these, an updated service-worker file installs but sits
+// "waiting" — the OLD version stays in control of any tab that was
+// already open when the update shipped, and only the new version takes
+// over once every tab of the app is fully closed and reopened. That's
+// what caused notification clicks to behave inconsistently right after a
+// deploy (some tabs on the new click-handling logic, others silently
+// still running the old one) even though there's only ever one SW file.
+// skipWaiting() + clients.claim() make every update take effect for all
+// open tabs the moment it installs, no full close-and-reopen required.
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+
 // Fires when a push arrives while no tab has focus (or the app is closed
 // entirely, on platforms that support it). Foreground messages — the app
 // open and focused — are handled instead in src/utils/pushNotifications.js

@@ -8,6 +8,7 @@ const adminAuth = require("../middleware/adminAuth");
 const logActivity = require("../utils/activityLog");
 const imagekit = require("../utils/imagekit");
 const SibApiV3Sdk = require("sib-api-v3-sdk");
+const { registerDeviceToken } = require("../utils/fcm");
 
 const router = express.Router();
 
@@ -156,6 +157,22 @@ router.get("/me", adminAuth, async (req, res) => {
     const admin = await Admin.findById(req.admin.id).select("email profilePhoto");
     if (!admin) return res.status(404).json({ error: "Admin not found" });
     res.json({ success: true, admin });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Register (or refresh) this admin's web-push token — mirrors
+// student/tutor's PATCH /fcm-token routes exactly (see studentRoutes.js /
+// tutorRoutes.js), just under adminAuth instead.
+router.patch("/fcm-token", adminAuth, async (req, res) => {
+  try {
+    const { fcmToken, platform } = req.body;
+    if (!fcmToken || typeof fcmToken !== "string") {
+      return res.status(400).json({ error: "fcmToken is required" });
+    }
+    await registerDeviceToken(Admin, req.admin.id, fcmToken, platform || "web");
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

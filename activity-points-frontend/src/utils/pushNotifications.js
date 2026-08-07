@@ -15,13 +15,14 @@ import { getToken, deleteToken, onMessage } from 'firebase/messaging';
 import { getMessagingInstance, firebaseConfig, VAPID_KEY } from './firebase';
 import axiosInstance from '../api/axiosInstance';
 import tutorAxios from '../api/tutorAxios';
+import adminAxios from '../api/adminAxios';
 
 export const SW_URL = `/firebase-messaging-sw.js?${new URLSearchParams(firebaseConfig).toString()}`;
 
 function clientFor(role) {
-  return role === 'tutor'
-    ? { axios: tutorAxios, endpoint: '/tutors/fcm-token' }
-    : { axios: axiosInstance, endpoint: '/students/fcm-token' };
+  if (role === 'tutor') return { axios: tutorAxios, endpoint: '/tutors/fcm-token' };
+  if (role === 'admin') return { axios: adminAxios, endpoint: '/admin/auth/fcm-token' };
+  return { axios: axiosInstance, endpoint: '/students/fcm-token' };
 }
 
 /**
@@ -75,7 +76,7 @@ export async function registerServiceWorkerForInstallability() {
  * Must be called from a user gesture (button click) — browsers block
  * permission prompts triggered any other way.
  *
- * @param {'student'|'tutor'} role
+ * @param {'student'|'tutor'|'admin'} role
  * @returns {Promise<'enabled'|'unsupported'|'denied'|'error'>}
  */
 export async function registerPushNotifications(role) {
@@ -147,7 +148,7 @@ export async function registerPushNotifications(role) {
  * tutor) so every login — not just the very first one — ends with a
  * valid token on file for that account.
  *
- * @param {'student'|'tutor'} role
+ * @param {'student'|'tutor'|'admin'} role
  * @returns {Promise<'synced'|'skipped'|'error'>}
  */
 export async function syncPushToken(role) {

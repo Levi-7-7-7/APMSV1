@@ -17,6 +17,7 @@ const multer = require('multer');
 const Ticket = require('../models/Ticket');
 const Student = require('../models/Student');
 const Tutor = require('../models/Tutor');
+const Admin = require('../models/Admin');
 
 const auth = require('../middleware/auth');
 const tutorAuth = require('../middleware/tutorAuth');
@@ -24,7 +25,7 @@ const adminAuth = require('../middleware/adminAuth');
 
 const imagekit = require('../utils/imagekit');
 const { buildTicketFolder, sanitizeName } = require('../utils/imagekitPaths');
-const { sendPushToUser } = require('../utils/fcm');
+const { sendPushToUser, sendPushToAdmins } = require('../utils/fcm');
 const logActivity = require('../utils/activityLog');
 
 const router = express.Router();
@@ -242,6 +243,13 @@ router.post('/tutor', tutorAuth, async (req, res) => {
       targetName: ticket.subject,
     });
 
+    sendPushToAdmins(
+      Admin,
+      '🎫 New Request from Tutor',
+      `${tutor.name} raised a request: "${ticket.subject}"`,
+      { type: 'new_ticket', ticketId: String(ticket._id), link: `/admin?ticketId=${ticket._id}` }
+    ); // not awaited
+
     res.status(201).json(ticket);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -346,6 +354,13 @@ router.patch('/tutor/:id/forward', tutorAuth, async (req, res) => {
       targetId: ticket._id,
       targetName: ticket.subject,
     });
+
+    sendPushToAdmins(
+      Admin,
+      '🎫 Ticket Forwarded to Admin',
+      `${tutor.name} forwarded a ticket from ${ticket.raisedByName}: "${ticket.subject}"`,
+      { type: 'new_ticket', ticketId: String(ticket._id), link: `/admin?ticketId=${ticket._id}` }
+    ); // not awaited
 
     res.json(ticket);
   } catch (err) {

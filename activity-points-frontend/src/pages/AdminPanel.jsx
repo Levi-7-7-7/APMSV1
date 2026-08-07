@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import adminAxios from "../api/adminAxios";
 import * as XLSX from "xlsx";
 import {
@@ -9,8 +9,10 @@ import {
 } from "lucide-react";
 import PhotoCropModal from "../components/PhotoCropModal";
 import ThemeSwitcher from "../components/ThemeSwitcher";
+import NotificationPermissionBanner from "../components/NotificationPermissionBanner";
 import AdminTickets from "./AdminTickets";
 import { getAdminTicketUnreadCount, getAdminTicketNotifications } from "../utils/ticketApi";
+import { listenForForegroundMessages, syncPushToken, showForegroundNotification } from "../utils/pushNotifications";
 import "../css/AdminPanel.css";
 
 // Small circular avatar used throughout the panel (admin/tutor/student
@@ -63,6 +65,7 @@ const ACTIONS_BY_ACTOR = {
 
 export default function AdminPanel() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
       localStorage.removeItem("adminToken");
@@ -137,6 +140,49 @@ export default function AdminPanel() {
     setTicketUnreadCount(prev => Math.max(0, prev - 1));
     openSection("tickets");
   };
+
+  // Deep-link support: an admin-facing push notification's data.link points
+  // to /admin?ticketId=<id> (see sendPushToAdmins() calls in
+  // ticketRoutes.js) — this app is a single route with client-side tabs, so
+  // there's no /admin/tickets path for the service worker to land on the
+  // way CertificatesPage.jsx does for students. Instead we read the query
+  // param here once the panel mounts, open the same Tickets section a
+  // bell-dropdown click would, and strip the param so it doesn't reapply on
+  // a later manual tab switch.
+  useEffect(() => {
+    const ticketId = searchParams.get("ticketId");
+    if (!ticketId) return;
+    setFocusTicketId(ticketId);
+    setTicketNotifications(prev => prev.filter(t => t._id !== ticketId));
+    setTicketUnreadCount(prev => Math.max(0, prev - 1));
+    openSection("tickets");
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Foreground push notifications (tab open + focused) — the service
+  // worker only fires for background/closed-tab pushes, so this covers
+  // the gap using the same browser Notification UI as Student/Tutor (see
+  // StudentLayout.jsx / TutorDashboard.jsx). showForegroundNotification
+  // goes through the service worker's registration.showNotification(),
+  // so a click is handled by the SAME notificationclick listener in
+  // firebase-messaging-sw.js that background pushes use — no separate
+  // click-handling logic needed here.
+  useEffect(() => {
+    const unsubscribe = listenForForegroundMessages(({ title, body, data }) => {
+      showForegroundNotification(title, body, data);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Covers every login, not just the very first: if this browser already
+  // has notification permission granted (from an earlier session, or a
+  // different admin account on a shared device), make sure the backend
+  // still has a valid token for *this* account. Same reasoning as
+  // Student/Tutor's syncPushToken calls — see StudentLayout.jsx.
+  useEffect(() => {
+    syncPushToken('admin');
+  }, []);
 
   // ── Admin's own profile photo ──
   const [adminPhoto, setAdminPhoto] = useState(null);
@@ -955,6 +1001,8 @@ export default function AdminPanel() {
       )}
 
       <div className="ap-content">
+
+        <NotificationPermissionBanner role="admin" />
 
         {/* ── Toast ── */}
         {msg && <div className={`ap-toast ${msgType}`}>{msg}</div>}
