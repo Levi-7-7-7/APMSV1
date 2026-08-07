@@ -6,7 +6,7 @@ import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import InstallAppBanner from '../components/InstallAppBanner';
-import { listenForForegroundMessages, syncPushToken } from '../utils/pushNotifications';
+import { listenForForegroundMessages, syncPushToken, showForegroundNotification } from '../utils/pushNotifications';
 import { getStudentTicketUnreadCount } from '../utils/ticketApi';
 import '../css/StudentDashboard.css';
 
@@ -58,15 +58,10 @@ const StudentLayout = () => {
   // the gap using the same browser Notification UI.
   useEffect(() => {
     const unsubscribe = listenForForegroundMessages(({ title, body, data }) => {
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        const notif = new Notification(title, { body, icon: '/icon-192.png' });
-        if (data?.link) {
-          notif.onclick = () => {
-            window.focus();
-            navigate(data.link);
-          };
-        }
-      }
+      // Click handling (focus/navigate to data.link) is done by the
+      // service worker's shared `notificationclick` listener, same as
+      // for background pushes — see firebase-messaging-sw.js.
+      showForegroundNotification(title, body, data);
     });
     return unsubscribe;
   }, [navigate]);

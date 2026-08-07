@@ -204,6 +204,57 @@ export function listenForForegroundMessages(onNotification) {
   return () => unsubscribe();
 }
 
+/**
+ * Displays a notification for a foreground (tab open + focused) push.
+ *
+ * IMPORTANT: this must NOT use `new Notification(...)`. Once a service
+ * worker is registered — which it always is here, at app startup, for
+ * installability — most browsers (notably Chrome on Android) throw
+ * "Failed to construct 'Notification': Illegal constructor" on that
+ * constructor. The throw happens inside the onMessage callback and isn't
+ * caught anywhere upstream, so it fails completely silently: no
+ * notification shown, no visible error, nothing in the UI to explain why.
+ * That's the exact bug this function fixes — it's why notifications only
+ * ever seemed to work while the app was closed.
+ *
+ * Instead we go through the same service-worker registration the
+ * background handler already (correctly) uses, via
+ * ServiceWorkerRegistration.showNotification(). Click handling can't be
+ * attached directly to the returned object the way `new Notification()`
+ * allows (showNotification() returns a Promise<void>, not a Notification
+ * instance) — so `data.link` is passed through in the notification's
+ * `data` field, and firebase-messaging-sw.js's existing
+ * `notificationclick` listener (which already handles background-push
+ * clicks the same way) takes care of focusing/opening the right page.
+ *
+ * @param {string} title
+ * @param {string} body
+ * @param {object} [data] - arbitrary payload, e.g. { link, certId, ticketId }
+ */
+export async function showForegroundNotification(title, body, data = {}) {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+
+  try {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    // This app registers exactly one service worker (see SW_URL above), so
+    // `.ready` — not getRegistration(SW_URL) — is the right lookup: scope
+    // matching ignores the query string, and `.ready` is guaranteed to
+    // resolve to *the* active registration once one exists, same as
+    // registerPushNotifications()/syncPushToken() already rely on above.
+    const registration = await navigator.serviceWorker.ready.catch(() => null);
+    if (!registration) return; // no SW yet — nothing safe to show through
+
+    await registration.showNotification(title, {
+      body,
+      icon: '/icon-192.png',
+      tag: data.certId || data.ticketId || undefined, // collapse repeat notifs for the same item
+      data,
+    });
+  } catch (err) {
+    console.warn('[push] showForegroundNotification failed:', err.message);
+  }
+}
+
 /** Has the user already granted or explicitly denied notification permission? */
 export function getPermissionState() {
   if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported';
