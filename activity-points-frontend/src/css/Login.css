@@ -313,7 +313,16 @@ body, html {
 
 .spinner {
   animation: spin 1s linear infinite;
-  display: inline-block;
+  display: block;
+  flex-shrink: 0;
+}
+
+.button-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 

@@ -223,7 +223,12 @@ export default function Login() {
           style={{ marginTop: '1rem' }}
         >
           {loading ? (
-            <><Loader2 size={20} className="spinner" /> Signing In...</>
+            <>
+              <span className="button-spinner">
+                <Loader2 size={20} className="spinner" />
+              </span>
+              <span>Signing In...</span>
+            </>
           ) : (
             isAdmin ? '🛡️ Sign In as Admin' : 'Sign In'
           )}
