@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 
-const STORAGE_KEY = 'appTheme'; // 'light' | 'dark' | 'system'
-const VALID_THEMES = ['light', 'dark', 'system'];
+const STORAGE_KEY = 'appTheme'; // 'light' | 'dark' | 'teal' | 'system'
+const VALID_THEMES = ['light', 'dark', 'teal', 'system'];
 
 const ThemeContext = createContext({
   theme: 'system',

@@ -206,6 +206,64 @@ svg.icon-spin {
 }
 
 /* ============================================================
+   TEAL THEME
+   A fourth explicit "Appearance" option (alongside Light/Dark/System),
+   inspired by the app's deep-teal/mint brand mark. Structured as a
+   dark-mode-style palette (dark teal surfaces) but retinted so the
+   accent colors (buttons, links, icons) are teal/mint instead of blue.
+   All neutral/text steps below were chosen to keep at least 4.5:1
+   contrast against --slate-50 / --surface, same bar as the dark theme.
+   ============================================================ */
+:root[data-theme="teal"] {
+  color-scheme: dark;
+
+  --surface: #0f3d3e;       /* card / input surfaces */
+  --on-color: #ffffff;      /* text/icons on colored buttons & banners */
+  --slate-50: #072726;      /* page background — deepest teal */
+  --slate-100: #0d3534;     /* subtle surface */
+  --slate-200: #1c4d4b;     /* borders */
+  --slate-300: #2a6461;     /* stronger borders */
+  --slate-400: #7fc2bb;     /* muted text, legible on dark teal */
+  --slate-500: #93d3cb;     /* secondary text */
+  --slate-600: #b8e4de;     /* body text */
+  --slate-700: #d3efeb;     /* body text, stronger */
+  --slate-800: #eafbf7;     /* headings */
+  --slate-900: #ffffff;     /* headings, strongest */
+
+  /* Page-level tinted gradients — subtle teal tints on the dark bg */
+  --blue-tint-25: rgba(45, 212, 191, 0.05);
+  --blue-tint-50: rgba(45, 212, 191, 0.08);
+  --blue-tint-75: rgba(45, 212, 191, 0.06);
+  --blue-tint-100: rgba(45, 212, 191, 0.14);
+  --green-tint-100: rgba(45, 212, 191, 0.12);
+
+  /* Primary accent recolored from blue to teal/mint (buttons, links, icons) */
+  --blue-500: #2dd4bf;
+  --blue-600: #14b8a6;
+  --blue-700: #0d9488;
+  --blue-800: #0f766e;
+  --blue-800-text: #5eead4; /* headings/labels on page/tinted surfaces */
+
+  --green-500: #34d399;
+  --green-600: #10b981;
+  --green-700: #059669;
+
+  --red-500: #f87171;
+  --red-600: #ef4444;
+  --red-700: #dc2626;
+  --red-800: #b91c1c;
+
+  /* Translucent "frosted glass" cards — dark teal translucent */
+  --glass-surface-strong: rgba(15, 61, 62, 0.94);
+  --glass-surface: rgba(15, 61, 62, 0.85);
+  --glass-overlay: rgba(255, 255, 255, 0.08);
+
+  /* Shadows, stronger to read against a dark surface */
+  --shadow-color: rgba(0, 0, 0, 0.4);
+  --shadow-color-strong: rgba(0, 0, 0, 0.55);
+}
+
+/* ============================================================
    APPEARANCE / THEME SWITCHER
    Shared by the three-dot dropdown menus on the student, tutor and
    admin dashboards (see components/ThemeSwitcher.jsx). Kept here so
@@ -234,6 +292,7 @@ svg.icon-spin {
 
 .theme-switcher-options {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
   background: var(--slate-100);
   border-radius: 10px;
@@ -241,7 +300,8 @@ svg.icon-spin {
 }
 
 .theme-switcher-option {
-  flex: 1;
+  flex: 1 1 calc(50% - 0.4rem);
+  min-width: 3.4rem;
   display: flex;
   flex-direction: column;
   align-items: center;

@@ -1,10 +1,11 @@
 import React from 'react';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { Sun, Moon, Monitor, Palette } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 const OPTIONS = [
   { value: 'light', label: 'Light', Icon: Sun },
   { value: 'dark', label: 'Dark', Icon: Moon },
+  { value: 'teal', label: 'Teal', Icon: Palette },
   { value: 'system', label: 'System', Icon: Monitor },
 ];
 
