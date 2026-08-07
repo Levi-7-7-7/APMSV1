@@ -138,7 +138,7 @@ export default function CertModal({ url, fileName = 'certificate', onClose }) {
             <>
               {!imgLoaded && !imgFailed && (
                 <div className="cert-modal-loading">
-                  <Loader2 size={20} className="spin" /> Loading…
+                  <Loader2 size={20} className="icon-spin" /> Loading…
                 </div>
               )}
               {imgFailed ? (

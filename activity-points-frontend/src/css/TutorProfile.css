@@ -115,16 +115,6 @@
   cursor: default;
 }
 
-.spin {
-  animation: tprofile-spin 1s linear infinite;
-}
-
-@keyframes tprofile-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .tprofile-error {
   margin: 60px 16px 0 16px;
   background: #fee2e2;

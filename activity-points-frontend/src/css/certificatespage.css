@@ -449,12 +449,6 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
-.cert-reupload-btn .spin {
-  animation: cert-reupload-spin 1s linear infinite;
-}
-@keyframes cert-reupload-spin {
-  to { transform: rotate(360deg); }
-}
 
 .rejected-reason-error {
   margin: 8px 0 0;

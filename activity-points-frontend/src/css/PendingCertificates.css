@@ -109,16 +109,8 @@
   font-size: 16px;
 }
 
-.spinner {
-  animation: spin 1s linear infinite;
-  vertical-align: middle;
+.pc-inline-icon {
   margin-right: 6px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Mobile safety */

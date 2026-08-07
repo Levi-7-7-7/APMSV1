@@ -185,7 +185,7 @@ export default function TutorProfile() {
             aria-label="Change profile photo"
             type="button"
           >
-            {uploading ? <Loader2 size={13} className="spin" /> : <Camera size={13} />}
+            {uploading ? <Loader2 size={13} className="icon-spin" /> : <Camera size={13} />}
           </button>
 
           <input

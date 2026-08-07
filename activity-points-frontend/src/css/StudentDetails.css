@@ -81,8 +81,7 @@ body {
   color: var(--text-muted);
 }
 
-.spinner {
-  animation: spin 1s linear infinite;
+.sd-loading-icon {
   margin-bottom: 1rem;
   color: var(--primary);
 }
@@ -396,11 +395,6 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 /* ================= DESKTOP ENHANCEMENT ================= */

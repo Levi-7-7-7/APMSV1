@@ -117,7 +117,7 @@ export default function ApprovedCertificates() {
 
   if (loading) return (
     <div className="approved-loading">
-      <Loader2 size={16} className="spinner" />
+      <Loader2 size={16} className="icon-spin" />
       <p>Loading approved certificates...</p>
     </div>
   );
@@ -254,7 +254,7 @@ export default function ApprovedCertificates() {
                       className="approved-revert-btn"
                     >
                       {revertingId === cert._id
-                        ? <><Loader2 size={12} className="spin" /> Reverting...</>
+                        ? <><Loader2 size={12} className="icon-spin" /> Reverting...</>
                         : <><RotateCcw size={12} /> Revert to Pending</>
                       }
                     </button>

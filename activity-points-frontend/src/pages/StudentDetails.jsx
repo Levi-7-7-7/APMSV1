@@ -170,7 +170,7 @@ const StudentDetails = () => {
 
       {loading ? (
         <div className="loading-state">
-          <Loader2 size={16} className="spinner"/>
+          <Loader2 size={16} className="icon-spin sd-loading-icon"/>
           <p>Loading student records…</p>
         </div>
       ) : (

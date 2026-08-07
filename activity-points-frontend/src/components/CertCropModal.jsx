@@ -241,7 +241,7 @@ export default function CertCropModal({ file, busy, error, onCancel, onConfirm }
             onClick={handleConfirm}
             disabled={busy || !ready}
           >
-            {busy ? <Loader2 size={16} className="spin" /> : 'Use this image'}
+            {busy ? <Loader2 size={16} className="icon-spin" /> : 'Use this image'}
           </button>
         </div>
 

@@ -178,10 +178,4 @@
   background: var(--slate-200);
 }
 
-.pcm-btn .spin {
-  animation: pcm-spin 1s linear infinite;
-}
 
-@keyframes pcm-spin {
-  to { transform: rotate(360deg); }
-}

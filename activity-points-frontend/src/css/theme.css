@@ -68,27 +68,34 @@ html, body {
 }
 
 /* ============================================================
-   ICON / SPINNER ALIGNMENT FIX (applies app-wide)
-   Every "<Loader2 className="spin"/> Some Text" combo across the app
-   renders an inline <svg> right next to plain text. Inline <svg> defaults
-   to vertical-align: baseline, which lines the icon's bottom edge up with
-   the text's baseline — since letters have no descenders sitting below
-   that baseline, the icon visually reads as floating noticeably ABOVE the
-   text ("raised"). That's the bug: it's not one component, it's every
-   spinner+label pairing in the app, because they all inherit this same
-   default.
-   This single rule re-centers all of them. It's written as `svg.spin` /
-   `svg.spinner` (element + class) rather than just `.spin` / `.spinner` so
-   it wins over the many near-duplicate `.spin`/`.spinner` rules scattered
-   across individual page stylesheets (same class name reused everywhere)
-   without needing !important.
-   Icons inside flex/inline-flex buttons (most buttons in the app) are
-   unaffected either way — vertical-align has no effect on flex children,
-   so this only touches the plain-text-flow cases that were actually
-   broken. ============================================================ */
-svg.spin,
-svg.spinner {
+   CANONICAL SPINNER ICON (applies app-wide)
+   This app previously had the SAME class name ("spin" or "spinner")
+   redefined independently in half a dozen page stylesheets — AdminPanel,
+   Profile, Tickets, TutorProfile, PendingCertificates, StudentDetails,
+   etc. Because plain CSS files all share one global namespace, whichever
+   file happened to be bundled/imported LAST won the cascade for every
+   other page too, causing the spin animation, margins, and alignment to
+   randomly "leak" between unrelated pages (e.g. the Login spinner
+   inheriting StudentDetails' margin, or PendingCertificates' spinner
+   changing after an unrelated page's CSS was edited).
+   Fix: ONE single, uniquely-named utility class, defined once, used by
+   every <Loader2 className="icon-spin" /> in the app. There is now only
+   one place that can ever define how a loading icon spins or aligns, so
+   there is nothing left for other stylesheets to collide with.
+   Per-page files may still add their OWN spacing (margin-left/right, gap)
+   scoped to their own component class, combined alongside icon-spin —
+   that's safe because spacing lives on a page-specific class name, not on
+   this shared one. ============================================================ */
+.icon-spin {
+  animation: icon-spin-rotate 0.9s linear infinite;
+}
+
+svg.icon-spin {
   vertical-align: -0.2em;
+}
+
+@keyframes icon-spin-rotate {
+  to { transform: rotate(360deg); }
 }
 
 @media (prefers-color-scheme: dark) {

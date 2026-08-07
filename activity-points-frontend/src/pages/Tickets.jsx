@@ -156,7 +156,7 @@ export default function Tickets() {
           {formError && <div className="ticket-form-error">{formError}</div>}
 
           <button type="submit" className="ticket-form-submit" disabled={submitting}>
-            {submitting ? <><Loader2 size={16} className="spin" /> Submitting…</> : 'Submit Ticket'}
+            {submitting ? <><Loader2 size={16} className="icon-spin" /> Submitting…</> : 'Submit Ticket'}
           </button>
         </form>
       )}

@@ -213,7 +213,7 @@ export default function PhotoCropModal({ file, uploading, error, onCancel, onCon
             onClick={handleConfirm}
             disabled={uploading || !ready}
           >
-            {uploading ? <Loader2 size={16} className="spin" /> : 'Use this photo'}
+            {uploading ? <Loader2 size={16} className="icon-spin" /> : 'Use this photo'}
           </button>
         </div>
 

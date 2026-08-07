@@ -204,7 +204,7 @@ export default function Profile() {
             aria-label="Change profile photo"
             type="button"
           >
-            {uploading ? <Loader2 size={13} className="spin" /> : <Camera size={13} />}
+            {uploading ? <Loader2 size={13} className="icon-spin" /> : <Camera size={13} />}
           </button>
 
           <input
@@ -252,7 +252,7 @@ export default function Profile() {
       <div className="profile-card">
         {tutorLoading ? (
           <div className="profile-tutor-loading">
-            <Loader2 size={18} className="spin" />
+            <Loader2 size={18} className="icon-spin" />
             <span>Finding your tutor…</span>
           </div>
         ) : tutor ? (
@@ -270,7 +270,7 @@ export default function Profile() {
       <div className="profile-card">
         {staffLoading ? (
           <div className="profile-tutor-loading">
-            <Loader2 size={18} className="spin" />
+            <Loader2 size={18} className="icon-spin" />
             <span>Finding your HOD…</span>
           </div>
         ) : hod ? (
@@ -288,7 +288,7 @@ export default function Profile() {
       <div className="profile-card">
         {staffLoading ? (
           <div className="profile-tutor-loading">
-            <Loader2 size={18} className="spin" />
+            <Loader2 size={18} className="icon-spin" />
             <span>Finding the principal…</span>
           </div>
         ) : principal ? (

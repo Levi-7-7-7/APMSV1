@@ -392,7 +392,7 @@ export default function CertificatesPage() {
                   disabled={reuploadingId === cert._id}
                 >
                   {reuploadingId === cert._id
-                    ? <><Loader2 size={14} className="spin" /> Re-uploading…</>
+                    ? <><Loader2 size={14} className="icon-spin" /> Re-uploading…</>
                     : <><UploadCloud size={14} /> Re-upload Certificate</>
                   }
                 </button>

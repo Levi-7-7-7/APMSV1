@@ -147,13 +147,7 @@
   cursor: not-allowed;
 }
 
-.approved-revert-btn .spin {
-  animation: approved-spin 1s linear infinite;
-}
 
-@keyframes approved-spin {
-  to { transform: rotate(360deg); }
-}
 
 /* ═══════════════════════════════════════════
    STUDENT LIST — grouped approved certificates,

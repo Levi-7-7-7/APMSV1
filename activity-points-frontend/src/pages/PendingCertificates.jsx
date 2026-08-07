@@ -269,7 +269,7 @@ const PendingCertificates = () => {
     setModalUrl(cert.fileUrl);
   };
 
-  if (loading) return <p className="pending-loading"><Loader2 size={16} className="spinner"/> Loading pending certificates…</p>;
+  if (loading) return <p className="pending-loading"><Loader2 size={16} className="icon-spin pc-inline-icon"/> Loading pending certificates…</p>;
   if (!pendingCerts.length) return (
     <div className="pending-loading" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
       <Award size={48} style={{ color: '#22c55e', marginBottom: '0.5rem' }} />
@@ -421,7 +421,7 @@ const PendingCertificates = () => {
                 onClick={submitEdit}
                 disabled={editSaving}
               >
-                {editSaving ? <><Loader2 size={14} className="spinner"/> Saving…</> : <><Check size={14}/> Save Changes</>}
+                {editSaving ? <><Loader2 size={14} className="icon-spin pc-inline-icon"/> Saving…</> : <><Check size={14}/> Save Changes</>}
               </button>
             </div>
           </div>
@@ -542,7 +542,7 @@ const PendingCertificates = () => {
                     disabled={isProcessing}
                   >
                     {isProcessing
-                      ? <><Loader2 size={14} className="spinner"/> Processing…</>
+                      ? <><Loader2 size={14} className="icon-spin pc-inline-icon"/> Processing…</>
                       : 'Approve'
                     }
                   </button>
@@ -552,7 +552,7 @@ const PendingCertificates = () => {
                     disabled={isProcessing}
                   >
                     {isProcessing
-                      ? <><Loader2 size={14} className="spinner"/> Processing…</>
+                      ? <><Loader2 size={14} className="icon-spin pc-inline-icon"/> Processing…</>
                       : 'Reject'
                     }
                   </button>

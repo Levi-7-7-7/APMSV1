@@ -100,14 +100,6 @@
   cursor: default;
 }
 
-.spin {
-  animation: profile-spin 1s linear infinite;
-}
-
-@keyframes profile-spin {
-  to { transform: rotate(360deg); }
-}
-
 .profile-error {
   margin: 60px 16px 0 16px;
   background: #fee2e2;
