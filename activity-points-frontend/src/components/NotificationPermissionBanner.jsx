@@ -56,16 +56,24 @@ export default function NotificationPermissionBanner({ role }) {
     const result = await registerPushNotifications(role);
 
     if (result === 'enabled') {
-      localStorage.setItem(DISMISS_KEY, 'true');
+      // Don't touch DISMISS_KEY here. It's meant to mean "the user
+      // explicitly closed the banner with the X" — setting it on the
+      // success path too is both unnecessary (permission being
+      // 'granted' already keeps the banner from rendering, see the
+      // mount check below) and actively harmful: on Android, uninstalling
+      // the PWA resets permission back to 'default' but does NOT clear
+      // localStorage, so a stale DISMISS_KEY='true' from a previous
+      // successful enable would permanently suppress the banner on
+      // reinstall even though the user now has zero notification setup.
       setMode(null);
     } else if (result === 'denied') {
       // The user just blocked it in the native dialog — switch straight
-      // to the blocked-state message instead of vanishing.
-      localStorage.setItem(DISMISS_KEY, 'true');
+      // to the blocked-state message instead of vanishing. This uses
+      // BLOCKED_DISMISS_KEY's mode, not DISMISS_KEY, so it's likewise
+      // left untouched here.
       setStatus('idle');
       setMode('denied');
     } else if (result === 'unsupported') {
-      localStorage.setItem(DISMISS_KEY, 'true');
       setMode(null);
     } else {
       setStatus('error'); // let them retry

@@ -11,7 +11,7 @@
  *   const result = await registerPushNotifications('student');
  *   // result: 'enabled' | 'unsupported' | 'denied' | 'error'
  */
-import { getToken, onMessage } from 'firebase/messaging';
+import { getToken, deleteToken, onMessage } from 'firebase/messaging';
 import { getMessagingInstance, firebaseConfig, VAPID_KEY } from './firebase';
 import axiosInstance from '../api/axiosInstance';
 import tutorAxios from '../api/tutorAxios';
@@ -91,6 +91,23 @@ export async function registerPushNotifications(role) {
     const registration = await navigator.serviceWorker.register(SW_URL);
     // Make sure it's actually active before asking Firebase to use it.
     await navigator.serviceWorker.ready;
+
+    // Firebase's Messaging SDK caches the last token it minted for this
+    // origin + SW scope in its own IndexedDB store, independent of
+    // localStorage/OS permission. On Android, uninstalling and
+    // reinstalling the PWA resets the OS-level permission but does NOT
+    // reliably clear that cache — so a plain getToken() call here can
+    // hand back a stale token/subscription from a previous install that
+    // nothing will ever be delivered to. Explicitly deleting any cached
+    // token first forces Firebase to mint a genuinely fresh one bound to
+    // the current install, every time a user goes through this flow.
+    try {
+      await deleteToken(messaging);
+    } catch (err) {
+      // No cached token to delete, or deletion failed — not fatal, we
+      // still attempt to mint a fresh one below.
+      console.warn('[push] deleteToken before re-register failed:', err.message);
+    }
 
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
