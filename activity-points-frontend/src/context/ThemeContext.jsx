@@ -3,6 +3,18 @@ import React, { createContext, useContext, useEffect, useMemo, useState, useCall
 const STORAGE_KEY = 'appTheme'; // 'light' | 'dark' | 'teal' | 'system'
 const VALID_THEMES = ['light', 'dark', 'teal', 'system'];
 
+// Mirrors each theme's --blue-800 brand-accent value from theme.css. Used to
+// keep the OS/browser PWA window chrome (title bar) — which reads the
+// <meta name="theme-color"> tag, not any CSS variable — in sync with
+// whichever in-app theme is active. Light and Dark intentionally share the
+// same blue brand accent (dark mode never retints --blue-800), only Teal
+// diverges, matching how the accent colors themselves are defined in CSS.
+const THEME_COLORS = {
+  light: '#1d4ed8',
+  dark: '#1d4ed8',
+  teal: '#0f766e',
+};
+
 const ThemeContext = createContext({
   theme: 'system',
   resolvedTheme: 'light',
@@ -51,6 +63,20 @@ export const ThemeProvider = ({ children }) => {
   }, []);
 
   const resolvedTheme = theme === 'system' ? (systemPrefersDark ? 'dark' : 'light') : theme;
+
+  // Keep the PWA/browser window-chrome color (theme-color meta tag) in sync
+  // with the resolved theme. The manifest.json theme_color is only read
+  // once (install time / before first paint), so this is what actually
+  // updates the title bar live as the user switches themes.
+  useEffect(() => {
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'theme-color');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', THEME_COLORS[resolvedTheme] || THEME_COLORS.light);
+  }, [resolvedTheme]);
 
   const value = useMemo(() => ({ theme, resolvedTheme, setTheme }), [theme, resolvedTheme, setTheme]);
 
