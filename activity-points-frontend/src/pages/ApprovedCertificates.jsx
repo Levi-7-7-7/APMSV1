@@ -117,7 +117,7 @@ export default function ApprovedCertificates() {
 
   if (loading) return (
     <div className="approved-loading">
-      <Loader2 className="spinner" />
+      <Loader2 size={16} className="spinner" />
       <p>Loading approved certificates...</p>
     </div>
   );

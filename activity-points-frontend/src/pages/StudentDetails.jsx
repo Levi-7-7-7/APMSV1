@@ -170,7 +170,7 @@ const StudentDetails = () => {
 
       {loading ? (
         <div className="loading-state">
-          <Loader2 className="spinner"/>
+          <Loader2 size={16} className="spinner"/>
           <p>Loading student records…</p>
         </div>
       ) : (

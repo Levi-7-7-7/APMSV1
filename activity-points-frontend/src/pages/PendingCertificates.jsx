@@ -269,7 +269,7 @@ const PendingCertificates = () => {
     setModalUrl(cert.fileUrl);
   };
 
-  if (loading) return <p className="pending-loading"><Loader2 className="spinner"/> Loading pending certificates…</p>;
+  if (loading) return <p className="pending-loading"><Loader2 size={16} className="spinner"/> Loading pending certificates…</p>;
   if (!pendingCerts.length) return (
     <div className="pending-loading" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
       <Award size={48} style={{ color: '#22c55e', marginBottom: '0.5rem' }} />
