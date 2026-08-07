@@ -5,6 +5,7 @@ import BottomNav from '../components/BottomNav';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
+import InstallAppBanner from '../components/InstallAppBanner';
 import { listenForForegroundMessages, syncPushToken } from '../utils/pushNotifications';
 import { getStudentTicketUnreadCount } from '../utils/ticketApi';
 import '../css/StudentDashboard.css';
@@ -229,6 +230,7 @@ const StudentLayout = () => {
       {/* Nested student pages */}
       <main className="dashboard-main">
         <NotificationPermissionBanner role="student" />
+        <InstallAppBanner />
         <Outlet context={{ refreshTicketUnreadCount }} />
       </main>
 

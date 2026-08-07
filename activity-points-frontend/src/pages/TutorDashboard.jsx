@@ -5,6 +5,7 @@ import TutorBottomNav from '../components/TutorBottomNav';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
+import InstallAppBanner from '../components/InstallAppBanner';
 import { listenForForegroundMessages, syncPushToken } from '../utils/pushNotifications';
 import tutorAxios from '../api/tutorAxios';
 import { getTutorTicketUnreadCount, getTutorTicketNewCount, getTutorTicketNotifications } from '../utils/ticketApi';
@@ -333,6 +334,7 @@ const TutorDashboard = () => {
       {/* Nested pages */}
       <main className="nested-content min-h-[300px]">
         <NotificationPermissionBanner role="tutor" />
+        <InstallAppBanner />
         <React.Suspense fallback={<p className="loading-text">Loading...</p>}>
           <Outlet context={{ refreshPendingCount, refreshTicketUnreadCount, refreshNewTicketCount }} />
         </React.Suspense>

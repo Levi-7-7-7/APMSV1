@@ -1,10 +1,16 @@
 /**
  * NotificationPermissionBanner — small dismissible strip nudging the
  * student/tutor to turn on push notifications (new certificate uploaded,
- * approved/rejected, ticket updates). Only renders when:
- *   - the browser can plausibly support web push (isPushCapable), AND
- *   - permission hasn't been granted or denied yet, AND
- *   - the user hasn't dismissed it before on this device.
+ * approved/rejected, ticket updates).
+ *
+ * Renders in one of two states, both gated on isPushCapable() and on the
+ * user not having dismissed it before on this device:
+ *   - permission === 'default'  → "Enable" button (normal opt-in nudge)
+ *   - permission === 'denied'   → info-only message pointing at browser
+ *     settings, since a page can never re-trigger the native permission
+ *     dialog once the user has blocked it — the previous version of this
+ *     banner just silently disappeared here, which looked like a bug
+ *     rather than an expected browser restriction.
  *
  * Requesting permission MUST happen from a user gesture, hence the button
  * rather than an automatic prompt on mount.
@@ -19,21 +25,30 @@ import { isPushCapable, getPermissionState, registerPushNotifications } from '..
 import '../css/NotificationPermissionBanner.css';
 
 const DISMISS_KEY = 'pushPromptDismissed';
+const BLOCKED_DISMISS_KEY = 'pushBlockedNoticeDismissed';
 
 export default function NotificationPermissionBanner({ role }) {
-  const [visible, setVisible] = useState(false);
+  // 'default' → show the opt-in nudge; 'denied' → show the blocked notice;
+  // null → capable/dismissed/granted, render nothing.
+  const [mode, setMode] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | asking | error
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(DISMISS_KEY) === 'true';
     const capable = isPushCapable();
+    if (!capable) return;
+
     const permission = getPermissionState();
-    setVisible(capable && !dismissed && permission === 'default');
+
+    if (permission === 'default' && localStorage.getItem(DISMISS_KEY) !== 'true') {
+      setMode('default');
+    } else if (permission === 'denied' && localStorage.getItem(BLOCKED_DISMISS_KEY) !== 'true') {
+      setMode('denied');
+    }
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem(DISMISS_KEY, 'true');
-    setVisible(false);
+    localStorage.setItem(mode === 'denied' ? BLOCKED_DISMISS_KEY : DISMISS_KEY, 'true');
+    setMode(null);
   };
 
   const enable = async () => {
@@ -42,17 +57,44 @@ export default function NotificationPermissionBanner({ role }) {
 
     if (result === 'enabled') {
       localStorage.setItem(DISMISS_KEY, 'true');
-      setVisible(false);
-    } else if (result === 'denied' || result === 'unsupported') {
-      // Browser will remember the denial itself — no point asking again.
+      setMode(null);
+    } else if (result === 'denied') {
+      // The user just blocked it in the native dialog — switch straight
+      // to the blocked-state message instead of vanishing.
       localStorage.setItem(DISMISS_KEY, 'true');
-      setVisible(false);
+      setStatus('idle');
+      setMode('denied');
+    } else if (result === 'unsupported') {
+      localStorage.setItem(DISMISS_KEY, 'true');
+      setMode(null);
     } else {
       setStatus('error'); // let them retry
     }
   };
 
-  if (!visible) return null;
+  if (!mode) return null;
+
+  if (mode === 'denied') {
+    return (
+      <div className="push-banner" role="status">
+        <div className="push-banner-icon">
+          <Bell size={18} />
+        </div>
+        <div className="push-banner-text">
+          <strong>Notifications are blocked</strong>
+          <span>
+            You won't get alerts for {role === 'tutor' ? 'new uploads or tickets' : 'certificate or ticket updates'} until
+            you re-enable notifications for this site in your browser's settings.
+          </span>
+        </div>
+        <div className="push-banner-actions">
+          <button type="button" className="push-banner-dismiss" onClick={dismiss} aria-label="Dismiss">
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="push-banner" role="status">

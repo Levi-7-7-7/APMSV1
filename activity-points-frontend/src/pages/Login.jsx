@@ -6,6 +6,7 @@ import axiosInstance from '../api/axiosInstance';
 import adminAxios from '../api/adminAxios';
 import tutorAxios from '../api/tutorAxios';
 import BootLoader from '../components/BootLoader';
+import InstallAppBanner from '../components/InstallAppBanner';
 import '../css/Login.css';
 
 export default function Login() {
@@ -148,6 +149,8 @@ export default function Login() {
           <h1>Activity Points</h1>
           <p>{isAdmin ? 'Admin Portal' : 'Management System'}</p>
         </div>
+
+        <InstallAppBanner />
 
         {/* Role Selector */}
         <div className="role-tabs">
