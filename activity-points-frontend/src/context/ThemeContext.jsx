@@ -3,16 +3,15 @@ import React, { createContext, useContext, useEffect, useMemo, useState, useCall
 const STORAGE_KEY = 'appTheme'; // 'light' | 'dark' | 'teal' | 'system'
 const VALID_THEMES = ['light', 'dark', 'teal', 'system'];
 
-// Mirrors each theme's --blue-800 brand-accent value from theme.css. Used to
-// keep the OS/browser PWA window chrome (title bar) — which reads the
-// <meta name="theme-color"> tag, not any CSS variable — in sync with
-// whichever in-app theme is active. Light and Dark intentionally share the
-// same blue brand accent (dark mode never retints --blue-800), only Teal
-// diverges, matching how the accent colors themselves are defined in CSS.
+// Mirrors each theme's --surface value from theme.css (the same background
+// color the app's own topbar sits on). Used to keep the OS/browser PWA
+// window chrome (title bar) — which reads the <meta name="theme-color">
+// tag, not any CSS variable — blended with whichever in-app theme is
+// active: white for Light, dark slate for Dark, deep teal for Teal.
 const THEME_COLORS = {
-  light: '#1d4ed8',
-  dark: '#1d4ed8',
-  teal: '#0f766e',
+  light: '#ffffff',
+  dark: '#1e293b',
+  teal: '#0f3d3e',
 };
 
 const ThemeContext = createContext({
