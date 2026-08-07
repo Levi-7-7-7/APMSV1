@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom';
 import {
   Plus, Clock, CheckCircle2, ChevronDown, Loader2, Forward, Check, X, Inbox, Send,
+  Image as ImageIcon,
 } from 'lucide-react';
 import {
   getTutorTicketInbox, getTutorOwnTickets, createTutorTicket,
@@ -38,8 +39,11 @@ export default function TutorTickets() {
   const [showForm, setShowForm] = useState(false);
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const fileInputRef = useRef(null);
 
   const loadInbox = async () => {
     const res = await getTutorTicketInbox();
@@ -98,6 +102,19 @@ export default function TutorTickets() {
     [inbox]
   );
 
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!subject.trim() || !description.trim()) {
@@ -107,10 +124,16 @@ export default function TutorTickets() {
     setSubmitting(true);
     setFormError('');
     try {
-      const res = await createTutorTicket({ subject: subject.trim(), description: description.trim() });
+      const formData = new FormData();
+      formData.append('subject', subject.trim());
+      formData.append('description', description.trim());
+      if (imageFile) formData.append('image', imageFile);
+
+      const res = await createTutorTicket(formData);
       setMine((prev) => [res.data, ...prev]);
       setSubject('');
       setDescription('');
+      clearImage();
       setShowForm(false);
     } catch (err) {
       setFormError(err.response?.data?.error || 'Failed to raise request. Please try again.');
@@ -228,6 +251,21 @@ export default function TutorTickets() {
                   maxLength={2000}
                 />
               </label>
+              <div className="tt-form-image">
+                <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleFileChange} />
+                {imagePreview ? (
+                  <div className="tt-image-preview">
+                    <img src={imagePreview} alt="Attachment preview" />
+                    <button type="button" className="tt-image-remove" onClick={clearImage} aria-label="Remove image">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" className="tt-image-add" onClick={() => fileInputRef.current?.click()}>
+                    <ImageIcon size={16} /> Attach a photo (optional)
+                  </button>
+                )}
+              </div>
               {formError && <div className="tt-form-error">{formError}</div>}
               <button type="submit" className="tt-form-submit" disabled={submitting}>
                 {submitting ? <><Loader2 size={16} className="tt-spin" /> Submitting…</> : 'Submit Request'}

@@ -450,6 +450,84 @@
   cursor: not-allowed;
 }
 
+/* ── Re-upload: pending file preview + submit/cancel (shown after a file
+   is picked, before it's actually sent) ──────────────────────────────── */
+.cert-reupload-pending {
+  margin: 10px 12px 0;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1.5px solid var(--blue-500);
+  border-radius: 10px;
+  background: var(--blue-tint-50);
+}
+
+.cert-reupload-pending-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.cert-reupload-pending-filename {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--blue-600);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.cert-reupload-pending-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.cert-reupload-submit-btn,
+.cert-reupload-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cert-reupload-submit-btn {
+  background: var(--blue-600);
+  color: var(--on-color);
+}
+.cert-reupload-submit-btn:hover:not(:disabled) {
+  background: var(--blue-700, var(--blue-600));
+}
+.cert-reupload-submit-btn:disabled,
+.cert-reupload-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cert-reupload-cancel-btn {
+  background: transparent;
+  border-color: var(--slate-300, rgba(0,0,0,0.2));
+  color: var(--slate-500);
+}
+.cert-reupload-cancel-btn:hover:not(:disabled) {
+  background: rgba(0,0,0,0.04);
+}
+
 .rejected-reason-error {
   margin: 8px 0 0;
   font-size: 0.78rem;

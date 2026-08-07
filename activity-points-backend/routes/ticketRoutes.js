@@ -203,8 +203,9 @@ router.get('/tutor', tutorAuth, async (req, res) => {
   }
 });
 
-// Tutor raises their own request directly to admin (not tied to a student).
-router.post('/tutor', tutorAuth, async (req, res) => {
+// Tutor raises their own request directly to admin (not tied to a student),
+// optionally with a photo of the issue — mirrors the student route above.
+router.post('/tutor', tutorAuth, upload.single('image'), async (req, res) => {
   try {
     const { subject, description } = req.body;
     if (!subject?.trim() || !description?.trim()) {
@@ -213,6 +214,18 @@ router.post('/tutor', tutorAuth, async (req, res) => {
 
     const tutor = await fetchTutor(req, res);
     if (!tutor) return;
+
+    let imageUrl = null;
+    let imageFileId = null;
+    if (req.file) {
+      const uploadResult = await imagekit.upload({
+        file: req.file.buffer.toString('base64'),
+        fileName: `${sanitizeName(subject.trim())}_${Date.now()}.${req.file.originalname.split('.').pop()}`,
+        folder: buildTicketFolder(tutor.name),
+      });
+      imageUrl = uploadResult.url;
+      imageFileId = uploadResult.fileId;
+    }
 
     const ticket = await Ticket.create({
       raisedByRole: 'tutor',
@@ -224,6 +237,8 @@ router.post('/tutor', tutorAuth, async (req, res) => {
       branch: tutor.branch || null,
       subject: subject.trim(),
       description: description.trim(),
+      imageUrl,
+      imageFileId,
       status: 'open',
       currentOwner: 'admin',
       adminSeen: false,

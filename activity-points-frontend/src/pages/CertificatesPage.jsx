@@ -33,6 +33,12 @@ export default function CertificatesPage() {
   // card — so each card's button opens its own file picker.
   const [reuploadingId, setReuploadingId] = useState(null);
   const [reuploadError, setReuploadError] = useState({});
+  // File the student has picked but not yet confirmed with Submit — keyed
+  // by cert id, so a rejected cert shows its chosen file back to them
+  // (with a Submit/Cancel choice) instead of uploading the instant a file
+  // is selected, which previously gave no chance to double-check or back
+  // out before it was sent for review.
+  const [pendingReupload, setPendingReupload] = useState({});
   const fileInputRefs = React.useRef({});
 
   useEffect(() => {
@@ -160,7 +166,10 @@ export default function CertificatesPage() {
     fileInputRefs.current[certId]?.click();
   };
 
-  const handleReuploadFile = async (cert, e) => {
+  // Step 1: file picked — validate and stage it for review, but don't
+  // upload yet. The student confirms with the Submit button that now
+  // appears next to the preview (or backs out with Cancel).
+  const handleReuploadFileSelect = (cert, e) => {
     const file = e.target.files?.[0];
     e.target.value = ''; // allow picking the same file again later
     if (!file) return;
@@ -175,10 +184,32 @@ export default function CertificatesPage() {
     }
 
     setReuploadError(prev => ({ ...prev, [cert._id]: '' }));
+    setPendingReupload(prev => ({
+      ...prev,
+      [cert._id]: { file, previewUrl: isImage ? URL.createObjectURL(file) : null },
+    }));
+  };
+
+  // Discard the staged file without uploading anything.
+  const cancelReuploadSelection = (certId) => {
+    setPendingReupload(prev => {
+      if (prev[certId]?.previewUrl) URL.revokeObjectURL(prev[certId].previewUrl);
+      const next = { ...prev };
+      delete next[certId];
+      return next;
+    });
+  };
+
+  // Step 2: student hits Submit — actually send the staged file.
+  const submitReupload = async (cert) => {
+    const pending = pendingReupload[cert._id];
+    if (!pending) return;
+
+    setReuploadError(prev => ({ ...prev, [cert._id]: '' }));
     setReuploadingId(cert._id);
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', pending.file);
       const res = await axiosInstance.put(`/certificates/${cert._id}/reupload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -192,6 +223,7 @@ export default function CertificatesPage() {
         pointsAwarded: updated.pointsAwarded,
         updatedAt: updated.updatedAt,
       } : c)));
+      cancelReuploadSelection(cert._id); // clears the staged file/preview now that it's been sent
     } catch (err) {
       setReuploadError(prev => ({
         ...prev,
@@ -383,19 +415,52 @@ export default function CertificatesPage() {
                   type="file"
                   accept="image/*,application/pdf"
                   ref={el => (fileInputRefs.current[cert._id] = el)}
-                  onChange={e => handleReuploadFile(cert, e)}
+                  onChange={e => handleReuploadFileSelect(cert, e)}
                   style={{ display: 'none' }}
                 />
-                <button
-                  className="cert-reupload-btn"
-                  onClick={() => triggerReupload(cert._id)}
-                  disabled={reuploadingId === cert._id}
-                >
-                  {reuploadingId === cert._id
-                    ? <><Loader2 size={14} className="icon-spin" /> Re-uploading…</>
-                    : <><UploadCloud size={14} /> Re-upload Certificate</>
-                  }
-                </button>
+                {pendingReupload[cert._id] ? (
+                  <div className="cert-reupload-pending">
+                    {pendingReupload[cert._id].previewUrl ? (
+                      <img
+                        src={pendingReupload[cert._id].previewUrl}
+                        alt="Selected certificate preview"
+                        className="cert-reupload-pending-thumb"
+                      />
+                    ) : (
+                      <span className="cert-reupload-pending-filename">
+                        <FileText size={14} /> {pendingReupload[cert._id].file.name}
+                      </span>
+                    )}
+                    <div className="cert-reupload-pending-actions">
+                      <button
+                        type="button"
+                        className="cert-reupload-submit-btn"
+                        onClick={() => submitReupload(cert)}
+                        disabled={reuploadingId === cert._id}
+                      >
+                        {reuploadingId === cert._id
+                          ? <><Loader2 size={13} className="icon-spin" /> Submitting…</>
+                          : <><UploadCloud size={13} /> Submit</>
+                        }
+                      </button>
+                      <button
+                        type="button"
+                        className="cert-reupload-cancel-btn"
+                        onClick={() => cancelReuploadSelection(cert._id)}
+                        disabled={reuploadingId === cert._id}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    className="cert-reupload-btn"
+                    onClick={() => triggerReupload(cert._id)}
+                  >
+                    <UploadCloud size={14} /> Re-upload Certificate
+                  </button>
+                )}
                 {reuploadError[cert._id] && (
                   <p className="rejected-reason-error">{reuploadError[cert._id]}</p>
                 )}

@@ -16,7 +16,10 @@ export const getStudentTicketUnreadCount = () => axiosInstance.get('/tickets/stu
 // ── Tutor ────────────────────────────────────────────────────────────────
 export const getTutorTicketInbox = () => tutorAxios.get('/tickets/tutor');
 export const getTutorOwnTickets = () => tutorAxios.get('/tickets/tutor?scope=mine');
-export const createTutorTicket = (data) => tutorAxios.post('/tickets/tutor', data);
+export const createTutorTicket = (formData) =>
+  tutorAxios.post('/tickets/tutor', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 export const resolveTicketAsTutor = (id, note) => tutorAxios.patch(`/tickets/tutor/${id}/resolve`, { note });
 export const forwardTicketToAdmin = (id, note) => tutorAxios.patch(`/tickets/tutor/${id}/forward`, { note });
 export const markTutorTicketSeen = (id) => tutorAxios.patch(`/tickets/tutor/${id}/seen`);
