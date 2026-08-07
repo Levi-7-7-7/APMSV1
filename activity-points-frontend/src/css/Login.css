@@ -311,13 +311,21 @@ body, html {
   to { transform: rotate(360deg); }
 }
 
-.spinner {
+/* Renamed from the generic .spinner/.button-spinner to avoid colliding
+   with unrelated same-named classes defined in other page stylesheets
+   (e.g. StudentDetails.css, PendingCertificates.css) that are bundled
+   into the same global CSS namespace. Those rules add their own margin/
+   vertical-align to ANY element matching .spinner, which is what was
+   pushing this icon out of alignment regardless of the rules below. */
+.login-btn-spinner-icon {
   animation: spin 1s linear infinite;
   display: block;
   flex-shrink: 0;
+  margin: 0;
+  vertical-align: initial;
 }
 
-.button-spinner {
+.login-btn-spinner-wrap {
   display: flex;
   align-items: center;
   justify-content: center;

@@ -224,8 +224,8 @@ export default function Login() {
         >
           {loading ? (
             <>
-              <span className="button-spinner">
-                <Loader2 size={20} className="spinner" />
+              <span className="login-btn-spinner-wrap">
+                <Loader2 size={20} className="login-btn-spinner-icon" />
               </span>
               <span>Signing In...</span>
             </>
