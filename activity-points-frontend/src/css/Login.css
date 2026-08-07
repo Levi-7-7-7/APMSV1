@@ -315,8 +315,6 @@ body, html {
   animation: spin 1s linear infinite;
   display: inline-block;
   flex-shrink: 0;
-  position: relative;
-  top: 8px; /* nudge down slightly relative to the text */
 }
 
 /* =========================

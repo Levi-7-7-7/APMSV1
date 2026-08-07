@@ -93,3 +93,38 @@
   color: var(--slate-600, #475569);
   background: var(--slate-100, #f1f5f9);
 }
+
+/* Mobile-friendly layout for the "Install APMS" banner */
+@media (max-width: 480px) {
+  .push-banner--install {
+    flex-wrap: wrap;
+    margin: 0.75rem 0.6rem;
+    padding: 0.85rem 0.9rem;
+  }
+
+  .push-banner--install .push-banner-text {
+    flex-basis: calc(100% - 34px - 0.75rem);
+  }
+
+  .push-banner--install .push-banner-actions {
+    flex-basis: 100%;
+    margin-top: 0.65rem;
+    padding-left: calc(34px + 0.75rem);
+    gap: 0.5rem;
+  }
+
+  .push-banner--install .push-banner-enable {
+    flex: 1;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .push-banner--install .push-banner-dismiss {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

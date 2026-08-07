@@ -47,7 +47,7 @@ export default function InstallAppBanner() {
   if (!available || dismissed) return null;
 
   return (
-    <div className="push-banner" role="status">
+    <div className="push-banner push-banner--install" role="status">
       <div className="push-banner-icon">
         <Download size={18} />
       </div>
