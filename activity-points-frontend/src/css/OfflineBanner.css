@@ -1,0 +1,43 @@
+.offline-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #92400e;
+  background: #fef3c7;
+  border-bottom: 1px solid #fde68a;
+  animation: offline-banner-in 0.2s ease;
+}
+
+.offline-banner svg {
+  flex-shrink: 0;
+}
+
+.offline-banner-back {
+  color: #166534;
+  background: var(--green-tint-100, #d1fae5);
+  border-bottom-color: transparent;
+}
+
+@keyframes offline-banner-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark theme: keep it readable without the light-mode amber/green being
+   too bright against a dark surface. */
+[data-theme='dark'] .offline-banner {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.16);
+  border-bottom-color: rgba(245, 158, 11, 0.3);
+}
+
+[data-theme='dark'] .offline-banner-back {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.16);
+  border-bottom-color: transparent;
+}

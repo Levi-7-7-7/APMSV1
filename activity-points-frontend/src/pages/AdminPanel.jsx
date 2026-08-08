@@ -10,9 +10,11 @@ import {
 import PhotoCropModal from "../components/PhotoCropModal";
 import ThemeSwitcher from "../components/ThemeSwitcher";
 import NotificationPermissionBanner from "../components/NotificationPermissionBanner";
+import OfflineBanner from "../components/OfflineBanner";
 import AdminTickets from "./AdminTickets";
 import { getAdminTicketUnreadCount, getAdminTicketNotifications } from "../utils/ticketApi";
 import { listenForForegroundMessages, syncPushToken, showForegroundNotification } from "../utils/pushNotifications";
+import { clearAllOfflineCaches } from "../utils/pageDataCache";
 import "../css/AdminPanel.css";
 
 // Small circular avatar used throughout the panel (admin/tutor/student
@@ -70,6 +72,7 @@ export default function AdminPanel() {
     if (window.confirm("Are you sure you want to logout?")) {
       localStorage.removeItem("adminToken");
       localStorage.removeItem("adminEmail");
+      clearAllOfflineCaches();
       navigate("/");
     }
   };
@@ -1002,6 +1005,7 @@ export default function AdminPanel() {
 
       <div className="ap-content">
 
+        <OfflineBanner />
         <NotificationPermissionBanner role="admin" />
 
         {/* ── Toast ── */}

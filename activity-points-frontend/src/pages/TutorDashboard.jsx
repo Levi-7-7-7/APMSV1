@@ -6,9 +6,11 @@ import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import InstallAppBanner from '../components/InstallAppBanner';
+import OfflineBanner from '../components/OfflineBanner';
 import { listenForForegroundMessages, syncPushToken, showForegroundNotification } from '../utils/pushNotifications';
 import tutorAxios from '../api/tutorAxios';
 import { getTutorTicketUnreadCount, getTutorTicketNewCount, getTutorTicketNotifications } from '../utils/ticketApi';
+import { clearAllOfflineCaches } from '../utils/pageDataCache';
 import '../css/TutorDashboard.css';
 
 const PAGE_TITLES = {
@@ -226,6 +228,7 @@ const TutorDashboard = () => {
       localStorage.removeItem('tutorToken');
       localStorage.removeItem('tutorName');
       localStorage.removeItem('tutorFirstTimePasswordSet');
+      clearAllOfflineCaches();
       navigate('/'); // redirect to login
     }
   };
@@ -345,6 +348,7 @@ const TutorDashboard = () => {
 
       {/* Nested pages */}
       <main className="nested-content min-h-[300px]">
+        <OfflineBanner />
         <NotificationPermissionBanner role="tutor" />
         <InstallAppBanner />
         <React.Suspense fallback={<p className="loading-text">Loading...</p>}>

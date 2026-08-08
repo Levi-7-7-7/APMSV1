@@ -56,10 +56,16 @@ export function isPushCapable() {
  *
  * Call once, near app root (see main.jsx). Fails silently — push/
  * installability just won't be available, nothing else breaks.
+ *
+ * Intentionally NOT gated on firebaseConfig.apiKey: this same worker is
+ * also what caches the app shell and API responses for offline use (see
+ * public/firebase-messaging-sw.js), which has nothing to do with push
+ * and needs to work even on a deployment where Firebase was never set
+ * up. The worker itself guards its Firebase-specific setup so it's safe
+ * to register either way.
  */
 export async function registerServiceWorkerForInstallability() {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
-  if (!firebaseConfig.apiKey) return; // Firebase not configured yet
 
   try {
     await navigator.serviceWorker.register(SW_URL);

@@ -9,8 +9,10 @@ import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import InstallAppBanner from '../components/InstallAppBanner';
+import OfflineBanner from '../components/OfflineBanner';
 import { listenForForegroundMessages, syncPushToken, showForegroundNotification } from '../utils/pushNotifications';
 import { getStudentTicketUnreadCount } from '../utils/ticketApi';
+import { clearAllOfflineCaches } from '../utils/pageDataCache';
 import { StudentTabProvider } from '../context/StudentTabContext';
 import Dashboard from '../pages/Dashboard';
 import CertificateUploadScreen from '../pages/UploadCertificates';
@@ -267,6 +269,7 @@ const StudentLayout = () => {
       localStorage.removeItem('userData');
       localStorage.removeItem('userName');
       localStorage.removeItem('firstTimePasswordSet');
+      clearAllOfflineCaches();
       navigate('/');
     }
   };
@@ -357,6 +360,7 @@ const StudentLayout = () => {
         {...(isSwipeTab ? swipeHandlers : {})}
       >
         <div className="dashboard-main-banners">
+          <OfflineBanner />
           <NotificationPermissionBanner role="student" />
           <InstallAppBanner />
         </div>
