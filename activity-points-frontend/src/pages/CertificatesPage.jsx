@@ -6,7 +6,8 @@ import {
   UploadCloud, Loader2
 } from 'lucide-react';
 import '../css/certificatespage.css';
-import { useNavigate, useSearchParams, useOutletContext } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import useStudentTabContext from '../context/StudentTabContext';
 import CertModal from '../components/CertModal';
 import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
 import { getCached, setCached } from '../utils/pageDataCache';
@@ -16,7 +17,7 @@ const CACHE_KEY = 'certificatesPage';
 export default function CertificatesPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { refreshToken } = useOutletContext() || {};
+  const { refreshToken } = useStudentTabContext();
   const lastRefreshToken = React.useRef(refreshToken);
 
   const cached = getCached(CACHE_KEY);

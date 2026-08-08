@@ -353,8 +353,48 @@
   margin: 0 auto;
   overflow: hidden; /* clips the sliding pages; each page scrolls itself below */
   touch-action: pan-y; /* let vertical scroll pass through; horizontal is handled by the swipe hook */
+  display: flex;
+  flex-direction: column;
 }
 
+/* Sits above the swipeable track — shown once regardless of which tab is
+   active, instead of being duplicated into all four mounted panels. */
+.dashboard-main-banners {
+  flex: 0 0 auto;
+}
+.dashboard-main-banners:empty {
+  display: none;
+}
+
+/* Clips whichever content sits below the banners: either the WhatsApp-style
+   four-tab track, or (for non-swipe routes like Profile) a single page. */
+.dashboard-track-viewport {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+/* The horizontal strip holding all four swipe tabs side by side. Its
+   transform is driven inline from JS (1:1 with the finger while dragging,
+   animated to the nearest tab on release) so a partial drag reveals a
+   sliver of the neighboring tab, like a native ViewPager. */
+.dashboard-track {
+  display: flex;
+  height: 100%;
+  will-change: transform;
+}
+
+.dashboard-page-panel {
+  flex: 0 0 auto;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding: 1.25rem 1rem 1rem 1rem;
+  box-sizing: border-box;
+}
+
+/* Non-swipe routes (e.g. Profile), rendered through <Outlet/> as a single page. */
 .dashboard-page-scroll {
   position: absolute;
   inset: 0;

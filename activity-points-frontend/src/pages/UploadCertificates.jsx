@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import useStudentTabContext from '../context/StudentTabContext';
 import axiosInstance from '../api/axiosInstance';
 import { ArrowLeft, Award, Paperclip, Search, X, Calendar } from 'lucide-react';
 import CertCropModal from '../components/CertCropModal';
@@ -27,7 +28,7 @@ export default function CertificateUploadScreen() {
   // The page's own scroll container now lives in StudentLayout (the
   // document/body no longer scrolls), so scrolling to top on submit goes
   // through this instead of window.scrollTo.
-  const { scrollToTop, refreshToken } = useOutletContext() || {};
+  const { scrollToTop, refreshToken } = useStudentTabContext();
   const lastRefreshToken = useRef(refreshToken);
 
   const [categories, setCategories] = useState(getCached(CACHE_KEY) ?? []);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import axiosInstance from '../api/axiosInstance';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import useStudentTabContext from '../context/StudentTabContext';
 import { Award, Star } from 'lucide-react';
 import '../css/StudentDashboard.css';
 import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
@@ -10,7 +11,7 @@ const CACHE_KEY = 'dashboard';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { refreshToken } = useOutletContext() || {};
+  const { refreshToken } = useStudentTabContext();
   const lastRefreshToken = useRef(refreshToken);
 
   const cached = getCached(CACHE_KEY);

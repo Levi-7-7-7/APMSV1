@@ -78,6 +78,7 @@ export default function useSwipeNavigation(paths, current, onNavigate) {
   return {
     dragX,
     isDragging,
+    currentIndex,
     swipeHandlers: {
       onTouchStart,
       onTouchMove,

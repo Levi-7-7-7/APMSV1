@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MoreVertical, User, LogOut, X, RefreshCw } from 'lucide-react';
@@ -10,7 +10,24 @@ import NotificationPermissionBanner from '../components/NotificationPermissionBa
 import InstallAppBanner from '../components/InstallAppBanner';
 import { listenForForegroundMessages, syncPushToken, showForegroundNotification } from '../utils/pushNotifications';
 import { getStudentTicketUnreadCount } from '../utils/ticketApi';
+import { StudentTabProvider } from '../context/StudentTabContext';
+import Dashboard from '../pages/Dashboard';
+import CertificateUploadScreen from '../pages/UploadCertificates';
+import CertificatesPage from '../pages/CertificatesPage';
+import Tickets from '../pages/Tickets';
 import '../css/StudentDashboard.css';
+
+// The four swipeable tabs, mounted directly (side by side, in a horizontal
+// track) instead of one-at-a-time through react-router's <Outlet/>. This is
+// what lets a partial drag reveal a sliver of the neighboring tab, like
+// WhatsApp's chat-list/status/calls pager, instead of only animating the
+// currently-matched route.
+const SWIPE_TABS = [
+  { path: '/student', Component: Dashboard },
+  { path: '/student/upload-certificate', Component: CertificateUploadScreen },
+  { path: '/student/certificates', Component: CertificatesPage },
+  { path: '/student/tickets', Component: Tickets },
+];
 
 const PAGE_TITLES = {
   '/student': 'Dashboard',
@@ -39,30 +56,42 @@ const StudentLayout = () => {
 
   // Bottom-nav tab order — swiping left/right moves between these, same as
   // tapping the corresponding nav icon. Must match BottomNav.jsx's navItems.
-  const SWIPE_TAB_PATHS = [
-    '/student',
-    '/student/upload-certificate',
-    '/student/certificates',
-    '/student/tickets',
-  ];
-  const { dragX, isDragging, swipeHandlers } = useSwipeNavigation(
+  const SWIPE_TAB_PATHS = useMemo(() => SWIPE_TABS.map((t) => t.path), []);
+  const { dragX, isDragging, currentIndex, swipeHandlers } = useSwipeNavigation(
     SWIPE_TAB_PATHS,
     location.pathname,
     (path) => navigate(path)
   );
+  // -1 for routes nested under /student that aren't one of the four
+  // swipeable tabs (e.g. Profile) — those still render through <Outlet/>
+  // as a single, non-swipeable page.
+  const isSwipeTab = currentIndex !== -1;
 
   // Tracks which tab we were just on, so we know which direction to slide
-  // toward for ANY navigation — swipe gesture, bottom-nav tap, or otherwise
-  // — not just the swipe gesture itself.
-  const currentTabIndex = SWIPE_TAB_PATHS.indexOf(location.pathname);
-  const prevTabIndexRef = useRef(currentTabIndex);
+  // toward for ANY navigation of the non-swipe (Outlet) route — bottom-nav
+  // tap or otherwise.
+  const prevTabIndexRef = useRef(currentIndex);
   const direction =
-    currentTabIndex === -1 || prevTabIndexRef.current === -1
+    currentIndex === -1 || prevTabIndexRef.current === -1
       ? 0
-      : Math.sign(currentTabIndex - prevTabIndexRef.current);
+      : Math.sign(currentIndex - prevTabIndexRef.current);
   useEffect(() => {
-    prevTabIndexRef.current = currentTabIndex;
-  }, [currentTabIndex]);
+    prevTabIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  // Pixel width of the swipeable viewport — measured (not assumed) so the
+  // track lines up exactly regardless of device width. Re-measured on resize.
+  const trackViewportRef = useRef(null);
+  const [paneWidth, setPaneWidth] = useState(0);
+  useLayoutEffect(() => {
+    const el = trackViewportRef.current;
+    if (!el) return;
+    const measure = () => setPaneWidth(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const [userName, setUserName] = useState(() => {
     // Try userData first (set after dashboard fetch), fall back to userName key
@@ -171,19 +200,33 @@ const StudentLayout = () => {
   // WhatsApp-style: the top bar stays fixed, but gains a subtle shadow once
   // the page underneath has scrolled, giving it a sense of "elevation".
   // The document/body no longer scrolls (see .dashboard-main), so this
-  // reads scrollTop from whichever page's own scroll container is active,
-  // via the ref callback below.
-  const pageScrollRef = useRef(null);
-  const setPageScrollRef = useCallback((el) => {
-    pageScrollRef.current = el;
+  // reads scrollTop from whichever page's own scroll container is active.
+  // All four swipe tabs are mounted at once now, so we keep one ref per
+  // tab (indexed same as SWIPE_TABS) plus a separate one for the single
+  // non-swipe (Outlet) route.
+  const pageScrollRefs = useRef([]);
+  const outletScrollRef = useRef(null);
+
+  const setPageScrollRef = useCallback((idx) => (el) => {
+    pageScrollRefs.current[idx] = el;
+    if (idx === currentIndex) setScrolled(el ? el.scrollTop > 4 : false);
+  }, [currentIndex]);
+  const handlePageScroll = useCallback((idx) => (e) => {
+    if (idx === currentIndex) setScrolled(e.currentTarget.scrollTop > 4);
+  }, [currentIndex]);
+
+  const setOutletScrollRef = useCallback((el) => {
+    outletScrollRef.current = el;
     setScrolled(el ? el.scrollTop > 4 : false);
   }, []);
-  const handlePageScroll = useCallback((e) => {
+  const handleOutletScroll = useCallback((e) => {
     setScrolled(e.currentTarget.scrollTop > 4);
   }, []);
+
   const scrollToTop = useCallback(() => {
-    pageScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
-  }, []);
+    const el = isSwipeTab ? pageScrollRefs.current[currentIndex] : outletScrollRef.current;
+    el?.scrollTo({ top: 0, behavior: 'auto' });
+  }, [isSwipeTab, currentIndex]);
 
   // Close the three-dot menu on outside click or Escape
   useEffect(() => {
@@ -293,32 +336,63 @@ const StudentLayout = () => {
       </header>
 
       {/* Nested student pages — a fixed pane between the top bar and bottom
-          nav. AnimatePresence's default ("sync") mode keeps the outgoing
-          page mounted while the incoming one mounts immediately, so both
-          are on screen and slide past each other at once, like a native
-          tab pager, instead of exiting then entering in sequence. */}
+          nav. The banners sit above the swipeable area (shown once, not
+          per-tab), and the four swipe tabs live in a horizontal track that
+          all four are mounted in simultaneously, so a partial drag reveals
+          a sliver of the neighboring tab — like WhatsApp — rather than
+          just animating whichever single route react-router has matched. */}
       <main
         className={`dashboard-main${isDragging ? ' dashboard-main-dragging' : ''}`}
-        {...swipeHandlers}
+        {...(isSwipeTab ? swipeHandlers : {})}
       >
-        <AnimatePresence initial={false} custom={direction}>
-          <motion.div
-            key={location.pathname}
-            ref={setPageScrollRef}
-            onScroll={handlePageScroll}
-            className="dashboard-page-scroll"
-            custom={direction}
-            variants={pageVariants}
-            initial="enter"
-            animate={isDragging ? { x: dragX, opacity: 1, transition: { duration: 0 } } : 'center'}
-            exit="exit"
-            transition={pageTransition}
-          >
-            <NotificationPermissionBanner role="student" />
-            <InstallAppBanner />
-            <Outlet context={{ refreshTicketUnreadCount, scrollToTop, refreshToken }} />
-          </motion.div>
-        </AnimatePresence>
+        <div className="dashboard-main-banners">
+          <NotificationPermissionBanner role="student" />
+          <InstallAppBanner />
+        </div>
+
+        <div className="dashboard-track-viewport" ref={trackViewportRef}>
+          {isSwipeTab ? (
+            <StudentTabProvider value={{ refreshTicketUnreadCount, scrollToTop, refreshToken }}>
+              <div
+                className="dashboard-track"
+                style={{
+                  width: paneWidth ? `${paneWidth * SWIPE_TABS.length}px` : '100%',
+                  transform: `translateX(${-(currentIndex * paneWidth) + (isDragging ? dragX : 0)}px)`,
+                  transition: isDragging ? 'none' : 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)',
+                }}
+              >
+                {SWIPE_TABS.map(({ path, Component }, idx) => (
+                  <div
+                    key={path}
+                    className="dashboard-page-panel"
+                    style={{ width: paneWidth ? `${paneWidth}px` : `${100 / SWIPE_TABS.length}%` }}
+                    ref={setPageScrollRef(idx)}
+                    onScroll={handlePageScroll(idx)}
+                  >
+                    <Component />
+                  </div>
+                ))}
+              </div>
+            </StudentTabProvider>
+          ) : (
+            <AnimatePresence initial={false} custom={direction}>
+              <motion.div
+                key={location.pathname}
+                ref={setOutletScrollRef}
+                onScroll={handleOutletScroll}
+                className="dashboard-page-scroll"
+                custom={direction}
+                variants={pageVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={pageTransition}
+              >
+                <Outlet context={{ refreshTicketUnreadCount, scrollToTop, refreshToken }} />
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </div>
       </main>
 
       {/* Bottom navigation */}
