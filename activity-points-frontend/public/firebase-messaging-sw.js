@@ -186,23 +186,31 @@ try {
     });
 
     // Clicking the notification focuses an existing tab if one is open,
-    // otherwise opens a new one — both landing on the relevant page.
+    // otherwise opens a new one — both landing on the relevant page,
+    // refreshed with current backend data.
     self.addEventListener('notificationclick', (event) => {
       event.notification.close();
       const link = event.notification?.data?.link || '/';
 
       event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-          // Reuse any already-open tab of the app, rather than requiring
-          // it to already be sitting on `link` — navigate whichever tab
-          // we find to the right page and focus it, instead of always
-          // falling through to clients.openWindow() (which looks like
-          // the app relaunching even though it was already open).
           const existing = windowClients.find((c) => 'focus' in c);
           if (existing) {
-            const goTo = existing.navigate ? existing.navigate(link).catch(() => existing) : Promise.resolve(existing);
-            return goTo.then((client) => (client || existing).focus());
+            // Deliberately NOT using existing.navigate(link) here: when
+            // the tab is already sitting on `link` (the common case — the
+            // app is open, possibly already on the exact page the
+            // notification is about), several browsers treat
+            // WindowClient.navigate() to an unchanged URL as a
+            // same-document no-op and skip the network fetch entirely —
+            // the tab gets focused but nothing actually reloads or
+            // re-fetches. Posting a message and letting the PAGE itself
+            // do `window.location.href = link` (see main.jsx) always
+            // forces a genuine navigation/reload, even to an identical
+            // URL, guaranteeing a fresh fetch from the backend every time.
+            existing.postMessage({ type: 'NOTIFICATION_NAVIGATE', link });
+            return existing.focus();
           }
+          // No tab open at all — a brand new window loads fresh by definition.
           if (clients.openWindow) return clients.openWindow(link);
         })
       );
