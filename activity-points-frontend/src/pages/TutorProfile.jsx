@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import {
   ArrowLeft,
   Camera,
@@ -14,7 +14,10 @@ import {
 } from 'lucide-react';
 import tutorAxios from '../api/tutorAxios';
 import PhotoCropModal from '../components/PhotoCropModal';
+import { getCached, setCached } from '../utils/pageDataCache';
 import '../css/TutorProfile.css';
+
+const CACHE_KEY = 'tutor-profile';
 
 function getInitials(name) {
   return (name || '')
@@ -37,23 +40,40 @@ const ROLE_ACCESS       = {
 export default function TutorProfile() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { refreshToken } = useOutletContext() || {};
+  const lastRefreshToken = useRef(refreshToken);
 
-  const [profile, setProfile] = useState(null);
-  const [profileLoading, setProfileLoading] = useState(true);
+  const cached = getCached(CACHE_KEY);
+  const [profile, setProfile] = useState(cached?.profile ?? null);
+  const [profileLoading, setProfileLoading] = useState(!cached);
 
-  const [studentCount, setStudentCount] = useState(null);
+  const [studentCount, setStudentCount] = useState(cached?.studentCount ?? null);
 
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
   // Optimistic photo state (updates instantly after upload)
-  const [localPhoto, setLocalPhoto] = useState(null);
+  const [localPhoto, setLocalPhoto] = useState(cached?.profile?.profilePhoto ?? null);
 
   // Tap-to-enlarge photo viewer
   const [viewerImage, setViewerImage] = useState(null);
 
-  // Fetch tutor profile + student count (mirrors TutorProfileScreen.tsx)
+  // Fetch tutor profile + student count (mirrors TutorProfileScreen.tsx).
+  // Reuses cached data on a plain remount (e.g. navigating back to this
+  // page); only hits the network on first-ever load or when the global
+  // refresh button bumps refreshToken.
   useEffect(() => {
+    const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
+    lastRefreshToken.current = refreshToken;
+    const existing = getCached(CACHE_KEY);
+    if (existing && !isRefresh) {
+      setProfile(existing.profile);
+      setLocalPhoto(existing.profile?.profilePhoto ?? null);
+      setStudentCount(existing.studentCount);
+      setProfileLoading(false);
+      return;
+    }
+
     let cancelled = false;
 
     const load = async () => {
@@ -72,6 +92,7 @@ export default function TutorProfile() {
             ? studentsRes.data
             : studentsRes.data?.students ?? [];
           setStudentCount(students.length);
+          setCached(CACHE_KEY, { profile: meRes.data, studentCount: students.length });
 
           // Keep the header's cached name in sync
           if (meRes.data.name) {
@@ -91,7 +112,7 @@ export default function TutorProfile() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshToken]);
 
   const handlePhotoClick = () => {
     if (!uploading) fileInputRef.current?.click();
@@ -129,7 +150,11 @@ export default function TutorProfile() {
       });
 
       setLocalPhoto(res.data.profilePhoto);
-      setProfile(prev => (prev ? { ...prev, profilePhoto: res.data.profilePhoto } : prev));
+      setProfile(prev => {
+        const updated = prev ? { ...prev, profilePhoto: res.data.profilePhoto } : prev;
+        setCached(CACHE_KEY, { ...getCached(CACHE_KEY), profile: updated });
+        return updated;
+      });
       setPendingFile(null);
     } catch (err) {
       setError(err?.response?.data?.error || 'Could not upload photo. Please try again.');

@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import tutorAxios from '../api/tutorAxios';
+import { getCached, setCached } from '../utils/pageDataCache';
 import {
   Download,
   Search,
@@ -35,11 +36,16 @@ const getInitials = (name) =>
 // Component
 // ======================================================
 
+const CACHE_KEY = 'tutor-students';
+
 const StudentList = () => {
   const navigate = useNavigate();
+  const { refreshToken } = useOutletContext() || {};
+  const lastRefreshToken = useRef(refreshToken);
 
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCached(CACHE_KEY);
+  const [students, setStudents] = useState(cached?.students ?? []);
+  const [loading, setLoading] = useState(!cached);
 
   const [batchFilter, setBatchFilter] = useState('');
   const [branchFilter, setBranchFilter] = useState('');
@@ -47,8 +53,8 @@ const StudentList = () => {
   const [search, setSearch] = useState('');
   const [regSearch, setRegSearch] = useState('');
 
-  const [batchOptions, setBatchOptions] = useState([]);
-  const [branchOptions, setBranchOptions] = useState([]);
+  const [batchOptions, setBatchOptions] = useState(cached?.batchOptions ?? []);
+  const [branchOptions, setBranchOptions] = useState(cached?.branchOptions ?? []);
 
   const [pdfLoading, setPdfLoading] = useState(false);
   const [excelLoading, setExcelLoading] = useState(false);
@@ -81,20 +87,21 @@ const StudentList = () => {
       const res = await tutorAxios.get('/tutors/students');
 
       const list = res.data.students || [];
-
-      setStudents(list);
-
-      setBatchOptions([
+      const nextBatchOptions = [
         ...new Set(
           list.map((s) => s.batch?.name).filter(Boolean)
         )
-      ]);
-
-      setBranchOptions([
+      ];
+      const nextBranchOptions = [
         ...new Set(
           list.map((s) => s.branch?.name).filter(Boolean)
         )
-      ]);
+      ];
+
+      setStudents(list);
+      setBatchOptions(nextBatchOptions);
+      setBranchOptions(nextBranchOptions);
+      setCached(CACHE_KEY, { students: list, batchOptions: nextBatchOptions, branchOptions: nextBranchOptions });
     } catch (err) {
       console.error(err);
     } finally {
@@ -103,8 +110,21 @@ const StudentList = () => {
   };
 
   useEffect(() => {
+    // Reuse cached data on a plain remount (e.g. tapping back to this tab);
+    // only hit the network on first-ever load or when the global refresh
+    // button bumps refreshToken.
+    const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
+    lastRefreshToken.current = refreshToken;
+    const existing = getCached(CACHE_KEY);
+    if (existing && !isRefresh) {
+      setStudents(existing.students);
+      setBatchOptions(existing.batchOptions);
+      setBranchOptions(existing.branchOptions);
+      setLoading(false);
+      return;
+    }
     fetchStudents();
-  }, []);
+  }, [refreshToken]);
 
   // ======================================================
   // Filter + Sort

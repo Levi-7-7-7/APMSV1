@@ -1,22 +1,28 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { Loader2, Award, Eye, AlertCircle, X, Edit2, Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import tutorAxios from '../api/tutorAxios';
 import CertModal from '../components/CertModal';
+import { getCached, setCached, clearCached } from '../utils/pageDataCache';
 import '../css/PendingCertificates.css';
+
+const CACHE_KEY = 'tutor-pending';
 
 const PendingCertificates = () => {
   // Provided by TutorDashboard via <Outlet context={...}> — lets us nudge
   // the bottom-nav badge count to refresh immediately after an
   // approve/reject/reassign, instead of waiting for its own poll.
-  const { refreshPendingCount } = useOutletContext() || {};
+  // refreshToken bumps whenever the top-bar refresh button is tapped.
+  const { refreshPendingCount, refreshToken } = useOutletContext() || {};
+  const lastRefreshToken = useRef(refreshToken);
 
-  const [pendingCerts, setPendingCerts]   = useState([]);
-  const [loading, setLoading]             = useState(true);
+  const cached = getCached(CACHE_KEY);
+  const [pendingCerts, setPendingCerts]   = useState(cached?.pendingCerts ?? []);
+  const [loading, setLoading]             = useState(!cached);
   const [processingId, setProcessingId]   = useState(null);
   const [modalUrl, setModalUrl]           = useState(null);
   const [modalFile, setModalFile]         = useState('');
-  const [categories, setCategories]       = useState([]);
+  const [categories, setCategories]       = useState(cached?.categories ?? []);
 
   // Which student's certificate queue is currently open. null = show the
   // student list (grouped, WhatsApp-chat-list style) instead of every
@@ -65,8 +71,11 @@ const PendingCertificates = () => {
         tutorAxios.get('/tutors/certificates/pending'),
         tutorAxios.get('/categories'),
       ]);
-      setPendingCerts(certRes.data || []);
-      setCategories(catRes.data.categories || []);
+      const nextPending = certRes.data || [];
+      const nextCategories = catRes.data.categories || [];
+      setPendingCerts(nextPending);
+      setCategories(nextCategories);
+      setCached(CACHE_KEY, { pendingCerts: nextPending, categories: nextCategories });
     } catch (err) {
       console.error('Error fetching pending certificates:', err);
     } finally {
@@ -74,7 +83,21 @@ const PendingCertificates = () => {
     }
   };
 
-  useEffect(() => { fetchPending(); }, []);
+  useEffect(() => {
+    // Reuse cached data on a plain remount (e.g. tapping back to this tab);
+    // only hit the network on first-ever load or when the global refresh
+    // button bumps refreshToken.
+    const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
+    lastRefreshToken.current = refreshToken;
+    const existing = getCached(CACHE_KEY);
+    if (existing && !isRefresh) {
+      setPendingCerts(existing.pendingCerts);
+      setCategories(existing.categories);
+      setLoading(false);
+      return;
+    }
+    fetchPending();
+  }, [refreshToken]);
 
   // Group flat pendingCerts (already oldest-first from the backend) into
   // per-student queues. Iterating in that order and pushing each student's
@@ -170,6 +193,11 @@ const PendingCertificates = () => {
       await tutorAxios.post(`/tutors/certificates/${certId}/approve`);
       await fetchPending();
       refreshPendingCount?.();
+      // Approval changes the student's total points and adds to their
+      // approved list — invalidate those cached pages so switching to
+      // Students/Approved doesn't show stale numbers.
+      clearCached('tutor-students');
+      clearCached('tutor-approved');
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to approve certificate');
     } finally {

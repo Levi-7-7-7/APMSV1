@@ -69,6 +69,29 @@
   text-align: center;
 }
 
+.tutor-topbar-refresh-btn {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  color: var(--slate-700);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.tutor-topbar-refresh-btn:hover,
+.tutor-topbar-refresh-btn:active {
+  background-color: var(--slate-100);
+}
+
+.tutor-topbar-refresh-btn:disabled {
+  cursor: default;
+}
+
 /* ── Bell-icon ticket notifications ── */
 .tutor-topbar-notif {
   position: relative;

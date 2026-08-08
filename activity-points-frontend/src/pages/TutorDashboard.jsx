@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { MoreVertical, User, LogOut, X, Bell } from 'lucide-react';
+import { MoreVertical, User, LogOut, X, Bell, RefreshCw } from 'lucide-react';
 import TutorBottomNav from '../components/TutorBottomNav';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
@@ -39,6 +39,19 @@ const TutorDashboard = () => {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [avatarEnlarged, setAvatarEnlarged] = useState(false);
+
+  // Pages cache their fetched data (see src/utils/pageDataCache.js) instead
+  // of re-fetching every time they remount from a tab switch. Bumping
+  // refreshToken is the signal each page listens for to bypass that cache
+  // and pull fresh data — wired to the top-bar refresh button below, same
+  // pattern as StudentLayout.
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const triggerRefresh = useCallback(() => {
+    setRefreshToken((t) => t + 1);
+    setRefreshing(true);
+    window.setTimeout(() => setRefreshing(false), 700);
+  }, []);
 
   // Foreground push notifications (tab open + focused) — the service
   // worker only fires for background/closed-tab pushes, so this covers
@@ -249,6 +262,16 @@ const TutorDashboard = () => {
 
         <span className="tutor-topbar-page-title">{pageTitle}</span>
 
+        <button
+          className="tutor-topbar-refresh-btn"
+          onClick={triggerRefresh}
+          disabled={refreshing}
+          aria-label="Refresh"
+          type="button"
+        >
+          <RefreshCw size={19} className={refreshing ? 'icon-spin' : ''} />
+        </button>
+
         <div className="tutor-topbar-notif" ref={notifRef}>
           <button
             className="tutor-topbar-notif-btn"
@@ -331,7 +354,7 @@ const TutorDashboard = () => {
         <NotificationPermissionBanner role="tutor" />
         <InstallAppBanner />
         <React.Suspense fallback={<p className="loading-text">Loading...</p>}>
-          <Outlet context={{ refreshPendingCount, refreshTicketUnreadCount, refreshNewTicketCount }} />
+          <Outlet context={{ refreshPendingCount, refreshTicketUnreadCount, refreshNewTicketCount, refreshToken }} />
         </React.Suspense>
       </main>
 

@@ -8,7 +8,10 @@ import {
   getTutorTicketInbox, getTutorOwnTickets, createTutorTicket,
   resolveTicketAsTutor, forwardTicketToAdmin, markTutorTicketSeen, markTutorTicketSeenNew,
 } from '../utils/ticketApi';
+import { getCached, setCached } from '../utils/pageDataCache';
 import '../css/TutorTickets.css';
+
+const CACHE_KEY = 'tutor-tickets';
 
 function StatusBadge({ status, forwarded }) {
   if (status === 'resolved') {
@@ -21,13 +24,15 @@ function StatusBadge({ status, forwarded }) {
 }
 
 export default function TutorTickets() {
-  const { refreshTicketUnreadCount, refreshNewTicketCount } = useOutletContext() || {};
+  const { refreshTicketUnreadCount, refreshNewTicketCount, refreshToken } = useOutletContext() || {};
+  const lastRefreshToken = useRef(refreshToken);
   const location = useLocation();
   const navigate = useNavigate();
   const [scope, setScope] = useState('inbox'); // 'inbox' | 'mine'
-  const [inbox, setInbox] = useState([]);
-  const [mine, setMine] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCached(CACHE_KEY);
+  const [inbox, setInbox] = useState(cached?.inbox ?? []);
+  const [mine, setMine] = useState(cached?.mine ?? []);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState('');
 
   const [expandedId, setExpandedId] = useState(null);
@@ -47,11 +52,17 @@ export default function TutorTickets() {
 
   const loadInbox = async () => {
     const res = await getTutorTicketInbox();
-    setInbox(res.data || []);
+    const next = res.data || [];
+    setInbox(next);
+    setCached(CACHE_KEY, { ...getCached(CACHE_KEY), inbox: next });
+    return next;
   };
   const loadMine = async () => {
     const res = await getTutorOwnTickets();
-    setMine(res.data || []);
+    const next = res.data || [];
+    setMine(next);
+    setCached(CACHE_KEY, { ...getCached(CACHE_KEY), mine: next });
+    return next;
   };
 
   const loadAll = async () => {
@@ -66,7 +77,21 @@ export default function TutorTickets() {
     }
   };
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => {
+    // Reuse cached data on a plain remount (e.g. tapping back to this tab);
+    // only hit the network on first-ever load or when the global refresh
+    // button bumps refreshToken.
+    const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
+    lastRefreshToken.current = refreshToken;
+    const existing = getCached(CACHE_KEY);
+    if (existing && !isRefresh) {
+      setInbox(existing.inbox ?? []);
+      setMine(existing.mine ?? []);
+      setLoading(false);
+      return;
+    }
+    loadAll();
+  }, [refreshToken]);
 
   // Arrived here via a bell-icon notification about a new student ticket —
   // those always sit in the inbox, so switch there, then once it's loaded
@@ -88,7 +113,7 @@ export default function TutorTickets() {
     }, 80);
 
     if (target.tutorSeen === false) {
-      setInbox((prev) => prev.map((t) => (t._id === focusTicketId ? { ...t, tutorSeen: true } : t)));
+      updateInbox((prev) => prev.map((t) => (t._id === focusTicketId ? { ...t, tutorSeen: true } : t)));
       markTutorTicketSeenNew(focusTicketId).then(() => refreshNewTicketCount?.()).catch(() => {});
     }
 
@@ -96,6 +121,24 @@ export default function TutorTickets() {
     // nav) doesn't keep re-triggering the same jump.
     navigate(location.pathname, { replace: true, state: {} });
   }, [focusTicketId, loading, inbox]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Wrap setInbox/setMine so every local mutation (mark-seen, resolve,
+  // forward, create) also updates the shared cache — otherwise switching
+  // scope/tabs and back would show stale data until the next full load.
+  const updateInbox = (updater) => {
+    setInbox((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      setCached(CACHE_KEY, { ...getCached(CACHE_KEY), inbox: next });
+      return next;
+    });
+  };
+  const updateMine = (updater) => {
+    setMine((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      setCached(CACHE_KEY, { ...getCached(CACHE_KEY), mine: next });
+      return next;
+    });
+  };
 
   const openInboxCount = useMemo(
     () => inbox.filter((t) => t.status !== 'resolved').length,
@@ -130,7 +173,7 @@ export default function TutorTickets() {
       if (imageFile) formData.append('image', imageFile);
 
       const res = await createTutorTicket(formData);
-      setMine((prev) => [res.data, ...prev]);
+      updateMine((prev) => [res.data, ...prev]);
       setSubject('');
       setDescription('');
       clearImage();
@@ -151,7 +194,7 @@ export default function TutorTickets() {
     if (opening && ticket.raisedByModel === 'Student' && ticket.currentOwner === 'tutor' && ticket.tutorSeen === false) {
       try {
         await markTutorTicketSeenNew(ticket._id);
-        setInbox((prev) => prev.map((t) => (t._id === ticket._id ? { ...t, tutorSeen: true } : t)));
+        updateInbox((prev) => prev.map((t) => (t._id === ticket._id ? { ...t, tutorSeen: true } : t)));
         refreshNewTicketCount?.();
       } catch (_) {}
     }
@@ -166,8 +209,8 @@ export default function TutorTickets() {
         const patch = (list) => list.map((t) => (t._id === ticket._id
           ? { ...t, raiserSeen: isOwn ? true : t.raiserSeen, forwarderSeen: isForwarder ? true : t.forwarderSeen }
           : t));
-        setInbox(patch);
-        setMine(patch);
+        updateInbox(patch);
+        updateMine(patch);
         refreshTicketUnreadCount?.();
       } catch (_) {}
     }
@@ -177,7 +220,7 @@ export default function TutorTickets() {
     setActioningId(ticket._id);
     try {
       const res = await resolveTicketAsTutor(ticket._id, noteDraft.trim());
-      setInbox((prev) => prev.map((t) => (t._id === ticket._id ? res.data : t)));
+      updateInbox((prev) => prev.map((t) => (t._id === ticket._id ? res.data : t)));
       setNoteMode(null);
       setNoteDraft('');
     } catch (err) {
@@ -191,7 +234,7 @@ export default function TutorTickets() {
     setActioningId(ticket._id);
     try {
       const res = await forwardTicketToAdmin(ticket._id, noteDraft.trim());
-      setInbox((prev) => prev.map((t) => (t._id === ticket._id ? res.data : t)));
+      updateInbox((prev) => prev.map((t) => (t._id === ticket._id ? res.data : t)));
       setNoteMode(null);
       setNoteDraft('');
     } catch (err) {

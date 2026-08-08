@@ -4,8 +4,10 @@ import axiosInstance from '../api/axiosInstance';
 import { ArrowLeft, Award, Paperclip, Search, X, Calendar } from 'lucide-react';
 import CertCropModal from '../components/CertCropModal';
 import { compressCertImage } from '../utils/compressCertImage';
-import { clearCached } from '../utils/pageDataCache';
+import { clearCached, getCached, setCached } from '../utils/pageDataCache';
 import '../css/upload.css';
+
+const CACHE_KEY = 'upload-categories';
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_IMAGE_BYTES_BEFORE_COMPRESSION = 2 * 1024 * 1024; // auto-optimized above this
@@ -25,9 +27,10 @@ export default function CertificateUploadScreen() {
   // The page's own scroll container now lives in StudentLayout (the
   // document/body no longer scrolls), so scrolling to top on submit goes
   // through this instead of window.scrollTo.
-  const { scrollToTop } = useOutletContext() || {};
+  const { scrollToTop, refreshToken } = useOutletContext() || {};
+  const lastRefreshToken = useRef(refreshToken);
 
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(getCached(CACHE_KEY) ?? []);
   const [categoryId, setCategoryId] = useState('');
   const [subcategories, setSubcategories] = useState([]);
   const [subcategoryName, setSubcategoryName] = useState('');
@@ -63,11 +66,26 @@ export default function CertificateUploadScreen() {
   const skipSubcategoryReset = useRef(false);
 
   useEffect(() => {
+    // Reuse cached categories on a plain remount (e.g. swiping back to this
+    // tab); only hit the network on first-ever load or when the global
+    // refresh button bumps refreshToken. Categories change rarely (admin
+    // only), so this is safe to hold onto across swipes.
+    const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
+    lastRefreshToken.current = refreshToken;
+    const existing = getCached(CACHE_KEY);
+    if (existing && !isRefresh) {
+      setCategories(existing);
+      return;
+    }
     axiosInstance
       .get('/categories')
-      .then(res => setCategories(res.data.categories || []))
+      .then(res => {
+        const next = res.data.categories || [];
+        setCategories(next);
+        setCached(CACHE_KEY, next);
+      })
       .catch(() => alert('Failed to fetch categories'));
-  }, []);
+  }, [refreshToken]);
 
   useEffect(() => {
     if (!categoryId) {

@@ -1,12 +1,20 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Loader2, Award, Eye, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import tutorAxios from '../api/tutorAxios';
 import CertModal from '../components/CertModal';
+import { getCached, setCached, clearCached } from '../utils/pageDataCache';
 import '../css/ApprovedCertificates.css';
 
+const CACHE_KEY = 'tutor-approved';
+
 export default function ApprovedCertificates() {
-  const [certificates, setCertificates] = useState([]);
-  const [loading, setLoading]           = useState(true);
+  const { refreshToken } = useOutletContext() || {};
+  const lastRefreshToken = useRef(refreshToken);
+
+  const cached = getCached(CACHE_KEY);
+  const [certificates, setCertificates] = useState(cached ?? []);
+  const [loading, setLoading]           = useState(!cached);
   const [search, setSearch]             = useState('');
   const [modalUrl, setModalUrl]         = useState(null);
   const [modalFile, setModalFile]       = useState('');
@@ -24,12 +32,26 @@ export default function ApprovedCertificates() {
       .then(res => {
         const approved = (res.data.certificates || []).filter(c => c.status === 'approved');
         setCertificates(approved);
+        setCached(CACHE_KEY, approved);
       })
       .catch(err => console.error(err))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchApproved(); }, []);
+  useEffect(() => {
+    // Reuse cached data on a plain remount (e.g. tapping back to this tab);
+    // only hit the network on first-ever load or when the global refresh
+    // button bumps refreshToken.
+    const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
+    lastRefreshToken.current = refreshToken;
+    const existing = getCached(CACHE_KEY);
+    if (existing && !isRefresh) {
+      setCertificates(existing);
+      setLoading(false);
+      return;
+    }
+    fetchApproved();
+  }, [refreshToken]);
 
   // Lock the background page scroll whenever a modal is open — otherwise
   // touch-scrolling inside the modal also scrolls the certificate list behind it.
@@ -106,7 +128,16 @@ export default function ApprovedCertificates() {
     setConfirmId(null);
     try {
       await tutorAxios.post(`/tutors/certificates/${certId}/revert-to-pending`);
-      setCertificates(prev => prev.filter(c => c._id !== certId));
+      setCertificates(prev => {
+        const next = prev.filter(c => c._id !== certId);
+        setCached(CACHE_KEY, next);
+        return next;
+      });
+      // Reverting changes the student's total points and moves the
+      // certificate back into the Pending queue — invalidate those cached
+      // pages so switching tabs doesn't show stale numbers.
+      clearCached('tutor-students');
+      clearCached('tutor-pending');
     } catch (err) {
       console.error('Revert failed:', err);
       alert(err?.response?.data?.error || 'Failed to revert certificate. Please try again.');
