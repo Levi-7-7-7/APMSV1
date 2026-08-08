@@ -8,7 +8,7 @@ import {
   getTutorTicketInbox, getTutorOwnTickets, createTutorTicket,
   resolveTicketAsTutor, forwardTicketToAdmin, markTutorTicketSeen, markTutorTicketSeenNew,
 } from '../utils/ticketApi';
-import { getCached, setCached } from '../utils/pageDataCache';
+import { getCached, setCached, isSessionCached } from '../utils/pageDataCache';
 import '../css/TutorTickets.css';
 
 const CACHE_KEY = 'tutor-tickets';
@@ -83,8 +83,13 @@ export default function TutorTickets() {
     // button bumps refreshToken.
     const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
     lastRefreshToken.current = refreshToken;
+    // False on a cold start even though this component's top-level
+    // getCached(CACHE_KEY) call (for instant paint) has already run —
+    // that's just a passive read, not a real fetch, so it doesn't mark
+    // the key session-fetched. See pageDataCache.js for why.
+    const alreadySessionCached = isSessionCached(CACHE_KEY);
     const existing = getCached(CACHE_KEY);
-    if (existing && !isRefresh) {
+    if (existing && !isRefresh && alreadySessionCached) {
       setInbox(existing.inbox ?? []);
       setMine(existing.mine ?? []);
       setLoading(false);

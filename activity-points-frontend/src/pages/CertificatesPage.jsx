@@ -10,7 +10,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import useStudentTabContext from '../context/StudentTabContext';
 import CertModal from '../components/CertModal';
 import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
-import { getCached, setCached } from '../utils/pageDataCache';
+import { getCached, setCached, isSessionCached } from '../utils/pageDataCache';
 
 const CACHE_KEY = 'certificatesPage';
 
@@ -54,8 +54,13 @@ export default function CertificatesPage() {
     // button bumps refreshToken.
     const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
     lastRefreshToken.current = refreshToken;
+    // False on a cold start even though this component's top-level
+    // getCached(CACHE_KEY) call (for instant paint) has already run —
+    // that's just a passive read, not a real fetch, so it doesn't mark
+    // the key session-fetched. See pageDataCache.js for why.
+    const alreadySessionCached = isSessionCached(CACHE_KEY);
     const existing = getCached(CACHE_KEY);
-    if (existing && !isRefresh) {
+    if (existing && !isRefresh && alreadySessionCached) {
       setCertificates(existing.certificates);
       setCategories(existing.categories);
       setUser(existing.user);

@@ -6,7 +6,7 @@ import axiosInstance from '../api/axiosInstance';
 import { ArrowLeft, Award, Paperclip, Search, X, Calendar } from 'lucide-react';
 import CertCropModal from '../components/CertCropModal';
 import { compressCertImage } from '../utils/compressCertImage';
-import { clearCached, getCached, setCached } from '../utils/pageDataCache';
+import { clearCached, getCached, setCached, isSessionCached } from '../utils/pageDataCache';
 import '../css/upload.css';
 
 const CACHE_KEY = 'upload-categories';
@@ -75,8 +75,13 @@ export default function CertificateUploadScreen() {
     // only), so this is safe to hold onto across swipes.
     const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
     lastRefreshToken.current = refreshToken;
+    // False on a cold start even though this component's top-level
+    // getCached(CACHE_KEY) call (for instant paint) has already run —
+    // that's just a passive read, not a real fetch, so it doesn't mark
+    // the key session-fetched. See pageDataCache.js for why.
+    const alreadySessionCached = isSessionCached(CACHE_KEY);
     const existing = getCached(CACHE_KEY);
-    if (existing && !isRefresh) {
+    if (existing && !isRefresh && alreadySessionCached) {
       setCategories(existing);
       return;
     }

@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import useOnlineStatus from '../hooks/useOnlineStatus';
 import { Plus, Image as ImageIcon, X, Clock, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react';
 import { createStudentTicket, getMyTickets, markStudentTicketSeen } from '../utils/ticketApi';
-import { getCached, setCached } from '../utils/pageDataCache';
+import { getCached, setCached, isSessionCached } from '../utils/pageDataCache';
 import '../css/Tickets.css';
 
 const CACHE_KEY = 'tickets';
@@ -56,8 +56,13 @@ export default function Tickets() {
     // button bumps refreshToken.
     const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
     lastRefreshToken.current = refreshToken;
+    // False on a cold start even though this component's top-level
+    // getCached(CACHE_KEY) call (for instant paint) has already run —
+    // that's just a passive read, not a real fetch, so it doesn't mark
+    // the key session-fetched. See pageDataCache.js for why.
+    const alreadySessionCached = isSessionCached(CACHE_KEY);
     const existing = getCached(CACHE_KEY);
-    if (existing && !isRefresh) {
+    if (existing && !isRefresh && alreadySessionCached) {
       setTickets(existing);
       setLoading(false);
       return;

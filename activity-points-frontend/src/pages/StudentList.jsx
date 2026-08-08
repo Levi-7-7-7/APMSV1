@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import tutorAxios from '../api/tutorAxios';
 import useTutorTabContext from '../context/TutorTabContext';
-import { getCached, setCached } from '../utils/pageDataCache';
+import { getCached, setCached, isSessionCached } from '../utils/pageDataCache';
 import {
   Download,
   Search,
@@ -116,8 +116,13 @@ const StudentList = () => {
     // button bumps refreshToken.
     const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
     lastRefreshToken.current = refreshToken;
+    // False on a cold start even though this component's top-level
+    // getCached(CACHE_KEY) call (for instant paint) has already run —
+    // that's just a passive read, not a real fetch, so it doesn't mark
+    // the key session-fetched. See pageDataCache.js for why.
+    const alreadySessionCached = isSessionCached(CACHE_KEY);
     const existing = getCached(CACHE_KEY);
-    if (existing && !isRefresh) {
+    if (existing && !isRefresh && alreadySessionCached) {
       setStudents(existing.students);
       setBatchOptions(existing.batchOptions);
       setBranchOptions(existing.branchOptions);
