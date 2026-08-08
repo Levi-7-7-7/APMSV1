@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -326,8 +327,12 @@ export default function Profile() {
       </div>
 
       {/* Tap-to-enlarge photo viewer — full frame, WhatsApp-style, rather
-          than cropped into the small circular badge used elsewhere. */}
-      {viewerImage && (
+          than cropped into the small circular badge used elsewhere.
+          Portaled to document.body: this page renders inside StudentLayout's
+          animated <motion.div> route transition, and framer-motion's x
+          animation applies a CSS transform to that wrapper — which breaks
+          position:fixed the same way the swipe track's transform did. */}
+      {viewerImage && createPortal(
         <div className="profile-viewer-backdrop" onClick={() => setViewerImage(null)}>
           <button
             className="profile-viewer-close"
@@ -340,7 +345,8 @@ export default function Profile() {
           <div className="profile-viewer-photo" onClick={e => e.stopPropagation()}>
             <img src={viewerImage} alt="Enlarged profile" className="profile-viewer-img no-img-callout" {...noImgCallout} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Interactive crop tool shown before confirming a new photo upload */}

@@ -14,6 +14,7 @@
  *   />
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2, X, ZoomIn } from 'lucide-react';
 import '../css/PhotoCropModal.css';
 
@@ -155,7 +156,13 @@ export default function PhotoCropModal({ file, uploading, error, onCancel, onCon
 
   if (!file) return null;
 
-  return (
+  // Portaled to document.body — Profile.jsx and TutorProfile.jsx (two of
+  // this modal's three call sites) render inside their layout's animated
+  // <motion.div> route transition, whose CSS transform breaks
+  // position:fixed the same way the swipe track's transform did elsewhere
+  // in the app. AdminPanel isn't affected, but portaling here is harmless
+  // and keeps all three call sites consistent.
+  return createPortal(
     <div className="pcm-backdrop" onClick={() => !uploading && onCancel()}>
       <div className="pcm-modal" onClick={e => e.stopPropagation()}>
         <h3 className="pcm-title">Adjust photo</h3>
@@ -221,6 +228,7 @@ export default function PhotoCropModal({ file, uploading, error, onCancel, onCon
           <X size={18} />
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

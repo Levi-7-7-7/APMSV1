@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import tutorAxios from '../api/tutorAxios';
 import { Loader2, Award, Info, ArrowLeft, Eye, CheckCircle, XCircle, Trash2, X } from 'lucide-react';
@@ -136,7 +137,10 @@ const StudentDetails = () => {
         />
       )}
 
-      {avatarExpanded && studentInfo?.profilePhoto && (
+      {/* Portaled — this page renders inside TutorDashboard's animated
+          <motion.div> route transition, whose transform breaks
+          position:fixed the same way the swipe track's transform did. */}
+      {avatarExpanded && studentInfo?.profilePhoto && createPortal(
         <div className="avatar-overlay" onClick={() => setAvatarExpanded(false)}>
           <button
             className="avatar-overlay-close"
@@ -153,7 +157,8 @@ const StudentDetails = () => {
               className="avatar-overlay-img"
             />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <div className="student-details-topbar">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -280,8 +281,11 @@ export default function TutorProfile() {
       </div>
 
       {/* Tap-to-enlarge photo viewer, shown as a circle to match how the
-          photo appears everywhere else in the app */}
-      {viewerImage && (
+          photo appears everywhere else in the app. Portaled for the same
+          reason as Profile.jsx's viewer — this page renders inside
+          TutorDashboard's animated <motion.div> route transition, whose
+          transform breaks position:fixed. */}
+      {viewerImage && createPortal(
         <div className="tprofile-viewer-backdrop" onClick={() => setViewerImage(null)}>
           <button
             className="tprofile-viewer-close"
@@ -294,7 +298,8 @@ export default function TutorProfile() {
           <div className="tprofile-viewer-photo" onClick={e => e.stopPropagation()}>
             <img src={viewerImage} alt="Enlarged profile" className="tprofile-viewer-img no-img-callout" {...noImgCallout} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Interactive crop tool shown before confirming a new photo upload */}
