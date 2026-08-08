@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { MoreVertical, User, LogOut, X } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
+import useSwipeNavigation from '../hooks/useSwipeNavigation';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
@@ -18,11 +20,49 @@ const PAGE_TITLES = {
   '/student/profile': 'Profile',
 };
 
+// Slide direction is based on tab order, not the browser's back/forward
+// history — swiping/tapping "forward" through the tabs slides the new page
+// in from the right, "backward" slides it in from the left, matching how
+// native tab bars (and iOS/Android nav) animate.
+const pageVariants = {
+  enter: (direction) => ({ x: direction >= 0 ? '100%' : '-100%', opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (direction) => ({ x: direction >= 0 ? '-100%' : '100%', opacity: 0 }),
+};
+const pageTransition = { duration: 0.2, ease: [0.4, 0, 0.2, 1] };
+
 const StudentLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const menuRef = useRef(null);
   const pageTitle = PAGE_TITLES[location.pathname] || 'Dashboard';
+
+  // Bottom-nav tab order — swiping left/right moves between these, same as
+  // tapping the corresponding nav icon. Must match BottomNav.jsx's navItems.
+  const SWIPE_TAB_PATHS = [
+    '/student',
+    '/student/upload-certificate',
+    '/student/certificates',
+    '/student/tickets',
+  ];
+  const { dragX, isDragging, swipeHandlers } = useSwipeNavigation(
+    SWIPE_TAB_PATHS,
+    location.pathname,
+    (path) => navigate(path)
+  );
+
+  // Tracks which tab we were just on, so we know which direction to slide
+  // toward for ANY navigation — swipe gesture, bottom-nav tap, or otherwise
+  // — not just the swipe gesture itself.
+  const currentTabIndex = SWIPE_TAB_PATHS.indexOf(location.pathname);
+  const prevTabIndexRef = useRef(currentTabIndex);
+  const direction =
+    currentTabIndex === -1 || prevTabIndexRef.current === -1
+      ? 0
+      : Math.sign(currentTabIndex - prevTabIndexRef.current);
+  useEffect(() => {
+    prevTabIndexRef.current = currentTabIndex;
+  }, [currentTabIndex]);
 
   const [userName, setUserName] = useState(() => {
     // Try userData first (set after dashboard fetch), fall back to userName key
@@ -223,10 +263,25 @@ const StudentLayout = () => {
       </header>
 
       {/* Nested student pages */}
-      <main className="dashboard-main">
-        <NotificationPermissionBanner role="student" />
-        <InstallAppBanner />
-        <Outlet context={{ refreshTicketUnreadCount }} />
+      <main
+        className={`dashboard-main${isDragging ? ' dashboard-main-dragging' : ''}`}
+        {...swipeHandlers}
+      >
+        <AnimatePresence initial={false} custom={direction} mode="wait">
+          <motion.div
+            key={location.pathname}
+            custom={direction}
+            variants={pageVariants}
+            initial="enter"
+            animate={isDragging ? { x: dragX, opacity: 1, transition: { duration: 0 } } : 'center'}
+            exit="exit"
+            transition={pageTransition}
+          >
+            <NotificationPermissionBanner role="student" />
+            <InstallAppBanner />
+            <Outlet context={{ refreshTicketUnreadCount }} />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Bottom navigation */}

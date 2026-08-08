@@ -312,6 +312,11 @@
 }
 
 /* Main dashboard */
+.dashboard-main {
+  touch-action: pan-y; /* let vertical scroll pass through; horizontal is handled by the swipe hook */
+  overflow-x: hidden; /* clip the slide-in/out animation instead of causing a horizontal scrollbar */
+}
+
 .dashboard-main h3 {
   font-weight: 700;
   color: var(--slate-800);
