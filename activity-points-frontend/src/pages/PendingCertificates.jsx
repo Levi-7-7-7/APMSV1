@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Loader2, Award, Eye, AlertCircle, X, Edit2, Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import tutorAxios from '../api/tutorAxios';
@@ -322,8 +323,11 @@ const PendingCertificates = () => {
         />
       )}
 
-      {/* Reject reason modal */}
-      {rejectingCert && (
+      {/* Reject reason modal — portaled to document.body so this fixed
+          overlay positions against the viewport instead of the swipeable
+          tab track (which has its own CSS transform; see PendingCertificates
+          bug notes). */}
+      {rejectingCert && createPortal(
         <div className="reject-overlay" onClick={e => { if (e.target === e.currentTarget) closeRejectModal(); }}>
           <div className="reject-modal">
             <div className="reject-modal-header">
@@ -357,11 +361,13 @@ const PendingCertificates = () => {
               <button className="reject-confirm-btn" onClick={submitReject}>Reject Certificate</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Edit category/subcategory/level modal */}
-      {editingCert && (
+      {/* Edit category/subcategory/level modal — also portaled, same reason
+          as the reject modal above. */}
+      {editingCert && createPortal(
         <div className="reject-overlay" onClick={e => { if (e.target === e.currentTarget) closeEditModal(); }}>
           <div className="reject-modal" style={{ maxWidth: 460 }}>
             <div className="reject-modal-header">
@@ -459,7 +465,8 @@ const PendingCertificates = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Student list (default view) or a single student's certificate queue */}

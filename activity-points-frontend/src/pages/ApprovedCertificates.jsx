@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2, Award, Eye, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import tutorAxios from '../api/tutorAxios';
 import CertModal from '../components/CertModal';
@@ -168,8 +169,10 @@ export default function ApprovedCertificates() {
         />
       )}
 
-      {/* Confirm revert overlay */}
-      {confirmId && (
+      {/* Confirm revert overlay — portaled to document.body so this fixed
+          overlay positions against the viewport instead of the swipeable
+          tab track, which has its own CSS transform. */}
+      {confirmId && createPortal(
         <div className="approved-confirm-backdrop">
           <div className="approved-confirm-modal">
             <h3 className="approved-confirm-title">Revert to Pending?</h3>
@@ -191,7 +194,8 @@ export default function ApprovedCertificates() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <input

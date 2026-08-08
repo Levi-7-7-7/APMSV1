@@ -101,7 +101,7 @@
 /* Content */
 .cert-modal-body {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -109,6 +109,7 @@
   background: var(--slate-800);
   min-height: 300px;
   position: relative;
+  touch-action: none; /* pinch/pan is handled entirely in JS — see CertModal.jsx */
 }
 
 .cert-modal-img {
@@ -117,6 +118,8 @@
   object-fit: contain;
   display: block;
   border-radius: 4px;
+  touch-action: none;
+  will-change: transform;
 }
 
 .cert-modal-iframe {

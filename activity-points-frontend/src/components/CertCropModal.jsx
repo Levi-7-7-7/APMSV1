@@ -190,8 +190,29 @@ export default function CertCropModal({ file, busy, error, onCancel, onConfirm }
   // containing block for `position: fixed` descendants, which would
   // otherwise stretch this backdrop across all four tabs instead of just
   // the viewport.
+  //
+  // A portal only detaches from the DOM tree, not the React tree — touch
+  // events fired inside it still bubble to this component's React
+  // ancestors (the swipeable tab track's own touch handlers), even
+  // though this backdrop isn't a DOM descendant of that track. The drag-
+  // to-reposition gesture above is driven entirely by Pointer Events
+  // (onPointerDown/Move/Up), but browsers fire the underlying native
+  // touch events alongside those regardless, so without stopping
+  // propagation here a finger-drag to reposition the certificate would
+  // also slide the swipeable page behind this modal. stopPropagation on
+  // every touch event at this outermost wrapper blocks that without
+  // touching the pointer-event drag logic itself.
+  const stopTouchBubble = e => e.stopPropagation();
+
   return createPortal(
-    <div className="ccm-backdrop" onClick={() => !busy && onCancel()}>
+    <div
+      className="ccm-backdrop"
+      onClick={() => !busy && onCancel()}
+      onTouchStart={stopTouchBubble}
+      onTouchMove={stopTouchBubble}
+      onTouchEnd={stopTouchBubble}
+      onTouchCancel={stopTouchBubble}
+    >
       <div className="ccm-modal" onClick={e => e.stopPropagation()}>
         <h3 className="ccm-title">Adjust certificate</h3>
         <p className="ccm-subtitle">Drag to reposition, use the slider to zoom — or just confirm to use it as-is.</p>
