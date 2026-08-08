@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { MoreVertical, User, LogOut, X, Bell, RefreshCw, Palette } from 'lucide-react';
+import { MoreVertical, User, LogOut, X, Bell, RefreshCw, Palette, MessageSquare } from 'lucide-react';
 import TutorBottomNav from '../components/TutorBottomNav';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
@@ -30,7 +30,7 @@ const TutorDashboard = () => {
 
   // Determine active tab
   const activeTab = React.useMemo(() => {
-    return ['students', 'upload', 'pending', 'approved', 'tickets'].includes(path)
+    return ['students', 'upload', 'pending', 'approved'].includes(path)
       ? path
       : 'students';
   }, [path]);
@@ -332,6 +332,20 @@ const TutorDashboard = () => {
               <div className="tutor-topbar-dropdown-divider" role="separator" />
               <button
                 role="menuitem"
+                onClick={() => { setMenuOpen(false); navigate('/tutor/dashboard/tickets'); }}
+                type="button"
+              >
+                <MessageSquare size={18} />
+                <span>Tickets</span>
+                {(ticketUnreadCount + newTicketCount) > 0 && (
+                  <span className="tutor-topbar-dropdown-badge" aria-label={`${ticketUnreadCount + newTicketCount} ticket updates`}>
+                    {(ticketUnreadCount + newTicketCount) > 99 ? '99+' : ticketUnreadCount + newTicketCount}
+                  </span>
+                )}
+              </button>
+              <div className="tutor-topbar-dropdown-divider" role="separator" />
+              <button
+                role="menuitem"
                 onClick={() => { setMenuOpen(false); navigate('/tutor/dashboard/appearance'); }}
                 type="button"
               >
@@ -367,7 +381,6 @@ const TutorDashboard = () => {
       <TutorBottomNav
         activeTab={activeTab}
         pendingCount={pendingCount}
-        ticketUnreadCount={ticketUnreadCount + newTicketCount}
       />
 
       {/* First-login nudge to change the admin-set password — auto-hides once firstTimePasswordSet flips to true */}

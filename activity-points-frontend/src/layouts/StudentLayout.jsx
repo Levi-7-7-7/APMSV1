@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { MoreVertical, User, LogOut, X, RefreshCw, Palette } from 'lucide-react';
+import { MoreVertical, User, LogOut, X, RefreshCw, Palette, MessageSquare } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import useSwipeNavigation from '../hooks/useSwipeNavigation';
 import useOnlineStatus from '../hooks/useOnlineStatus';
@@ -16,20 +16,20 @@ import { StudentTabProvider } from '../context/StudentTabContext';
 import Dashboard from '../pages/Dashboard';
 import CertificateUploadScreen from '../pages/UploadCertificates';
 import CertificatesPage from '../pages/CertificatesPage';
-import Tickets from '../pages/Tickets';
 import { noImgCallout } from '../utils/noImgCallout';
 import '../css/StudentDashboard.css';
 
-// The four swipeable tabs, mounted directly (side by side, in a horizontal
+// The three swipeable tabs, mounted directly (side by side, in a horizontal
 // track) instead of one-at-a-time through react-router's <Outlet/>. This is
 // what lets a partial drag reveal a sliver of the neighboring tab, like
 // WhatsApp's chat-list/status/calls pager, instead of only animating the
-// currently-matched route.
+// currently-matched route. Tickets used to be a fourth swipe tab but now
+// lives behind the three-dot menu (see dropdown below) alongside Profile
+// and Appearance, so it renders through the plain <Outlet/> branch instead.
 const SWIPE_TABS = [
   { path: '/student', Component: Dashboard },
   { path: '/student/upload-certificate', Component: CertificateUploadScreen },
   { path: '/student/certificates', Component: CertificatesPage },
-  { path: '/student/tickets', Component: Tickets },
 ];
 
 const PAGE_TITLES = {
@@ -169,11 +169,11 @@ const StudentLayout = () => {
     window.setTimeout(() => setRefreshing(false), 700);
   }, [isOnline]);
 
-  // "Ticket solved" badge on the bottom-nav Tickets icon — a resolved
-  // ticket the student hasn't opened yet. Push notifications already tell
-  // the student the moment a ticket is resolved, so this isn't polled on a
-  // timer — it's fetched once on app load and again whenever the top-bar
-  // refresh button is tapped (same as every other cached page).
+  // "Ticket solved" badge on the Tickets item in the three-dot dropdown —
+  // a resolved ticket the student hasn't opened yet. Push notifications
+  // already tell the student the moment a ticket is resolved, so this isn't
+  // polled on a timer — it's fetched once on app load and again whenever
+  // the top-bar refresh button is tapped (same as every other cached page).
   const [ticketUnreadCount, setTicketUnreadCount] = useState(0);
 
   const refreshTicketUnreadCount = React.useCallback(() => {
@@ -335,6 +335,20 @@ const StudentLayout = () => {
               <div className="app-topbar-dropdown-divider" role="separator" />
               <button
                 role="menuitem"
+                onClick={() => { setMenuOpen(false); navigate('/student/tickets'); }}
+                type="button"
+              >
+                <MessageSquare size={18} />
+                <span>Tickets</span>
+                {ticketUnreadCount > 0 && (
+                  <span className="app-topbar-dropdown-badge" aria-label={`${ticketUnreadCount} resolved tickets`}>
+                    {ticketUnreadCount > 99 ? '99+' : ticketUnreadCount}
+                  </span>
+                )}
+              </button>
+              <div className="app-topbar-dropdown-divider" role="separator" />
+              <button
+                role="menuitem"
                 onClick={() => { setMenuOpen(false); navigate('/student/appearance'); }}
                 type="button"
               >
@@ -418,7 +432,7 @@ const StudentLayout = () => {
       </main>
 
       {/* Bottom navigation */}
-      <BottomNav ticketUnreadCount={ticketUnreadCount} />
+      <BottomNav />
 
       {/* First-login nudge to change the default password — auto-hides once firstTimePasswordSet flips to true */}
       <PasswordSetupPrompt show={firstTimePasswordSet === false} resetPath="/forgot-password" />

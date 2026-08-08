@@ -253,6 +253,22 @@
   color: var(--red-600);
 }
 
+.tutor-topbar-dropdown-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--red-600);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Slim greeting block under the fixed top bar (avatar/logout now live there) */
 .tutor-greeting {
   margin-bottom: 1.5rem;

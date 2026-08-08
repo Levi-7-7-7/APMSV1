@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import useStudentTabContext from '../context/StudentTabContext';
+import { useOutletContext } from 'react-router-dom';
 import useOnlineStatus from '../hooks/useOnlineStatus';
 import { Plus, Image as ImageIcon, X, Clock, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react';
 import { createStudentTicket, getMyTickets, markStudentTicketSeen } from '../utils/ticketApi';
@@ -17,7 +17,7 @@ function StatusBadge({ status }) {
 }
 
 export default function Tickets() {
-  const { refreshTicketUnreadCount, refreshToken } = useStudentTabContext();
+  const { refreshTicketUnreadCount, refreshToken } = useOutletContext() || {};
   const isOnline = useOnlineStatus();
   const lastRefreshToken = useRef(refreshToken);
   const cached = getCached(CACHE_KEY);
