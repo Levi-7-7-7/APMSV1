@@ -120,6 +120,26 @@ svg.icon-spin {
   to { transform: rotate(360deg); }
 }
 
+/* ============================================================
+   PROFILE / AVATAR PHOTOS — no native save/share callout
+   Applied to every real (non-fallback) profile photo <img> across the
+   app — topbar avatars, table thumbnails, and the tap-to-enlarge
+   viewers. Stops the long-press "Save Image / Open Image in New Tab /
+   Copy Image" popup on mobile browsers, and the equivalent right-click
+   context menu and drag-to-save on desktop. Must be paired with
+   `onContextMenu={(e) => e.preventDefault()}` and `draggable={false}`
+   on the element itself — CSS alone can't block the desktop
+   right-click menu. See utils/noImgCallout.js for the ready-made prop
+   bundle.
+   ============================================================ */
+.no-img-callout {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+  user-select: none;
+  pointer-events: auto; /* still tappable/clickable — only the callout is blocked */
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
@@ -286,11 +306,47 @@ svg.icon-spin {
 }
 
 /* ============================================================
+   CUSTOM THEME — FALLBACK ONLY
+   The real values for a user's custom theme are generated at runtime
+   from their picked accent color + light/dark base (see
+   context/ThemeContext.jsx, applyCustomVars()) and applied as inline
+   CSS variables on <html>, which always win over this block. This
+   just mirrors the Light theme so there's a sane, non-broken look for
+   the brief moment before that JS runs (e.g. first paint).
+   ============================================================ */
+:root[data-theme="custom"] {
+  color-scheme: light;
+  --surface: #ffffff;
+  --on-color: #ffffff;
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --blue-tint-25: #f0f4f8;
+  --blue-tint-50: #eff6ff;
+  --blue-tint-75: #f0f9ff;
+  --blue-tint-100: #dbeafe;
+  --green-tint-100: #d1fae5;
+  --blue-800-text: #1e40af;
+  --glass-surface-strong: rgba(255, 255, 255, 0.94);
+  --glass-surface: rgba(255, 255, 255, 0.85);
+  --glass-overlay: rgba(255, 255, 255, 0.7);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --shadow-color-strong: rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================================
    APPEARANCE / THEME SWITCHER
-   Shared by the three-dot dropdown menus on the student, tutor and
-   admin dashboards (see components/ThemeSwitcher.jsx). Kept here so
-   all three menus stay visually consistent without duplicating CSS
-   in each page's stylesheet.
+   Shared by the full-page Appearance screen (see pages/AppearanceSettings.jsx),
+   reached from the three-dot dropdown menus on the student, tutor and
+   admin dashboards. Kept here so all three surfaces stay visually
+   consistent without duplicating CSS in each page's stylesheet.
    ============================================================ */
 .theme-switcher {
   padding: 0.55rem 1rem 0.7rem;

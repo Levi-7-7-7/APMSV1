@@ -14,6 +14,7 @@ import {
 import axiosInstance from '../api/axiosInstance';
 import PhotoCropModal from '../components/PhotoCropModal';
 import { getCached, setCached } from '../utils/pageDataCache';
+import { noImgCallout } from '../utils/noImgCallout';
 import '../css/Profile.css';
 
 const CACHE_KEY = 'profile';
@@ -202,8 +203,9 @@ export default function Profile() {
             <img
               src={user.profilePhoto}
               alt={userName}
-              className="profile-avatar-img profile-avatar-clickable"
+              className="profile-avatar-img profile-avatar-clickable no-img-callout"
               onClick={() => setViewerImage(user.profilePhoto)}
+              {...noImgCallout}
             />
           ) : (
             <div
@@ -318,8 +320,8 @@ export default function Profile() {
         )}
       </div>
 
-      {/* Tap-to-enlarge photo viewer, shown as a circle to match how the
-          photo appears everywhere else in the app */}
+      {/* Tap-to-enlarge photo viewer — full frame, WhatsApp-style, rather
+          than cropped into the small circular badge used elsewhere. */}
       {viewerImage && (
         <div className="profile-viewer-backdrop" onClick={() => setViewerImage(null)}>
           <button
@@ -330,8 +332,8 @@ export default function Profile() {
           >
             <X size={22} />
           </button>
-          <div className="profile-viewer-circle" onClick={e => e.stopPropagation()}>
-            <img src={viewerImage} alt="Enlarged profile" className="profile-viewer-img" />
+          <div className="profile-viewer-photo" onClick={e => e.stopPropagation()}>
+            <img src={viewerImage} alt="Enlarged profile" className="profile-viewer-img no-img-callout" {...noImgCallout} />
           </div>
         </div>
       )}
@@ -367,8 +369,9 @@ function StaffRow({ person, onEnlarge, showBatch = false }) {
         <img
           src={person.profilePhoto}
           alt={person.name}
-          className="profile-tutor-avatar-img profile-avatar-clickable"
+          className="profile-tutor-avatar-img profile-avatar-clickable no-img-callout"
           onClick={() => onEnlarge(person.profilePhoto)}
+          {...noImgCallout}
         />
       ) : (
         <div className="profile-tutor-avatar">

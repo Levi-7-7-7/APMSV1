@@ -7,6 +7,7 @@ import UploadCertificates from './pages/UploadCertificates';
 import CertificatesPage from './pages/CertificatesPage';
 import Tickets from './pages/Tickets';
 import Profile from './pages/Profile';
+import AppearanceSettings from './pages/AppearanceSettings';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import PrivateRoute from './components/PrivateRoute';
@@ -55,6 +56,7 @@ function App() {
           <Route path="certificates" element={<CertificatesPage />} />
           <Route path="tickets" element={<Tickets />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="appearance" element={<AppearanceSettings />} />
         </Route>
 
         {/* ===== TUTOR ===== */}
@@ -67,6 +69,7 @@ function App() {
           <Route path="approved" element={<ApprovedCertificates />} />
           <Route path="tickets" element={<TutorTickets />} />
           <Route path="profile" element={<TutorProfile />} />
+          <Route path="appearance" element={<AppearanceSettings />} />
         </Route>
 
         {/* ===== ADMIN ===== */}

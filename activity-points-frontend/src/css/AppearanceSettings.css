@@ -1,0 +1,270 @@
+.apps-page {
+  min-height: 100vh;
+  background: var(--slate-50);
+  padding: 0 1rem 3rem;
+  box-sizing: border-box;
+}
+
+.apps-page-embedded {
+  min-height: 0;
+  background: transparent;
+  padding: 0.25rem 0 1rem;
+}
+
+.apps-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: max(16px, env(safe-area-inset-top)) 0 1.25rem;
+}
+
+.apps-back-btn {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface);
+  color: var(--slate-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 4px var(--shadow-color);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.apps-back-btn:hover,
+.apps-back-btn:active {
+  background: var(--slate-100);
+}
+
+.apps-hero-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  margin: 0;
+}
+
+.apps-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--slate-500);
+  margin: 0 0 0.6rem;
+}
+
+.apps-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 520px;
+}
+
+.apps-option {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1.5px solid var(--slate-200);
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.apps-option:hover {
+  border-color: var(--slate-300);
+}
+
+.apps-option:active {
+  transform: scale(0.99);
+}
+
+.apps-option.active {
+  border-color: var(--blue-600);
+  box-shadow: 0 0 0 3px var(--blue-tint-100);
+}
+
+.apps-option-icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.apps-swatch-light {
+  background: linear-gradient(135deg, #f8fafc, #cbd5e1);
+  color: #334155;
+}
+
+.apps-swatch-dark {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+}
+
+.apps-swatch-teal {
+  background: linear-gradient(135deg, #14b8a6, #0f3d3e);
+}
+
+.apps-swatch-system {
+  background: linear-gradient(135deg, var(--blue-500), var(--blue-700));
+}
+
+.apps-option-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.apps-option-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--slate-800);
+}
+
+.apps-option-desc {
+  font-size: 0.78rem;
+  color: var(--slate-500);
+}
+
+.apps-option-check {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--blue-600);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Create-your-own-theme editor ── */
+.apps-section-label-spaced {
+  margin-top: 1.75rem;
+}
+
+.apps-custom-editor {
+  max-width: 520px;
+  background: var(--surface);
+  border: 1.5px solid var(--slate-200);
+  border-radius: 14px;
+  padding: 1.1rem 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.apps-custom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.apps-custom-row label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--slate-700);
+}
+
+.apps-color-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.apps-color-input-wrap input[type='color'] {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1.5px solid var(--slate-200);
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+}
+
+/* Native color swatch fills the input on most browsers; strip default
+   inset chrome so it reads as a clean rounded square. */
+.apps-color-input-wrap input[type='color']::-webkit-color-swatch-wrapper {
+  padding: 3px;
+}
+
+.apps-color-input-wrap input[type='color']::-webkit-color-swatch {
+  border: none;
+  border-radius: 7px;
+}
+
+.apps-color-hex {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--slate-500);
+  letter-spacing: 0.02em;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+}
+
+.apps-base-toggle {
+  display: flex;
+  gap: 0.35rem;
+  background: var(--slate-100);
+  border-radius: 10px;
+  padding: 0.25rem;
+}
+
+.apps-base-toggle button {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--slate-500);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.apps-base-toggle button.active {
+  background: var(--surface);
+  color: var(--slate-800);
+  box-shadow: 0 1px 4px var(--shadow-color);
+}
+
+.apps-custom-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--slate-500);
+}
+
+.apps-custom-apply-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  background: var(--blue-600);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.apps-custom-apply-btn:hover {
+  background: var(--blue-700);
+}

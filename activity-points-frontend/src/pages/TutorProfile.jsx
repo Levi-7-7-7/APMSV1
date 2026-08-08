@@ -15,6 +15,7 @@ import {
 import tutorAxios from '../api/tutorAxios';
 import PhotoCropModal from '../components/PhotoCropModal';
 import { getCached, setCached } from '../utils/pageDataCache';
+import { noImgCallout } from '../utils/noImgCallout';
 import '../css/TutorProfile.css';
 
 const CACHE_KEY = 'tutor-profile';
@@ -191,8 +192,9 @@ export default function TutorProfile() {
             <img
               src={localPhoto}
               alt={tutorName}
-              className="tprofile-avatar-img tprofile-avatar-clickable"
+              className="tprofile-avatar-img tprofile-avatar-clickable no-img-callout"
               onClick={() => setViewerImage(localPhoto)}
+              {...noImgCallout}
             />
           ) : (
             <div
@@ -284,8 +286,8 @@ export default function TutorProfile() {
           >
             <X size={22} />
           </button>
-          <div className="tprofile-viewer-circle" onClick={e => e.stopPropagation()}>
-            <img src={viewerImage} alt="Enlarged profile" className="tprofile-viewer-img" />
+          <div className="tprofile-viewer-photo" onClick={e => e.stopPropagation()}>
+            <img src={viewerImage} alt="Enlarged profile" className="tprofile-viewer-img no-img-callout" {...noImgCallout} />
           </div>
         </div>
       )}

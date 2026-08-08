@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { MoreVertical, User, LogOut, X, RefreshCw } from 'lucide-react';
+import { MoreVertical, User, LogOut, X, RefreshCw, Palette } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import useSwipeNavigation from '../hooks/useSwipeNavigation';
 import useOnlineStatus from '../hooks/useOnlineStatus';
-import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import InstallAppBanner from '../components/InstallAppBanner';
@@ -18,6 +17,7 @@ import Dashboard from '../pages/Dashboard';
 import CertificateUploadScreen from '../pages/UploadCertificates';
 import CertificatesPage from '../pages/CertificatesPage';
 import Tickets from '../pages/Tickets';
+import { noImgCallout } from '../utils/noImgCallout';
 import '../css/StudentDashboard.css';
 
 // The four swipeable tabs, mounted directly (side by side, in a horizontal
@@ -291,7 +291,7 @@ const StudentLayout = () => {
           type="button"
         >
           {profilePhoto ? (
-            <img src={profilePhoto} alt={userName} />
+            <img src={profilePhoto} alt={userName} className="no-img-callout" {...noImgCallout} />
           ) : (
             <span className="avatar-fallback">{avatarInitials}</span>
           )}
@@ -333,7 +333,14 @@ const StudentLayout = () => {
                 <span>Profile</span>
               </button>
               <div className="app-topbar-dropdown-divider" role="separator" />
-              <ThemeSwitcher />
+              <button
+                role="menuitem"
+                onClick={() => { setMenuOpen(false); navigate('/student/appearance'); }}
+                type="button"
+              >
+                <Palette size={18} />
+                <span>Appearance</span>
+              </button>
               <div className="app-topbar-dropdown-divider" role="separator" />
               <button
                 role="menuitem"
@@ -433,9 +440,12 @@ const StudentLayout = () => {
           >
             <X size={22} />
           </button>
-          <div className="avatar-lightbox-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className={`avatar-lightbox-content${profilePhoto ? ' avatar-lightbox-content-photo' : ''}`}
+            onClick={(e) => e.stopPropagation()}
+          >
             {profilePhoto ? (
-              <img src={profilePhoto} alt={userName} />
+              <img src={profilePhoto} alt={userName} className="no-img-callout" {...noImgCallout} />
             ) : (
               <span className="avatar-fallback-lg">{avatarInitials}</span>
             )}

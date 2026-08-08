@@ -5,16 +5,17 @@ import * as XLSX from "xlsx";
 import {
   UserPlus, FilePlus, Download, Edit2, Trash2, Plus,
   LogOut, Link2, Users, Layers, GitBranch, Tag, Shield, Search, ArrowRightLeft,
-  History, Filter, ChevronLeft, ChevronRight, MoreVertical, Camera, Loader2, X, MessageSquare, Bell
+  History, Filter, ChevronLeft, ChevronRight, MoreVertical, Camera, Loader2, X, MessageSquare, Bell, Palette
 } from "lucide-react";
 import PhotoCropModal from "../components/PhotoCropModal";
-import ThemeSwitcher from "../components/ThemeSwitcher";
+import AppearanceSettings from "./AppearanceSettings";
 import NotificationPermissionBanner from "../components/NotificationPermissionBanner";
 import OfflineBanner from "../components/OfflineBanner";
 import AdminTickets from "./AdminTickets";
 import { getAdminTicketUnreadCount, getAdminTicketNotifications } from "../utils/ticketApi";
 import { listenForForegroundMessages, syncPushToken, showForegroundNotification } from "../utils/pushNotifications";
 import { clearAllOfflineCaches } from "../utils/pageDataCache";
+import { noImgCallout } from "../utils/noImgCallout";
 import "../css/AdminPanel.css";
 
 // Small circular avatar used throughout the panel (admin/tutor/student
@@ -33,7 +34,7 @@ function getInitials(nameOrEmail) {
 function AvatarThumb({ src, name, onClick }) {
   return (
     <button type="button" className="ap-avatar-thumb" onClick={onClick} aria-label={`View ${name || "profile"} photo`}>
-      {src ? <img src={src} alt={name || "Profile"}/> : <span>{getInitials(name)}</span>}
+      {src ? <img src={src} alt={name || "Profile"} className="no-img-callout" {...noImgCallout}/> : <span>{getInitials(name)}</span>}
     </button>
   );
 }
@@ -823,7 +824,7 @@ export default function AdminPanel() {
     { id: "logs",       label: "Activity Log", desc: "See who did what, and when",                  icon: <History size={15}/>,    bigIcon: <History size={26}/>,    cls: "slate"  },
   ];
 
-  const currentTabLabel = tabs.find(t => t.id === tab)?.label || "Dashboard";
+  const currentTabLabel = tab === "appearance" ? "Appearance" : (tabs.find(t => t.id === tab)?.label || "Dashboard");
 
   // Every individual feature/card inside every section, so the dashboard
   // search can jump straight to "Add Tutor" or "Batch Delete Students"
@@ -890,7 +891,7 @@ export default function AdminPanel() {
             aria-label={adminPhoto ? "View profile photo" : "Add profile photo"}
             type="button"
           >
-            {adminPhoto ? <img src={adminPhoto} alt={adminEmail}/> : <span>{adminInitials}</span>}
+            {adminPhoto ? <img src={adminPhoto} alt={adminEmail} className="no-img-callout" {...noImgCallout}/> : <span>{adminInitials}</span>}
           </button>
           <input ref={adminPhotoInputRef} type="file" accept="image/*" hidden onChange={handleAdminPhotoFileChange}/>
         </div>
@@ -971,7 +972,10 @@ export default function AdminPanel() {
                 <span>Export Tutors</span>
               </button>
               <div className="ap-topbar-dropdown-divider" role="separator" />
-              <ThemeSwitcher />
+              <button role="menuitem" type="button" onClick={() => { setMenuOpen(false); setTab("appearance"); }}>
+                <Palette size={16}/>
+                <span>Appearance</span>
+              </button>
               <div className="ap-topbar-dropdown-divider" role="separator" />
               <button role="menuitem" type="button" className="danger" onClick={() => { setMenuOpen(false); handleLogout(); }}>
                 <LogOut size={16}/>
@@ -1969,6 +1973,11 @@ export default function AdminPanel() {
           />
         )}
 
+        {/* ══════════════ APPEARANCE ══════════════ */}
+        {tab === "appearance" && (
+          <AppearanceSettings onBack={goToDashboard} hideHeader />
+        )}
+
       </div>
 
       {/* Crop tool shown before confirming a newly picked admin photo */}
@@ -1987,9 +1996,12 @@ export default function AdminPanel() {
           <button className="ap-avatar-lightbox-close" onClick={() => setViewerPhoto(null)} aria-label="Close" type="button">
             <X size={22}/>
           </button>
-          <div className="ap-avatar-lightbox-content" onClick={e => e.stopPropagation()}>
+          <div
+            className={`ap-avatar-lightbox-content${viewerPhoto.src ? ' ap-avatar-lightbox-content-photo' : ''}`}
+            onClick={e => e.stopPropagation()}
+          >
             {viewerPhoto.src ? (
-              <img src={viewerPhoto.src} alt={viewerPhoto.name || "Profile"}/>
+              <img src={viewerPhoto.src} alt={viewerPhoto.name || "Profile"} className="no-img-callout" {...noImgCallout}/>
             ) : (
               <span className="ap-avatar-fallback-lg">{getInitials(viewerPhoto.name)}</span>
             )}

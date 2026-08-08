@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { MoreVertical, User, LogOut, X, Bell, RefreshCw } from 'lucide-react';
+import { MoreVertical, User, LogOut, X, Bell, RefreshCw, Palette } from 'lucide-react';
 import TutorBottomNav from '../components/TutorBottomNav';
-import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import InstallAppBanner from '../components/InstallAppBanner';
@@ -11,6 +10,7 @@ import { listenForForegroundMessages, syncPushToken, showForegroundNotification 
 import tutorAxios from '../api/tutorAxios';
 import { getTutorTicketUnreadCount, getTutorTicketNewCount, getTutorTicketNotifications } from '../utils/ticketApi';
 import { clearAllOfflineCaches } from '../utils/pageDataCache';
+import { noImgCallout } from '../utils/noImgCallout';
 import '../css/TutorDashboard.css';
 
 const PAGE_TITLES = {
@@ -251,7 +251,7 @@ const TutorDashboard = () => {
           type="button"
         >
           {tutorPhoto ? (
-            <img src={tutorPhoto} alt={tutorName} />
+            <img src={tutorPhoto} alt={tutorName} className="no-img-callout" {...noImgCallout} />
           ) : (
             <span>{avatarInitials}</span>
           )}
@@ -330,7 +330,14 @@ const TutorDashboard = () => {
                 <span>Profile</span>
               </button>
               <div className="tutor-topbar-dropdown-divider" role="separator" />
-              <ThemeSwitcher />
+              <button
+                role="menuitem"
+                onClick={() => { setMenuOpen(false); navigate('/tutor/dashboard/appearance'); }}
+                type="button"
+              >
+                <Palette size={18} />
+                <span>Appearance</span>
+              </button>
               <div className="tutor-topbar-dropdown-divider" role="separator" />
               <button
                 role="menuitem"
@@ -383,9 +390,12 @@ const TutorDashboard = () => {
           >
             <X size={22} />
           </button>
-          <div className="tutor-avatar-lightbox-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className={`tutor-avatar-lightbox-content${tutorPhoto ? ' tutor-avatar-lightbox-content-photo' : ''}`}
+            onClick={(e) => e.stopPropagation()}
+          >
             {tutorPhoto ? (
-              <img src={tutorPhoto} alt={tutorName} />
+              <img src={tutorPhoto} alt={tutorName} className="no-img-callout" {...noImgCallout} />
             ) : (
               <span className="tutor-avatar-fallback-lg">{avatarInitials}</span>
             )}
