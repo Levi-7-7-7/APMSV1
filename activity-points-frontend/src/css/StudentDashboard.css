@@ -178,6 +178,10 @@
   cursor: default;
 }
 
+.app-topbar-refresh-btn.offline {
+  opacity: 0.5;
+}
+
 .app-topbar-menu {
   position: relative;
   flex-shrink: 0;

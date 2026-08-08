@@ -94,6 +94,13 @@
   color: var(--slate-500);
 }
 
+.certificate-upload-container .upload-offline-note {
+  margin: 8px 0 0 0;
+  font-size: 0.82rem;
+  color: var(--red-500, #dc2626);
+  text-align: center;
+}
+
 .certificate-upload-container .upload-input {
   display: none;
 }

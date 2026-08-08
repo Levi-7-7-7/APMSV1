@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { MoreVertical, User, LogOut, X, RefreshCw } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import useSwipeNavigation from '../hooks/useSwipeNavigation';
+import useOnlineStatus from '../hooks/useOnlineStatus';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
@@ -149,13 +150,22 @@ const StudentLayout = () => {
   // of re-fetching every time they remount from a swipe/tab change. Bumping
   // refreshToken is the signal each page listens for to bypass that cache
   // and pull fresh data — wired to the top-bar refresh button below.
+  // All four tabs are mounted at once now, so a single refreshToken bump
+  // fires ALL of their fetches at once, not just the visible one — which
+  // is exactly why this needs an offline guard: without it, tapping
+  // refresh while offline would fire four requests that all fail at once.
+  const isOnline = useOnlineStatus();
   const [refreshToken, setRefreshToken] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const triggerRefresh = useCallback(() => {
+    if (!isOnline) {
+      alert("You're offline. Connect to the internet to refresh.");
+      return;
+    }
     setRefreshToken((t) => t + 1);
     setRefreshing(true);
     window.setTimeout(() => setRefreshing(false), 700);
-  }, []);
+  }, [isOnline]);
 
   // "Ticket solved" badge on the bottom-nav Tickets icon — a resolved
   // ticket the student hasn't opened yet. Push notifications already tell
@@ -287,10 +297,11 @@ const StudentLayout = () => {
         <span className="app-topbar-page-title">{pageTitle}</span>
 
         <button
-          className="app-topbar-refresh-btn"
+          className={`app-topbar-refresh-btn${!isOnline ? ' offline' : ''}`}
           onClick={triggerRefresh}
           disabled={refreshing}
-          aria-label="Refresh"
+          aria-label={isOnline ? 'Refresh' : "You're offline"}
+          title={isOnline ? undefined : "You're offline"}
           type="button"
         >
           <RefreshCw size={19} className={refreshing ? 'icon-spin' : ''} />

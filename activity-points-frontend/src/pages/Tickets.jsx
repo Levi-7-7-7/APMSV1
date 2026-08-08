@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import useStudentTabContext from '../context/StudentTabContext';
+import useOnlineStatus from '../hooks/useOnlineStatus';
 import { Plus, Image as ImageIcon, X, Clock, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react';
 import { createStudentTicket, getMyTickets, markStudentTicketSeen } from '../utils/ticketApi';
 import { getCached, setCached } from '../utils/pageDataCache';
@@ -17,6 +18,7 @@ function StatusBadge({ status }) {
 
 export default function Tickets() {
   const { refreshTicketUnreadCount, refreshToken } = useStudentTabContext();
+  const isOnline = useOnlineStatus();
   const lastRefreshToken = useRef(refreshToken);
   const cached = getCached(CACHE_KEY);
   const [tickets, setTickets] = useState(cached ?? []);
@@ -88,6 +90,10 @@ export default function Tickets() {
     e.preventDefault();
     if (!subject.trim() || !description.trim()) {
       setFormError('Please fill in both subject and description.');
+      return;
+    }
+    if (!isOnline) {
+      setFormError("You're offline. Connect to the internet to raise a ticket.");
       return;
     }
     setSubmitting(true);

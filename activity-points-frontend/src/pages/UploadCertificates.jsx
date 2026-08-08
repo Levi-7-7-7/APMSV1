@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStudentTabContext from '../context/StudentTabContext';
+import useOnlineStatus from '../hooks/useOnlineStatus';
 import axiosInstance from '../api/axiosInstance';
 import { ArrowLeft, Award, Paperclip, Search, X, Calendar } from 'lucide-react';
 import CertCropModal from '../components/CertCropModal';
@@ -29,6 +30,7 @@ export default function CertificateUploadScreen() {
   // document/body no longer scrolls), so scrolling to top on submit goes
   // through this instead of window.scrollTo.
   const { scrollToTop, refreshToken } = useStudentTabContext();
+  const isOnline = useOnlineStatus();
   const lastRefreshToken = useRef(refreshToken);
 
   const [categories, setCategories] = useState(getCached(CACHE_KEY) ?? []);
@@ -243,6 +245,10 @@ export default function CertificateUploadScreen() {
     : null;
   const hasLevels = currentSub?.levels?.length > 0;
 
+  // Form-completeness check, kept separate from connectivity: the submit
+  // button stays enabled (not just greyed out) even while offline, so
+  // tapping it while offline still reaches handleSubmit and surfaces a
+  // clear "you're offline" message instead of just silently doing nothing.
   const canSubmit = isOthers
     ? (othersDescription.trim() && uploadedFile && !uploading)
     : (
@@ -258,6 +264,10 @@ export default function CertificateUploadScreen() {
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
+    if (!isOnline) {
+      alert("You're offline. Connect to the internet to submit your certificate.");
+      return;
+    }
     setUploading(true);
     try {
       const formData = new FormData();
@@ -558,6 +568,9 @@ export default function CertificateUploadScreen() {
         >
           {uploading ? 'Uploading...' : 'Submit Certificate'}
         </button>
+        {!isOnline && (
+          <p className="upload-offline-note">You're offline — connect to the internet to submit.</p>
+        )}
       </main>
 
       <CertCropModal
