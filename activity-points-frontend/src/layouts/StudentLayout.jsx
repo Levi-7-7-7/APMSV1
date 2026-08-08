@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { MoreVertical, User, LogOut, X } from 'lucide-react';
+import { MoreVertical, User, LogOut, X, RefreshCw } from 'lucide-react';
 import BottomNav from '../components/BottomNav';
 import useSwipeNavigation from '../hooks/useSwipeNavigation';
 import ThemeSwitcher from '../components/ThemeSwitcher';
@@ -173,6 +173,18 @@ const StudentLayout = () => {
     pageScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
+  // Pages cache their fetched data (see src/utils/pageDataCache.js) instead
+  // of re-fetching every time they remount from a swipe/tab change. Bumping
+  // refreshToken is the signal each page listens for to bypass that cache
+  // and pull fresh data — wired to the top-bar refresh button below.
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const triggerRefresh = useCallback(() => {
+    setRefreshToken((t) => t + 1);
+    setRefreshing(true);
+    window.setTimeout(() => setRefreshing(false), 700);
+  }, []);
+
   // Close the three-dot menu on outside click or Escape
   useEffect(() => {
     if (!menuOpen) return;
@@ -230,6 +242,16 @@ const StudentLayout = () => {
         </button>
 
         <span className="app-topbar-page-title">{pageTitle}</span>
+
+        <button
+          className="app-topbar-refresh-btn"
+          onClick={triggerRefresh}
+          disabled={refreshing}
+          aria-label="Refresh"
+          type="button"
+        >
+          <RefreshCw size={19} className={refreshing ? 'icon-spin' : ''} />
+        </button>
 
         <div className="app-topbar-menu" ref={menuRef}>
           <button
@@ -294,7 +316,7 @@ const StudentLayout = () => {
           >
             <NotificationPermissionBanner role="student" />
             <InstallAppBanner />
-            <Outlet context={{ refreshTicketUnreadCount, scrollToTop }} />
+            <Outlet context={{ refreshTicketUnreadCount, scrollToTop, refreshToken }} />
           </motion.div>
         </AnimatePresence>
       </main>

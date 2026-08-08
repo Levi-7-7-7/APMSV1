@@ -6,22 +6,28 @@ import {
   UploadCloud, Loader2
 } from 'lucide-react';
 import '../css/certificatespage.css';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useOutletContext } from 'react-router-dom';
 import CertModal from '../components/CertModal';
 import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
+import { getCached, setCached } from '../utils/pageDataCache';
+
+const CACHE_KEY = 'certificatesPage';
 
 export default function CertificatesPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { refreshToken } = useOutletContext() || {};
+  const lastRefreshToken = React.useRef(refreshToken);
 
-  const [certificates, setCertificates] = useState([]);
-  const [categories, setCategories]     = useState([]);
-  const [user, setUser]                 = useState(null);
+  const cached = getCached(CACHE_KEY);
+  const [certificates, setCertificates] = useState(cached?.certificates ?? []);
+  const [categories, setCategories]     = useState(cached?.categories ?? []);
+  const [user, setUser]                 = useState(cached?.user ?? null);
   const [activeFilter, setActiveFilter] = useState('all');
   // Set from ?certId= on a notification deep-link, so the matching card
   // can be visually highlighted and scrolled to once the list renders.
   const [highlightedCertId, setHighlightedCertId] = useState(null);
-  const [loading, setLoading]           = useState(true);
+  const [loading, setLoading]           = useState(!cached);
   const [error, setError]               = useState(null);
   const [modalUrl, setModalUrl]         = useState(null);
   const [modalFile, setModalFile]       = useState('');
@@ -42,6 +48,20 @@ export default function CertificatesPage() {
   const fileInputRefs = React.useRef({});
 
   useEffect(() => {
+    // Reuse cached data on a plain remount (e.g. swiping back to this tab);
+    // only hit the network on first-ever load or when the global refresh
+    // button bumps refreshToken.
+    const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
+    lastRefreshToken.current = refreshToken;
+    const existing = getCached(CACHE_KEY);
+    if (existing && !isRefresh) {
+      setCertificates(existing.certificates);
+      setCategories(existing.categories);
+      setUser(existing.user);
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -50,9 +70,13 @@ export default function CertificatesPage() {
           axiosInstance.get('/categories'),
           axiosInstance.get('/students/me'),
         ]);
-        setCertificates(certRes.data.certificates || []);
-        setCategories(catRes.data.categories || []);
-        setUser(userRes.data);
+        const nextCertificates = certRes.data.certificates || [];
+        const nextCategories = catRes.data.categories || [];
+        const nextUser = userRes.data;
+        setCertificates(nextCertificates);
+        setCategories(nextCategories);
+        setUser(nextUser);
+        setCached(CACHE_KEY, { certificates: nextCertificates, categories: nextCategories, user: nextUser });
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load certificates');
       } finally {
@@ -60,7 +84,17 @@ export default function CertificatesPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [refreshToken]);
+
+  // Keeps the cached certificate list in sync with local mutations
+  // (reupload, cancel/delete) so swiping away and back doesn't show
+  // stale, already-mutated data from the cache.
+  const updateCertificatesCache = (updater) => {
+    const existing = getCached(CACHE_KEY);
+    if (existing) {
+      setCached(CACHE_KEY, { ...existing, certificates: updater(existing.certificates) });
+    }
+  };
 
   // Deep-link support: a certificate-status push notification's data.link
   // points here with ?certId=<id>&status=<status>. Once the list has
@@ -214,7 +248,7 @@ export default function CertificatesPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const updated = res.data.certificate;
-      setCertificates(prev => prev.map(c => (c._id === cert._id ? {
+      const applyReupload = (list) => list.map(c => (c._id === cert._id ? {
         ...c,
         fileUrl: updated.fileUrl,
         fileId: updated.fileId,
@@ -222,7 +256,9 @@ export default function CertificatesPage() {
         rejectionReason: updated.rejectionReason,
         pointsAwarded: updated.pointsAwarded,
         updatedAt: updated.updatedAt,
-      } : c)));
+      } : c));
+      setCertificates(applyReupload);
+      updateCertificatesCache(applyReupload);
       cancelReuploadSelection(cert._id); // clears the staged file/preview now that it's been sent
     } catch (err) {
       setReuploadError(prev => ({
@@ -239,7 +275,9 @@ export default function CertificatesPage() {
     setDeletingId(cert._id);
     try {
       await axiosInstance.delete(`/certificates/${cert._id}`);
-      setCertificates(prev => prev.filter(c => c._id !== cert._id));
+      const applyDelete = (list) => list.filter(c => c._id !== cert._id);
+      setCertificates(applyDelete);
+      updateCertificatesCache(applyDelete);
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to cancel certificate. Please try again.');
     } finally {

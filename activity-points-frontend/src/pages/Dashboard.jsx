@@ -1,23 +1,44 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import axiosInstance from '../api/axiosInstance';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Award, Star } from 'lucide-react';
 import '../css/StudentDashboard.css';
 import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
+import { getCached, setCached } from '../utils/pageDataCache';
+
+const CACHE_KEY = 'dashboard';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { refreshToken } = useOutletContext() || {};
+  const lastRefreshToken = useRef(refreshToken);
 
-  const [user, setUser] = useState(null);
-  const [certificates, setCertificates] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cached = getCached(CACHE_KEY);
+  const [user, setUser] = useState(cached?.user ?? null);
+  const [certificates, setCertificates] = useState(cached?.certificates ?? []);
+  const [categories, setCategories] = useState(cached?.categories ?? []);
+  const [loading, setLoading] = useState(!cached);
 
   useEffect(() => {
+    // Reuse cached data on a plain remount (e.g. swiping back to this tab);
+    // only hit the network on first-ever load or when the global refresh
+    // button bumps refreshToken.
+    const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
+    lastRefreshToken.current = refreshToken;
+    const existing = getCached(CACHE_KEY);
+    if (existing && !isRefresh) {
+      setUser(existing.user);
+      setCertificates(existing.certificates);
+      setCategories(existing.categories);
+      setLoading(false);
+      return;
+    }
+
     const fetchDashboardData = async () => {
       const token = localStorage.getItem('token');
       if (!token) return navigate('/');
 
+      setLoading(true);
       try {
         const [userRes, certRes, catRes] = await Promise.all([
           axiosInstance.get('/students/me'),
@@ -25,12 +46,17 @@ export default function Dashboard() {
           axiosInstance.get('/categories'),
         ]);
 
-        setUser(userRes.data);
-        setCertificates(certRes.data.certificates || []);
-        setCategories(catRes.data.categories || []);
+        const nextUser = userRes.data;
+        const nextCertificates = certRes.data.certificates || [];
+        const nextCategories = catRes.data.categories || [];
 
-        localStorage.setItem('userData', JSON.stringify(userRes.data));
-        localStorage.setItem('userName', userRes.data.name);
+        setUser(nextUser);
+        setCertificates(nextCertificates);
+        setCategories(nextCategories);
+        setCached(CACHE_KEY, { user: nextUser, certificates: nextCertificates, categories: nextCategories });
+
+        localStorage.setItem('userData', JSON.stringify(nextUser));
+        localStorage.setItem('userName', nextUser.name);
         // Notify same-tab listeners (StudentLayout) that userName is available
         window.dispatchEvent(new Event('storage'));
       } catch (err) {
@@ -42,7 +68,7 @@ export default function Dashboard() {
     };
 
     fetchDashboardData();
-  }, [navigate]);
+  }, [navigate, refreshToken]);
 
   // Capped total using correct SBTE Kerala rules (Rule 3 + Rule 6 + isLateralEntry)
   const cappedTotal = useMemo(() => {

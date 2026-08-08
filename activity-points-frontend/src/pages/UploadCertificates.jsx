@@ -4,6 +4,7 @@ import axiosInstance from '../api/axiosInstance';
 import { ArrowLeft, Award, Paperclip, Search, X, Calendar } from 'lucide-react';
 import CertCropModal from '../components/CertCropModal';
 import { compressCertImage } from '../utils/compressCertImage';
+import { clearCached } from '../utils/pageDataCache';
 import '../css/upload.css';
 
 const MAX_FILE_SIZE_MB = 5;
@@ -260,6 +261,12 @@ export default function CertificateUploadScreen() {
       await axiosInstance.post('/certificates/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+
+      // A new certificate exists now, so the cached Dashboard/My Certs data
+      // (see src/utils/pageDataCache.js) is stale — clear it so those pages
+      // fetch fresh instead of needing an explicit refresh-button tap.
+      clearCached('dashboard');
+      clearCached('certificatesPage');
 
       setSubmitted(true);
       setTimeout(() => navigate('/student'), 2000);

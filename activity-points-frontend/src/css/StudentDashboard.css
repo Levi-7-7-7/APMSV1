@@ -155,6 +155,29 @@
   text-align: center;
 }
 
+.app-topbar-refresh-btn {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  color: var(--slate-700);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.app-topbar-refresh-btn:hover,
+.app-topbar-refresh-btn:active {
+  background-color: var(--slate-100);
+}
+
+.app-topbar-refresh-btn:disabled {
+  cursor: default;
+}
+
 .app-topbar-menu {
   position: relative;
   flex-shrink: 0;

@@ -2,7 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Plus, Image as ImageIcon, X, Clock, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react';
 import { createStudentTicket, getMyTickets, markStudentTicketSeen } from '../utils/ticketApi';
+import { getCached, setCached } from '../utils/pageDataCache';
 import '../css/Tickets.css';
+
+const CACHE_KEY = 'tickets';
 
 function StatusBadge({ status }) {
   return status === 'resolved' ? (
@@ -13,9 +16,11 @@ function StatusBadge({ status }) {
 }
 
 export default function Tickets() {
-  const { refreshTicketUnreadCount } = useOutletContext() || {};
-  const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { refreshTicketUnreadCount, refreshToken } = useOutletContext() || {};
+  const lastRefreshToken = useRef(refreshToken);
+  const cached = getCached(CACHE_KEY);
+  const [tickets, setTickets] = useState(cached ?? []);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState('');
 
   const [showForm, setShowForm] = useState(false);
@@ -33,7 +38,9 @@ export default function Tickets() {
     setLoading(true);
     try {
       const res = await getMyTickets();
-      setTickets(res.data || []);
+      const next = res.data || [];
+      setTickets(next);
+      setCached(CACHE_KEY, next);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load tickets');
     } finally {
@@ -41,7 +48,20 @@ export default function Tickets() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    // Reuse cached data on a plain remount (e.g. swiping back to this tab);
+    // only hit the network on first-ever load or when the global refresh
+    // button bumps refreshToken.
+    const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
+    lastRefreshToken.current = refreshToken;
+    const existing = getCached(CACHE_KEY);
+    if (existing && !isRefresh) {
+      setTickets(existing);
+      setLoading(false);
+      return;
+    }
+    load();
+  }, [refreshToken]);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -79,7 +99,11 @@ export default function Tickets() {
       if (imageFile) formData.append('image', imageFile);
 
       const res = await createStudentTicket(formData);
-      setTickets((prev) => [res.data, ...prev]);
+      setTickets((prev) => {
+        const next = [res.data, ...prev];
+        setCached(CACHE_KEY, next);
+        return next;
+      });
       resetForm();
     } catch (err) {
       setFormError(err.response?.data?.error || 'Failed to raise ticket. Please try again.');
@@ -96,7 +120,11 @@ export default function Tickets() {
     if (opening && ticket.status === 'resolved' && ticket.raiserSeen === false) {
       try {
         await markStudentTicketSeen(ticket._id);
-        setTickets((prev) => prev.map((t) => (t._id === ticket._id ? { ...t, raiserSeen: true } : t)));
+        setTickets((prev) => {
+          const next = prev.map((t) => (t._id === ticket._id ? { ...t, raiserSeen: true } : t));
+          setCached(CACHE_KEY, next);
+          return next;
+        });
         refreshTicketUnreadCount?.();
       } catch (_) {}
     }
