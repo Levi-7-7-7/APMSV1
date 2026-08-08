@@ -107,11 +107,21 @@
   font-weight: 600;
   font-size: 16px;
   text-align: center;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   transition: background-color 0.2s;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.certificate-upload-container .upload-input-btn-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .certificate-upload-container .upload-input-btn:hover {

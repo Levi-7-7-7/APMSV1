@@ -498,11 +498,13 @@ export default function CertificateUploadScreen() {
         <div className="upload-input-wrapper">
           <label htmlFor="file-upload" className="upload-input-btn">
             <Paperclip size={16} />
-            {processingImage
-              ? 'Processing image…'
-              : uploadedFile
-                ? `${uploadedFile.name} (${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)`
-                : `Attach Certificate — Image or PDF (Max ${MAX_FILE_SIZE_MB} MB)`}
+            <span className="upload-input-btn-text">
+              {processingImage
+                ? 'Processing image…'
+                : uploadedFile
+                  ? `${uploadedFile.name} (${(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)`
+                  : `Attach Certificate — Image or PDF (Max ${MAX_FILE_SIZE_MB} MB)`}
+            </span>
           </label>
           <input
             id="file-upload"

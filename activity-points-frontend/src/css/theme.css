@@ -65,6 +65,22 @@
 
 html, body {
   background-color: var(--slate-50);
+  overscroll-behavior-y: contain; /* kills the browser bounce/pull-to-refresh feel */
+  -webkit-tap-highlight-color: transparent; /* removes gray flash on tap (Android) */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Prevent long-press text selection / callout menu on UI chrome,
+   while still allowing normal selection inside real text inputs. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* ============================================================
