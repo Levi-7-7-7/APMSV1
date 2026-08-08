@@ -113,12 +113,12 @@ const TutorDashboard = () => {
   });
 
   // Count of pending certificates, shown as a WhatsApp-style badge on the
-  // "Pending Certificates" nav icon. Fetched independently of the Pending
-  // Certificates page itself (so the badge stays accurate even when the
-  // tutor is on a different tab), and refreshed on a light poll. The
-  // PendingCertificates page also calls refreshPendingCount() (passed down
-  // via Outlet context) right after an approve/reject/reassign so the
-  // badge updates instantly instead of waiting for the next poll.
+  // "Pending Certificates" nav icon. Push notifications already alert the
+  // tutor to new pending certs, so this isn't polled on a timer — it's
+  // fetched once on app load and again whenever the top-bar refresh button
+  // is tapped. The PendingCertificates page also calls refreshPendingCount()
+  // (passed down via Outlet context) right after an approve/reject/reassign
+  // so the badge updates instantly instead of waiting for a manual refresh.
   const [pendingCount, setPendingCount] = useState(0);
 
   const refreshPendingCount = React.useCallback(() => {
@@ -130,13 +130,11 @@ const TutorDashboard = () => {
 
   useEffect(() => {
     refreshPendingCount();
-    const interval = setInterval(refreshPendingCount, 30000);
-    return () => clearInterval(interval);
-  }, [refreshPendingCount]);
+  }, [refreshPendingCount, refreshToken]);
 
   // Count of resolved-and-unseen tickets (own requests + forwarded student
-  // tickets), shown as a badge on the "Tickets" nav icon — same pattern as
-  // pendingCount above.
+  // tickets), shown as a badge on the "Tickets" nav icon — same
+  // fetch-once-plus-refresh pattern as pendingCount above.
   const [ticketUnreadCount, setTicketUnreadCount] = useState(0);
 
   const refreshTicketUnreadCount = React.useCallback(() => {
@@ -147,9 +145,7 @@ const TutorDashboard = () => {
 
   useEffect(() => {
     refreshTicketUnreadCount();
-    const interval = setInterval(refreshTicketUnreadCount, 30000);
-    return () => clearInterval(interval);
-  }, [refreshTicketUnreadCount]);
+  }, [refreshTicketUnreadCount, refreshToken]);
 
   // Bell-icon notifications for brand-new tickets a student has just
   // raised into this tutor's inbox — same pattern as the admin panel's
@@ -170,9 +166,7 @@ const TutorDashboard = () => {
 
   useEffect(() => {
     refreshNewTicketCount();
-    const interval = setInterval(refreshNewTicketCount, 20000);
-    return () => clearInterval(interval);
-  }, [refreshNewTicketCount]);
+  }, [refreshNewTicketCount, refreshToken]);
 
   useEffect(() => {
     if (!notifOpen) return;

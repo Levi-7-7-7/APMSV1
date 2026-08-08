@@ -116,9 +116,23 @@ const StudentLayout = () => {
     syncPushToken('student');
   }, []);
 
-  // "Ticket solved" badge on the bottom-nav Tickets icon — same pattern as
-  // the tutor panel's ticket badge (see TutorDashboard.jsx): a resolved
-  // ticket the student hasn't opened yet.
+  // Pages cache their fetched data (see src/utils/pageDataCache.js) instead
+  // of re-fetching every time they remount from a swipe/tab change. Bumping
+  // refreshToken is the signal each page listens for to bypass that cache
+  // and pull fresh data — wired to the top-bar refresh button below.
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const triggerRefresh = useCallback(() => {
+    setRefreshToken((t) => t + 1);
+    setRefreshing(true);
+    window.setTimeout(() => setRefreshing(false), 700);
+  }, []);
+
+  // "Ticket solved" badge on the bottom-nav Tickets icon — a resolved
+  // ticket the student hasn't opened yet. Push notifications already tell
+  // the student the moment a ticket is resolved, so this isn't polled on a
+  // timer — it's fetched once on app load and again whenever the top-bar
+  // refresh button is tapped (same as every other cached page).
   const [ticketUnreadCount, setTicketUnreadCount] = useState(0);
 
   const refreshTicketUnreadCount = React.useCallback(() => {
@@ -129,9 +143,7 @@ const StudentLayout = () => {
 
   useEffect(() => {
     refreshTicketUnreadCount();
-    const interval = setInterval(refreshTicketUnreadCount, 30000);
-    return () => clearInterval(interval);
-  }, [refreshTicketUnreadCount]);
+  }, [refreshTicketUnreadCount, refreshToken]);
 
   // Re-read from localStorage whenever userData changes (e.g. after Dashboard fetch,
   // or after uploading a new photo on the Profile page)
@@ -171,18 +183,6 @@ const StudentLayout = () => {
   }, []);
   const scrollToTop = useCallback(() => {
     pageScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
-  }, []);
-
-  // Pages cache their fetched data (see src/utils/pageDataCache.js) instead
-  // of re-fetching every time they remount from a swipe/tab change. Bumping
-  // refreshToken is the signal each page listens for to bypass that cache
-  // and pull fresh data — wired to the top-bar refresh button below.
-  const [refreshToken, setRefreshToken] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
-  const triggerRefresh = useCallback(() => {
-    setRefreshToken((t) => t + 1);
-    setRefreshing(true);
-    window.setTimeout(() => setRefreshing(false), 700);
   }, []);
 
   // Close the three-dot menu on outside click or Escape
