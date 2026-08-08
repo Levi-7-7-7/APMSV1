@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import {
   ArrowLeft,
   Camera,
@@ -13,7 +13,10 @@ import {
 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import PhotoCropModal from '../components/PhotoCropModal';
+import { getCached, setCached } from '../utils/pageDataCache';
 import '../css/Profile.css';
+
+const CACHE_KEY = 'profile';
 
 function getInitials(name) {
   return (name || '')
@@ -28,16 +31,19 @@ function getInitials(name) {
 export default function Profile() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { refreshToken } = useOutletContext() || {};
+  const lastRefreshToken = useRef(refreshToken);
 
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const cached = getCached(CACHE_KEY);
+  const [user, setUser] = useState(cached?.user ?? null);
+  const [loading, setLoading] = useState(!cached);
 
-  const [tutor, setTutor] = useState(null);
-  const [tutorLoading, setTutorLoading] = useState(true);
+  const [tutor, setTutor] = useState(cached?.tutor ?? null);
+  const [tutorLoading, setTutorLoading] = useState(!cached);
 
-  const [hod, setHod] = useState(null);
-  const [principal, setPrincipal] = useState(null);
-  const [staffLoading, setStaffLoading] = useState(true);
+  const [hod, setHod] = useState(cached?.hod ?? null);
+  const [principal, setPrincipal] = useState(cached?.principal ?? null);
+  const [staffLoading, setStaffLoading] = useState(!cached);
 
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -45,36 +51,53 @@ export default function Profile() {
   // Full-screen tap-to-enlarge viewer (matches native app's photo viewer)
   const [viewerImage, setViewerImage] = useState(null);
 
-  // Fetch student profile
+  // Fetch student profile, assigned tutor, and HOD/Principal together.
+  // Reuses cached data on a plain remount (e.g. swiping/navigating back to
+  // this tab); only hits the network on first-ever load or when the global
+  // refresh button bumps refreshToken.
   useEffect(() => {
+    const isRefresh = refreshToken !== undefined && refreshToken !== lastRefreshToken.current;
+    lastRefreshToken.current = refreshToken;
+    const existing = getCached(CACHE_KEY);
+    if (existing && !isRefresh) {
+      setUser(existing.user);
+      setTutor(existing.tutor);
+      setHod(existing.hod);
+      setPrincipal(existing.principal);
+      setLoading(false);
+      setTutorLoading(false);
+      setStaffLoading(false);
+      return;
+    }
+
     let cancelled = false;
+    setLoading(true);
+    setTutorLoading(true);
+    setStaffLoading(true);
+
+    const nextData = { user: null, tutor: null, hod: null, principal: null };
 
     axiosInstance
       .get('/students/me')
       .then(res => {
-        if (!cancelled) {
-          setUser(res.data);
-          localStorage.setItem('userData', JSON.stringify(res.data));
-        }
+        if (cancelled) return;
+        nextData.user = res.data;
+        setUser(res.data);
+        localStorage.setItem('userData', JSON.stringify(res.data));
+        setCached(CACHE_KEY, { ...getCached(CACHE_KEY), ...nextData });
       })
       .catch(() => {})
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Fetch assigned tutor
-  useEffect(() => {
-    let cancelled = false;
-
     axiosInstance
       .get('/students/my-tutor')
       .then(res => {
-        if (!cancelled) setTutor(res.data.tutor ?? null);
+        if (cancelled) return;
+        nextData.tutor = res.data.tutor ?? null;
+        setTutor(nextData.tutor);
+        setCached(CACHE_KEY, { ...getCached(CACHE_KEY), ...nextData });
       })
       .catch(() => {
         if (!cancelled) setTutor(null);
@@ -83,22 +106,15 @@ export default function Profile() {
         if (!cancelled) setTutorLoading(false);
       });
 
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Fetch HOD (branch-scoped) and Principal (global)
-  useEffect(() => {
-    let cancelled = false;
-
     axiosInstance
       .get('/students/my-staff')
       .then(res => {
-        if (!cancelled) {
-          setHod(res.data.hod ?? null);
-          setPrincipal(res.data.principal ?? null);
-        }
+        if (cancelled) return;
+        nextData.hod = res.data.hod ?? null;
+        nextData.principal = res.data.principal ?? null;
+        setHod(nextData.hod);
+        setPrincipal(nextData.principal);
+        setCached(CACHE_KEY, { ...getCached(CACHE_KEY), ...nextData });
       })
       .catch(() => {
         if (!cancelled) {
@@ -113,7 +129,7 @@ export default function Profile() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshToken]);
 
   const handlePhotoClick = () => {
     if (!uploading) fileInputRef.current?.click();
@@ -153,6 +169,7 @@ export default function Profile() {
       setUser(prev => {
         const updated = { ...prev, profilePhoto: res.data.profilePhoto };
         localStorage.setItem('userData', JSON.stringify(updated));
+        setCached(CACHE_KEY, { ...getCached(CACHE_KEY), user: updated });
         return updated;
       });
       setPendingFile(null);
