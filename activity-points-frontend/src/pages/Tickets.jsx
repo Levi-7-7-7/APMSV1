@@ -44,7 +44,7 @@ export default function Tickets() {
       setTickets(next);
       setCached(CACHE_KEY, next);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load tickets');
+      setError(err.response?.data?.error || 'Failed to load requests');
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ export default function Tickets() {
       return;
     }
     if (!isOnline) {
-      setFormError("You're offline. Connect to the internet to raise a ticket.");
+      setFormError("You're offline. Connect to the internet to raise a request.");
       return;
     }
     setSubmitting(true);
@@ -112,7 +112,7 @@ export default function Tickets() {
       });
       resetForm();
     } catch (err) {
-      setFormError(err.response?.data?.error || 'Failed to raise ticket. Please try again.');
+      setFormError(err.response?.data?.error || 'Failed to raise request. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -140,10 +140,10 @@ export default function Tickets() {
     <div className="tickets-page">
       <div className="tickets-page-header">
         <p className="tickets-page-subtitle">
-          Raise an issue and your tutor will take a look — they'll either resolve it or pass it on to admin.
+          Raise a request and your tutor will take a look — they'll either resolve it or pass it on to admin.
         </p>
         <button type="button" className="tickets-new-btn" onClick={() => setShowForm((s) => !s)}>
-          <Plus size={16} /> {showForm ? 'Cancel' : 'Raise a Ticket'}
+          <Plus size={16} /> {showForm ? 'Cancel' : 'Raise a Request'}
         </button>
       </div>
 
@@ -190,17 +190,17 @@ export default function Tickets() {
           {formError && <div className="ticket-form-error">{formError}</div>}
 
           <button type="submit" className="ticket-form-submit" disabled={submitting}>
-            {submitting ? <><Loader2 size={16} className="icon-spin" /> Submitting…</> : 'Submit Ticket'}
+            {submitting ? <><Loader2 size={16} className="icon-spin" /> Submitting…</> : 'Submit Request'}
           </button>
         </form>
       )}
 
       {loading ? (
-        <div className="tickets-empty">Loading your tickets…</div>
+        <div className="tickets-empty">Loading your requests…</div>
       ) : error ? (
         <div className="tickets-empty error">{error}</div>
       ) : tickets.length === 0 ? (
-        <div className="tickets-empty">You haven't raised any tickets yet.</div>
+        <div className="tickets-empty">You haven't raised any requests yet.</div>
       ) : (
         <div className="tickets-list">
           {tickets.map((t) => (
@@ -219,7 +219,7 @@ export default function Tickets() {
                   <p className="ticket-description">{t.description}</p>
                   {t.imageUrl && (
                     <a href={t.imageUrl} target="_blank" rel="noreferrer" className="ticket-attachment-link">
-                      <img src={t.imageUrl} alt="Ticket attachment" className="ticket-attachment-img" />
+                      <img src={t.imageUrl} alt="Attachment" className="ticket-attachment-img" />
                     </a>
                   )}
                   {t.forwardedToAdmin && (

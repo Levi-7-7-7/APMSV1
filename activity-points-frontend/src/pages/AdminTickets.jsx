@@ -27,7 +27,7 @@ export default function AdminTickets({ flash, focusTicketId, onFocusHandled, onS
       const res = await getAdminTicketQueue(status);
       setTickets(res.data || []);
     } catch (err) {
-      flash?.(err.response?.data?.error || 'Failed to load tickets', 'error');
+      flash?.(err.response?.data?.error || 'Failed to load requests', 'error');
     } finally {
       setLoading(false);
     }
@@ -76,9 +76,9 @@ export default function AdminTickets({ flash, focusTicketId, onFocusHandled, onS
       setTickets((prev) => prev.filter((t) => t._id !== ticket._id));
       setNoteMode(null);
       setNoteDraft('');
-      flash?.('Ticket resolved');
+      flash?.('Request resolved');
     } catch (err) {
-      flash?.(err.response?.data?.error || 'Failed to resolve ticket', 'error');
+      flash?.(err.response?.data?.error || 'Failed to resolve request', 'error');
     } finally {
       setActioningId(null);
     }
@@ -89,7 +89,7 @@ export default function AdminTickets({ flash, focusTicketId, onFocusHandled, onS
       <div className="ap-card" id="sf-tickets" style={{ marginBottom: '1.5rem' }}>
         <div className="ap-card-header">
           <div className="ap-card-icon amber"><Forward size={16} /></div>
-          <h3>Tickets <span style={{ color: 'var(--ap-muted)', fontWeight: 400 }}>({tickets.length})</span></h3>
+          <h3>Help &amp; Support <span style={{ color: 'var(--ap-muted)', fontWeight: 400 }}>({tickets.length})</span></h3>
         </div>
         <div className="ap-card-body">
           <p style={{ fontSize: '0.85rem', color: 'var(--ap-muted)', marginBottom: '1rem' }}>
@@ -119,7 +119,7 @@ export default function AdminTickets({ flash, focusTicketId, onFocusHandled, onS
         <div className="ap-empty">Loading…</div>
       ) : tickets.length === 0 ? (
         <div className="ap-empty">
-          {statusFilter === 'open' ? 'Nothing in your queue right now.' : 'No resolved tickets yet.'}
+          {statusFilter === 'open' ? 'Nothing in your queue right now.' : 'No resolved requests yet.'}
         </div>
       ) : (
         <div className="adt-list">
@@ -130,7 +130,7 @@ export default function AdminTickets({ flash, focusTicketId, onFocusHandled, onS
               ref={(el) => { cardRefs.current[t._id] = el; }}
             >
               <button type="button" className="adt-card-head" onClick={() => toggleExpand(t._id, t)}>
-                {t.adminSeen === false && <span className="adt-new-dot" aria-label="New ticket" />}
+                {t.adminSeen === false && <span className="adt-new-dot" aria-label="New request" />}
                 <div className="adt-card-head-text">
                   <span className="adt-subject">{t.subject}</span>
                   <span className="adt-meta">
@@ -147,7 +147,7 @@ export default function AdminTickets({ flash, focusTicketId, onFocusHandled, onS
                   <p className="adt-description">{t.description}</p>
                   {t.imageUrl && (
                     <a href={t.imageUrl} target="_blank" rel="noreferrer" className="adt-attachment-link">
-                      <img src={t.imageUrl} alt="Ticket attachment" className="adt-attachment-img" />
+                      <img src={t.imageUrl} alt="Attachment" className="adt-attachment-img" />
                     </a>
                   )}
                   {t.forwardNote && (

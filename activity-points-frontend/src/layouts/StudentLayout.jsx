@@ -36,7 +36,7 @@ const PAGE_TITLES = {
   '/student': 'Dashboard',
   '/student/upload-certificate': 'Upload Certificate',
   '/student/certificates': 'My Certificates',
-  '/student/tickets': 'Tickets',
+  '/student/tickets': 'Help & Support',
   '/student/profile': 'Profile',
 };
 
@@ -339,7 +339,7 @@ const StudentLayout = () => {
                 type="button"
               >
                 <MessageSquare size={18} />
-                <span>Tickets</span>
+                <span>Help &amp; Support</span>
                 {ticketUnreadCount > 0 && (
                   <span className="app-topbar-dropdown-badge" aria-label={`${ticketUnreadCount} resolved tickets`}>
                     {ticketUnreadCount > 99 ? '99+' : ticketUnreadCount}

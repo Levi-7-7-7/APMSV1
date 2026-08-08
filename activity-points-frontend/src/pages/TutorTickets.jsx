@@ -71,7 +71,7 @@ export default function TutorTickets() {
     try {
       await Promise.all([loadInbox(), loadMine()]);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load tickets');
+      setError(err.response?.data?.error || 'Failed to load requests');
     } finally {
       setLoading(false);
     }
@@ -224,7 +224,7 @@ export default function TutorTickets() {
       setNoteMode(null);
       setNoteDraft('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to resolve ticket');
+      setError(err.response?.data?.error || 'Failed to resolve request');
     } finally {
       setActioningId(null);
     }
@@ -238,7 +238,7 @@ export default function TutorTickets() {
       setNoteMode(null);
       setNoteDraft('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to forward ticket');
+      setError(err.response?.data?.error || 'Failed to forward request');
     } finally {
       setActioningId(null);
     }
@@ -319,12 +319,12 @@ export default function TutorTickets() {
       )}
 
       {loading ? (
-        <div className="tt-empty">Loading tickets…</div>
+        <div className="tt-empty">Loading requests…</div>
       ) : error ? (
         <div className="tt-empty error">{error}</div>
       ) : list.length === 0 ? (
         <div className="tt-empty">
-          {scope === 'inbox' ? 'No tickets from your students right now.' : "You haven't raised any requests yet."}
+          {scope === 'inbox' ? 'No requests from your students right now.' : "You haven't raised any requests yet."}
         </div>
       ) : (
         <div className="tt-list">
@@ -360,7 +360,7 @@ export default function TutorTickets() {
                     <p className="tt-description">{t.description}</p>
                     {t.imageUrl && (
                       <a href={t.imageUrl} target="_blank" rel="noreferrer" className="tt-attachment-link">
-                        <img src={t.imageUrl} alt="Ticket attachment" className="tt-attachment-img" />
+                        <img src={t.imageUrl} alt="Attachment" className="tt-attachment-img" />
                       </a>
                     )}
                     {t.forwardedToAdmin && (

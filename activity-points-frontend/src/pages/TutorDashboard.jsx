@@ -18,7 +18,7 @@ const PAGE_TITLES = {
   upload: 'Add Students',
   pending: 'Pending Certificates',
   approved: 'Approved Certificates',
-  tickets: 'Tickets',
+  tickets: 'Help & Support',
   profile: 'Profile',
 };
 
@@ -286,7 +286,7 @@ const TutorDashboard = () => {
 
           {notifOpen && (
             <div className="tutor-topbar-dropdown tutor-notif-dropdown" role="menu">
-              <div className="tutor-notif-dropdown-header">New Tickets</div>
+              <div className="tutor-notif-dropdown-header">New Requests</div>
               {ticketNotifications.length === 0 ? (
                 <div className="tutor-notif-empty">No new tickets right now.</div>
               ) : (
@@ -336,7 +336,7 @@ const TutorDashboard = () => {
                 type="button"
               >
                 <MessageSquare size={18} />
-                <span>Tickets</span>
+                <span>Help &amp; Support</span>
                 {(ticketUnreadCount + newTicketCount) > 0 && (
                   <span className="tutor-topbar-dropdown-badge" aria-label={`${ticketUnreadCount + newTicketCount} ticket updates`}>
                     {(ticketUnreadCount + newTicketCount) > 99 ? '99+' : ticketUnreadCount + newTicketCount}

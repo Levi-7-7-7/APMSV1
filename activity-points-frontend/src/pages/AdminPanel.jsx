@@ -820,7 +820,7 @@ export default function AdminPanel() {
     { id: "branches",   label: "Branches",     desc: "Manage department branches",                  icon: <GitBranch size={15}/>,  bigIcon: <GitBranch size={26}/>,  cls: "orange" },
     { id: "categories", label: "Categories",   desc: "Activity point categories & levels",          icon: <Tag size={15}/>,        bigIcon: <Tag size={26}/>,        cls: "purple" },
     { id: "admins",     label: "Admins",       desc: "Manage admin accounts",                       icon: <Shield size={15}/>,     bigIcon: <Shield size={26}/>,     cls: "pink"   },
-    { id: "tickets",    label: "Tickets",      desc: "Forwarded tickets & tutor requests",          icon: <MessageSquare size={15}/>, bigIcon: <MessageSquare size={26}/>, cls: "amber" },
+    { id: "tickets",    label: "Help & Support", desc: "Forwarded requests & tutor questions",         icon: <MessageSquare size={15}/>, bigIcon: <MessageSquare size={26}/>, cls: "amber" },
     { id: "logs",       label: "Activity Log", desc: "See who did what, and when",                  icon: <History size={15}/>,    bigIcon: <History size={26}/>,    cls: "slate"  },
   ];
 
@@ -849,7 +849,7 @@ export default function AdminPanel() {
     { tabId: "categories", anchorId: "sf-category-list",   label: "All Categories & Levels", section: "Categories",   keywords: "table list categories levels prizes subcategories edit delete" },
     { tabId: "admins",     anchorId: "sf-add-admin",       label: "Add Admin",               section: "Admins",       keywords: "add create new admin account" },
     { tabId: "admins",     anchorId: "sf-all-admins",      label: "All Admins",              section: "Admins",       keywords: "table list admins delete" },
-    { tabId: "tickets",    anchorId: "sf-tickets",         label: "Tickets",                 section: "Tickets",      keywords: "tickets complaints requests forwarded tutor resolve" },
+    { tabId: "tickets",    anchorId: "sf-tickets",         label: "Help & Support",          section: "Help & Support", keywords: "tickets help support complaints requests forwarded tutor resolve" },
     { tabId: "logs",       anchorId: "sf-activity-log",    label: "Activity Log",            section: "Activity Log", keywords: "logs history who did what filter export csv" },
   ];
 
@@ -926,7 +926,7 @@ export default function AdminPanel() {
 
           {notifOpen && (
             <div className="ap-topbar-dropdown ap-notif-dropdown" role="menu">
-              <div className="ap-notif-dropdown-header">New Tickets</div>
+              <div className="ap-notif-dropdown-header">New Requests</div>
               {ticketNotifications.length === 0 ? (
                 <div className="ap-notif-empty">No new tickets right now.</div>
               ) : (
