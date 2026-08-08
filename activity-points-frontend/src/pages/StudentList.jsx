@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import tutorAxios from '../api/tutorAxios';
+import useTutorTabContext from '../context/TutorTabContext';
 import { getCached, setCached } from '../utils/pageDataCache';
 import {
   Download,
@@ -40,7 +41,7 @@ const CACHE_KEY = 'tutor-students';
 
 const StudentList = () => {
   const navigate = useNavigate();
-  const { refreshToken } = useOutletContext() || {};
+  const { refreshToken } = useTutorTabContext();
   const lastRefreshToken = useRef(refreshToken);
 
   const cached = getCached(CACHE_KEY);

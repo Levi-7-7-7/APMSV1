@@ -1,10 +1,16 @@
 /* =================== TUTOR DASHBOARD =================== */
+/* Fixed-height app shell, same treatment as .student-dashboard: the page
+   no longer scrolls the document/body — .tutor-main below is a fixed pane
+   between the top bar and bottom nav, and each individual tab/page scrolls
+   itself. This is what lets a horizontal swipe drag work at all, and lets
+   the outgoing/incoming non-swipe pages overlap and slide, like a native
+   app's tab pager, instead of the whole document jumping. */
 .tutor-dashboard {
-  min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: var(--slate-50);
   box-sizing: border-box;
   font-family: 'Inter', sans-serif;
-  padding: calc(64px + 1rem) 1rem 6rem 1rem; /* room for fixed top bar; 6rem bottom clears fixed bottom nav */
 }
 
 /* ============================================================
@@ -371,6 +377,69 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 }
 
+/* Main tutor content pane — fixed between the top bar and bottom nav,
+   same treatment as .dashboard-main in StudentDashboard.css. */
+.tutor-main {
+  position: fixed;
+  top: 64px; /* .tutor-topbar height */
+  bottom: calc(80px + env(safe-area-inset-bottom)); /* bottom nav height, incl. home-indicator clearance */
+  left: 0;
+  right: 0;
+  overflow: hidden; /* clips the sliding pages; each page scrolls itself below */
+  touch-action: pan-y; /* let vertical scroll pass through; horizontal is handled by the swipe hook */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sits above the swipeable track — shown once regardless of which tab is
+   active, instead of being duplicated into all four mounted panels. */
+.tutor-main-banners {
+  flex: 0 0 auto;
+}
+.tutor-main-banners:empty {
+  display: none;
+}
+
+/* Clips whichever content sits below the banners: either the WhatsApp-style
+   four-tab track, or (for non-swipe routes like Tickets/Profile) a single page. */
+.tutor-track-viewport {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+/* The horizontal strip holding all four swipe tabs side by side. Its
+   transform is driven inline from JS (1:1 with the finger while dragging,
+   animated to the nearest tab on release) so a partial drag reveals a
+   sliver of the neighboring tab, like a native ViewPager. */
+.tutor-track {
+  display: flex;
+  height: 100%;
+  will-change: transform;
+}
+
+.tutor-page-panel {
+  flex: 0 0 auto;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* Non-swipe routes (Tickets, Profile, Appearance, a student's detail
+   page), rendered through <Outlet/> as a single page. */
+.tutor-page-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
 /* Nested content */
 .nested-content {
   background: var(--surface);
@@ -520,9 +589,8 @@
     left: 0;
   }
 
-  .tutor-dashboard {
-    margin-left: 220px;
-    padding: calc(64px + 2rem) 2rem 2rem 2rem;
+  .tutor-main {
+    left: 220px;
   }
 }
 
@@ -594,8 +662,9 @@
 }
 
 @media (max-width: 480px) {
-  .tutor-dashboard {
-    padding: calc(64px + 0.5rem) 0.5rem 6.5rem 0.5rem; /* keep clearance for the fixed top bar */
+  .tutor-page-panel,
+  .tutor-page-scroll {
+    padding: 0.5rem;
   }
 
   .dashboard-header {

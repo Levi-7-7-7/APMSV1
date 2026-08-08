@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
 import { Loader2, Award, Eye, RotateCcw, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import tutorAxios from '../api/tutorAxios';
 import CertModal from '../components/CertModal';
 import { getCached, setCached, clearCached } from '../utils/pageDataCache';
+import useTutorTabContext from '../context/TutorTabContext';
 import '../css/ApprovedCertificates.css';
 
 const CACHE_KEY = 'tutor-approved';
 
 export default function ApprovedCertificates() {
-  const { refreshToken } = useOutletContext() || {};
+  const { refreshToken } = useTutorTabContext();
   const lastRefreshToken = useRef(refreshToken);
 
   const cached = getCached(CACHE_KEY);

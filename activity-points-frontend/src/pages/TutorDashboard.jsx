@@ -1,7 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { MoreVertical, User, LogOut, X, Bell, RefreshCw, Palette, MessageSquare } from 'lucide-react';
 import TutorBottomNav from '../components/TutorBottomNav';
+import useSwipeNavigation from '../hooks/useSwipeNavigation';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import InstallAppBanner from '../components/InstallAppBanner';
@@ -10,8 +12,29 @@ import { listenForForegroundMessages, syncPushToken, showForegroundNotification 
 import tutorAxios from '../api/tutorAxios';
 import { getTutorTicketUnreadCount, getTutorTicketNewCount, getTutorTicketNotifications } from '../utils/ticketApi';
 import { clearAllOfflineCaches } from '../utils/pageDataCache';
+import { TutorTabProvider } from '../context/TutorTabContext';
 import { noImgCallout } from '../utils/noImgCallout';
+import StudentList from './StudentList';
+import UploadCSV from './UploadCSV';
+import PendingCertificates from './PendingCertificates';
+import ApprovedCertificates from './ApprovedCertificates';
 import '../css/TutorDashboard.css';
+
+// The four swipeable tabs, mounted directly (side by side, in a
+// horizontal track) instead of one-at-a-time through react-router's
+// <Outlet/> — same treatment as StudentLayout's SWIPE_TABS. This is what
+// lets a partial drag reveal a sliver of the neighboring tab, like
+// WhatsApp's chat-list/status/calls pager. Order matches TutorBottomNav's
+// navItems exactly. Tickets/Profile/Appearance (and the students/:id
+// drill-down) aren't in this list, so they keep rendering through the
+// plain <Outlet/> branch below, non-swipeable, same as Profile does for
+// students.
+const SWIPE_TABS = [
+  { path: '/tutor/dashboard/students', Component: StudentList },
+  { path: '/tutor/dashboard/upload', Component: UploadCSV },
+  { path: '/tutor/dashboard/pending', Component: PendingCertificates },
+  { path: '/tutor/dashboard/approved', Component: ApprovedCertificates },
+];
 
 const PAGE_TITLES = {
   students: 'Students',
@@ -21,6 +44,17 @@ const PAGE_TITLES = {
   tickets: 'Help & Support',
   profile: 'Profile',
 };
+
+// Slide direction is based on tab order, not the browser's back/forward
+// history — swiping/tapping "forward" through the tabs slides the new
+// page in from the right, "backward" slides it in from the left. Same
+// pattern as StudentLayout.
+const pageVariants = {
+  enter: (direction) => ({ x: direction >= 0 ? '100%' : '-100%', opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (direction) => ({ x: direction >= 0 ? '-100%' : '100%', opacity: 0 }),
+};
+const pageTransition = { duration: 0.2, ease: [0.4, 0, 0.2, 1] };
 
 const TutorDashboard = () => {
   const location = useLocation();
@@ -38,6 +72,46 @@ const TutorDashboard = () => {
   // Page title shown in the fixed top bar; falls back to the active tab's
   // label for nested routes like students/:studentId.
   const pageTitle = PAGE_TITLES[path] || PAGE_TITLES[activeTab] || 'Dashboard';
+
+  // Bottom-nav tab order — swiping left/right moves between these, same
+  // as tapping the corresponding nav icon. Must match TutorBottomNav.jsx's
+  // navItems.
+  const SWIPE_TAB_PATHS = useMemo(() => SWIPE_TABS.map((t) => t.path), []);
+  const { dragX, isDragging, currentIndex, swipeHandlers } = useSwipeNavigation(
+    SWIPE_TAB_PATHS,
+    location.pathname,
+    (p) => navigate(p)
+  );
+  // -1 for routes nested under /tutor/dashboard that aren't one of the
+  // four swipeable tabs (e.g. Tickets, Profile, a student's detail page)
+  // — those still render through <Outlet/> as a single, non-swipeable page.
+  const isSwipeTab = currentIndex !== -1;
+
+  // Tracks which tab we were just on, so we know which direction to slide
+  // toward for ANY navigation of the non-swipe (Outlet) route — bottom-nav
+  // tap or otherwise.
+  const prevTabIndexRef = useRef(currentIndex);
+  const direction =
+    currentIndex === -1 || prevTabIndexRef.current === -1
+      ? 0
+      : Math.sign(currentIndex - prevTabIndexRef.current);
+  useEffect(() => {
+    prevTabIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  // Pixel width of the swipeable viewport — measured (not assumed) so the
+  // track lines up exactly regardless of device width. Re-measured on resize.
+  const trackViewportRef = useRef(null);
+  const [paneWidth, setPaneWidth] = useState(0);
+  useLayoutEffect(() => {
+    const el = trackViewportRef.current;
+    if (!el) return;
+    const measure = () => setPaneWidth(el.clientWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [avatarEnlarged, setAvatarEnlarged] = useState(false);
@@ -367,14 +441,71 @@ const TutorDashboard = () => {
         </div>
       </header>
 
-      {/* Nested pages */}
-      <main className="nested-content min-h-[300px]">
-        <OfflineBanner />
-        <NotificationPermissionBanner role="tutor" />
-        <InstallAppBanner />
-        <React.Suspense fallback={<p className="loading-text">Loading...</p>}>
-          <Outlet context={{ refreshPendingCount, refreshTicketUnreadCount, refreshNewTicketCount, refreshToken }} />
-        </React.Suspense>
+      {/* Nested tutor pages — a fixed pane between the top bar and bottom
+          nav. The banners sit above the swipeable area (shown once, not
+          per-tab), and the four swipe tabs (Students / Add Students /
+          Pending / Approved — same order as TutorBottomNav) live in a
+          horizontal track all four are mounted in simultaneously, so a
+          partial drag reveals a sliver of the neighboring tab — like
+          WhatsApp — rather than just animating whichever single route
+          react-router has matched. Mirrors StudentLayout. */}
+      <main
+        className={`tutor-main${isDragging ? ' tutor-main-dragging' : ''}`}
+        {...(isSwipeTab ? swipeHandlers : {})}
+      >
+        <div className="tutor-main-banners">
+          <OfflineBanner />
+          <NotificationPermissionBanner role="tutor" />
+          <InstallAppBanner />
+        </div>
+
+        <div className="tutor-track-viewport" ref={trackViewportRef}>
+          {isSwipeTab ? (
+            <TutorTabProvider value={{ refreshPendingCount, refreshTicketUnreadCount, refreshNewTicketCount, refreshToken }}>
+              <div
+                className="tutor-track"
+                style={{
+                  width: paneWidth ? `${paneWidth * SWIPE_TABS.length}px` : '100%',
+                  transform: `translateX(${-(currentIndex * paneWidth) + (isDragging ? dragX : 0)}px)`,
+                  transition: isDragging ? 'none' : 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)',
+                }}
+              >
+                {SWIPE_TABS.map(({ path: tabPath, Component }) => (
+                  <div
+                    key={tabPath}
+                    className="tutor-page-panel"
+                    style={{ width: paneWidth ? `${paneWidth}px` : `${100 / SWIPE_TABS.length}%` }}
+                  >
+                    <div className="nested-content">
+                      <React.Suspense fallback={<p className="loading-text">Loading...</p>}>
+                        <Component />
+                      </React.Suspense>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TutorTabProvider>
+          ) : (
+            <AnimatePresence initial={false} custom={direction}>
+              <motion.div
+                key={location.pathname}
+                className="tutor-page-scroll"
+                custom={direction}
+                variants={pageVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={pageTransition}
+              >
+                <div className="nested-content">
+                  <React.Suspense fallback={<p className="loading-text">Loading...</p>}>
+                    <Outlet context={{ refreshPendingCount, refreshTicketUnreadCount, refreshNewTicketCount, refreshToken }} />
+                  </React.Suspense>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </div>
       </main>
 
       {/* Bottom navigation */}

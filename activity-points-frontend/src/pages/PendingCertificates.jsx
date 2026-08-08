@@ -1,19 +1,20 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useOutletContext, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Loader2, Award, Eye, AlertCircle, X, Edit2, Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import tutorAxios from '../api/tutorAxios';
 import CertModal from '../components/CertModal';
 import { getCached, setCached, clearCached } from '../utils/pageDataCache';
+import useTutorTabContext from '../context/TutorTabContext';
 import '../css/PendingCertificates.css';
 
 const CACHE_KEY = 'tutor-pending';
 
 const PendingCertificates = () => {
-  // Provided by TutorDashboard via <Outlet context={...}> — lets us nudge
-  // the bottom-nav badge count to refresh immediately after an
+  // Provided by TutorDashboard via TutorTabContext — lets us nudge the
+  // bottom-nav badge count to refresh immediately after an
   // approve/reject/reassign, instead of waiting for its own poll.
   // refreshToken bumps whenever the top-bar refresh button is tapped.
-  const { refreshPendingCount, refreshToken } = useOutletContext() || {};
+  const { refreshPendingCount, refreshToken } = useTutorTabContext();
   const lastRefreshToken = useRef(refreshToken);
 
   const cached = getCached(CACHE_KEY);
