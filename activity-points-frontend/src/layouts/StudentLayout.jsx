@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MoreVertical, User, LogOut, X } from 'lucide-react';
@@ -158,11 +158,19 @@ const StudentLayout = () => {
 
   // WhatsApp-style: the top bar stays fixed, but gains a subtle shadow once
   // the page underneath has scrolled, giving it a sense of "elevation".
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 4);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+  // The document/body no longer scrolls (see .dashboard-main), so this
+  // reads scrollTop from whichever page's own scroll container is active,
+  // via the ref callback below.
+  const pageScrollRef = useRef(null);
+  const setPageScrollRef = useCallback((el) => {
+    pageScrollRef.current = el;
+    setScrolled(el ? el.scrollTop > 4 : false);
+  }, []);
+  const handlePageScroll = useCallback((e) => {
+    setScrolled(e.currentTarget.scrollTop > 4);
+  }, []);
+  const scrollToTop = useCallback(() => {
+    pageScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
 
   // Close the three-dot menu on outside click or Escape
@@ -262,14 +270,21 @@ const StudentLayout = () => {
         </div>
       </header>
 
-      {/* Nested student pages */}
+      {/* Nested student pages — a fixed pane between the top bar and bottom
+          nav. AnimatePresence's default ("sync") mode keeps the outgoing
+          page mounted while the incoming one mounts immediately, so both
+          are on screen and slide past each other at once, like a native
+          tab pager, instead of exiting then entering in sequence. */}
       <main
         className={`dashboard-main${isDragging ? ' dashboard-main-dragging' : ''}`}
         {...swipeHandlers}
       >
-        <AnimatePresence initial={false} custom={direction} mode="wait">
+        <AnimatePresence initial={false} custom={direction}>
           <motion.div
             key={location.pathname}
+            ref={setPageScrollRef}
+            onScroll={handlePageScroll}
+            className="dashboard-page-scroll"
             custom={direction}
             variants={pageVariants}
             initial="enter"
@@ -279,7 +294,7 @@ const StudentLayout = () => {
           >
             <NotificationPermissionBanner role="student" />
             <InstallAppBanner />
-            <Outlet context={{ refreshTicketUnreadCount }} />
+            <Outlet context={{ refreshTicketUnreadCount, scrollToTop }} />
           </motion.div>
         </AnimatePresence>
       </main>

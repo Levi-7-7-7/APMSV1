@@ -1,10 +1,15 @@
-/* Container */
+/* Container — fixed-height app shell. The page no longer scrolls the
+   document/body; .dashboard-main below is a fixed pane between the top bar
+   and bottom nav, and each individual page scrolls itself. This is what
+   lets the outgoing/incoming pages overlap and slide simultaneously,
+   like a native app's tab pager, instead of the whole document jumping. */
 .student-dashboard {
   max-width: 720px;
   margin: 0 auto;
   font-family: 'Inter', sans-serif;
   color: var(--slate-700);
-  padding: calc(64px + 1.25rem) 1rem 80px 1rem; /* room for fixed top bar + bottom nav */
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* Header */
@@ -89,11 +94,14 @@
   right: 0;
   max-width: 720px;
   margin: 0 auto;
-  height: 64px;
+  height: calc(64px + env(safe-area-inset-top)); /* clears the iOS notch/status bar when installed standalone */
+  padding-top: env(safe-area-inset-top);
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   background: var(--surface);
   border-bottom: 1px solid transparent;
   box-shadow: none;
@@ -313,8 +321,24 @@
 
 /* Main dashboard */
 .dashboard-main {
+  position: fixed;
+  top: calc(64px + env(safe-area-inset-top)); /* app-topbar height, incl. notch clearance */
+  bottom: calc(80px + env(safe-area-inset-bottom)); /* bottom nav height, incl. home-indicator clearance */
+  left: 0;
+  right: 0;
+  max-width: 720px;
+  margin: 0 auto;
+  overflow: hidden; /* clips the sliding pages; each page scrolls itself below */
   touch-action: pan-y; /* let vertical scroll pass through; horizontal is handled by the swipe hook */
-  overflow-x: hidden; /* clip the slide-in/out animation instead of causing a horizontal scrollbar */
+}
+
+.dashboard-page-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding: 1.25rem 1rem 1rem 1rem;
 }
 
 .dashboard-main h3 {
@@ -432,6 +456,8 @@
   border-top: 1px solid var(--slate-200);
   box-shadow: 0 -1px 5px rgb(0 0 0 / 0.05);
   z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom); /* clears the iOS home indicator when installed standalone */
+  box-sizing: border-box;
 }
 
 /* 🔑 THIS IS THE KEY */

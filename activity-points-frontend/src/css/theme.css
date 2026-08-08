@@ -71,6 +71,12 @@ html, body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* The student app (StudentLayout) manages its own fixed-pane scrolling —
+   see .student-dashboard / .dashboard-main / .dashboard-page-scroll in
+   StudentDashboard.css — so that page-to-page swipe transitions can
+   overlap. Tutor/Admin/Login screens still use normal document scroll,
+   so this is scoped to the student shell only, not applied globally. */
+
 /* Prevent long-press text selection / callout menu on UI chrome,
    while still allowing normal selection inside real text inputs. */
 body {

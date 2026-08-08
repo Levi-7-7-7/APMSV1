@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import axiosInstance from '../api/axiosInstance';
 import { ArrowLeft, Award, Paperclip, Search, X, Calendar } from 'lucide-react';
 import CertCropModal from '../components/CertCropModal';
@@ -21,6 +21,10 @@ function buildSearchIndex(categories) {
 
 export default function CertificateUploadScreen() {
   const navigate = useNavigate();
+  // The page's own scroll container now lives in StudentLayout (the
+  // document/body no longer scrolls), so scrolling to top on submit goes
+  // through this instead of window.scrollTo.
+  const { scrollToTop } = useOutletContext() || {};
 
   const [categories, setCategories] = useState([]);
   const [categoryId, setCategoryId] = useState('');
@@ -269,9 +273,9 @@ export default function CertificateUploadScreen() {
 
   useEffect(() => {
     if (submitted) {
-      window.scrollTo(0, 0);
+      scrollToTop?.();
     }
-  }, [submitted]);
+  }, [submitted, scrollToTop]);
 
   if (submitted) {
     return (
