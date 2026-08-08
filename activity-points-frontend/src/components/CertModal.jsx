@@ -5,6 +5,7 @@
  *   <CertModal url={cert.fileUrl} fileName="certificate.jpg" onClose={() => setOpen(false)} />
  */
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Download, Loader2, ExternalLink, AlertTriangle } from 'lucide-react';
 
 // Determine if a URL points to a PDF — check the actual file extension in
@@ -77,7 +78,15 @@ export default function CertModal({ url, fileName = 'certificate', onClose }) {
 
   if (!url) return null;
 
-  return (
+  // Rendered via a portal straight onto document.body: the four student
+  // tabs (Dashboard/Upload/Certificates/Tickets) are mounted side-by-side
+  // in a horizontally-translated track for the swipe gesture, and CSS
+  // `transform` on an ancestor creates a new containing block for any
+  // `position: fixed` descendant. Without the portal, this modal's fixed
+  // overlay would size/position itself against that (4x-viewport-wide)
+  // track instead of the actual viewport — which is what made it look
+  // like it was "opening across all four pages".
+  return createPortal(
     <div
       className="cert-modal-overlay"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
@@ -167,6 +176,7 @@ export default function CertModal({ url, fileName = 'certificate', onClose }) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

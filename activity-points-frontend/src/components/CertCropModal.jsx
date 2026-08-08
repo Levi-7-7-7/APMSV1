@@ -20,6 +20,7 @@
  *   />
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2, X, ZoomIn } from 'lucide-react';
 import '../css/CertCropModal.css';
 
@@ -183,7 +184,13 @@ export default function CertCropModal({ file, busy, error, onCancel, onConfirm }
 
   if (!file) return null;
 
-  return (
+  // Portalled to document.body for the same reason as CertModal — this
+  // page is one of the four tabs mounted inside the horizontally-
+  // translated swipe track, and a `transform` on that track becomes the
+  // containing block for `position: fixed` descendants, which would
+  // otherwise stretch this backdrop across all four tabs instead of just
+  // the viewport.
+  return createPortal(
     <div className="ccm-backdrop" onClick={() => !busy && onCancel()}>
       <div className="ccm-modal" onClick={e => e.stopPropagation()}>
         <h3 className="ccm-title">Adjust certificate</h3>
@@ -249,6 +256,7 @@ export default function CertCropModal({ file, busy, error, onCancel, onConfirm }
           <X size={18} />
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
