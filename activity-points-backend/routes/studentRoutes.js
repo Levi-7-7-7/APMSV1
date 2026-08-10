@@ -151,6 +151,21 @@ router.patch('/fcm-token', auth, async (req, res) => {
   }
 });
 
+// Clear the currently registered push token when the student logs out.
+// Authentication is required so a user can only clear their own device token.
+router.delete('/fcm-token', auth, async (req, res) => {
+  try {
+    await Student.findByIdAndUpdate(req.user.id, {
+      $set: { 'fcmToken.token': null, 'fcmToken.updatedAt': new Date() },
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 /* ────────────────────────────────────────────────────────────
  * PROFILE PHOTO UPLOAD
  * ────────────────────────────────────────────────────────────

@@ -202,6 +202,19 @@ router.patch('/fcm-token', tutorAuth, async (req, res) => {
   }
 });
 
+// Clear the currently registered push token when the tutor logs out.
+// Authentication is required so a user can only clear their own device token.
+router.delete('/fcm-token', tutorAuth, async (req, res) => {
+  try {
+    await Tutor.findByIdAndUpdate(req.tutor.id, {
+      $set: { 'fcmToken.token': null, 'fcmToken.updatedAt': new Date() },
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ─── GET STUDENTS (filtered to tutor's batch + branch) ───────────────────────
 router.get('/students', tutorAuth, async (req, res) => {
   try {

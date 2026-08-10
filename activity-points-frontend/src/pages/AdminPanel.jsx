@@ -15,7 +15,7 @@ import NotificationPermissionBanner from "../components/NotificationPermissionBa
 import OfflineBanner from "../components/OfflineBanner";
 import AdminTickets from "./AdminTickets";
 import { getAdminTicketUnreadCount, getAdminTicketNotifications } from "../utils/ticketApi";
-import { listenForForegroundMessages, syncPushToken, showForegroundNotification } from "../utils/pushNotifications";
+import { listenForForegroundMessages, syncPushToken, unregisterPushNotifications, showForegroundNotification } from "../utils/pushNotifications";
 import { clearAllOfflineCaches } from "../utils/pageDataCache";
 import { noImgCallout } from "../utils/noImgCallout";
 import "../css/AdminPanel.css";
@@ -71,8 +71,12 @@ const ACTIONS_BY_ACTOR = {
 export default function AdminPanel() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm("Are you sure you want to logout?")) {
+      // Clear the server-side FCM token and this browser's Firebase token
+      // before removing the JWT, so this device receives no pushes after
+      // logout. A later login registers a fresh token again.
+      await unregisterPushNotifications('admin');
       localStorage.removeItem("adminToken");
       localStorage.removeItem("adminEmail");
       clearAllOfflineCaches();

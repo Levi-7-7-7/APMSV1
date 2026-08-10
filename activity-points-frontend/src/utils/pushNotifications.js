@@ -200,6 +200,42 @@ export async function syncPushToken(role) {
 }
 
 /**
+ * Unregisters this role's push device during logout.
+ *
+ * The backend token is cleared while the JWT is still valid, then the
+ * Firebase token is deleted locally from this browser/service-worker.
+ * This guarantees that a logged-out device receives no further pushes
+ * until the user logs in again and registers a fresh token.
+ *
+ * @param {'student'|'tutor'|'admin'} role
+ * @returns {Promise<'cleared'|'skipped'|'error'>}
+ */
+export async function unregisterPushNotifications(role) {
+  const configured = clientFor(role);
+  if (!configured) return 'skipped';
+
+  // Clear the server-side token first, while the role's auth token still
+  // exists. If this request fails, we still continue with local cleanup.
+  try {
+    await configured.axios.delete(configured.endpoint);
+  } catch (err) {
+    console.warn('[push] server token clear failed during logout:', err.message);
+  }
+
+  // Remove Firebase's locally cached token/subscription from this browser.
+  try {
+    const messaging = await getMessagingInstance();
+    if (messaging) {
+      await deleteToken(messaging);
+    }
+  } catch (err) {
+    console.warn('[push] local FCM token delete failed during logout:', err.message);
+  }
+
+  return 'cleared';
+}
+
+/**
  * Listens for notifications that arrive while the tab is open and
  * focused (the service worker's onBackgroundMessage doesn't fire for
  * these). Call once near app root; returns an unsubscribe function.

@@ -212,6 +212,19 @@ router.patch("/fcm-token", adminAuth, async (req, res) => {
   }
 });
 
+// Clear the currently registered push token when the admin logs out.
+// Authentication is required so an admin can only clear their own token.
+router.delete("/fcm-token", adminAuth, async (req, res) => {
+  try {
+    await Admin.findByIdAndUpdate(req.admin.id, {
+      $set: { 'fcmToken.token': null, 'fcmToken.updatedAt': new Date() },
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Upload / update the logged-in admin's own profile photo
 router.delete("/profile-photo", adminAuth, async (req, res) => {
   try {

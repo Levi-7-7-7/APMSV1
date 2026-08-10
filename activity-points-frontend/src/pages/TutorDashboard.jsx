@@ -8,7 +8,7 @@ import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import InstallAppBanner from '../components/InstallAppBanner';
 import OfflineBanner from '../components/OfflineBanner';
-import { listenForForegroundMessages, syncPushToken, showForegroundNotification } from '../utils/pushNotifications';
+import { listenForForegroundMessages, syncPushToken, unregisterPushNotifications, showForegroundNotification } from '../utils/pushNotifications';
 import tutorAxios from '../api/tutorAxios';
 import { getTutorTicketUnreadCount, getTutorTicketNewCount, getTutorTicketNotifications } from '../utils/ticketApi';
 import { clearAllOfflineCaches } from '../utils/pageDataCache';
@@ -306,8 +306,12 @@ const TutorDashboard = () => {
   }, [refreshToken]);
 
   // Logout handler with confirmation
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm('Are you sure you want to logout?')) {
+      // Clear the server-side FCM token and this browser's Firebase token
+      // before removing the JWT, so this device receives no pushes after
+      // logout. A later login registers a fresh token again.
+      await unregisterPushNotifications('tutor');
       localStorage.removeItem('tutorToken');
       localStorage.removeItem('tutorName');
       localStorage.removeItem('tutorFirstTimePasswordSet');
