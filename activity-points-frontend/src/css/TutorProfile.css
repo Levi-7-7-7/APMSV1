@@ -133,8 +133,8 @@
   gap: 8px;
   background: var(--surface);
   border-radius: 16px;
-  padding: 88px 20px 24px 20px;
-  margin: -40px 16px 24px 16px;
+  padding: 24px 20px;
+  margin: 0 16px 24px 16px;
   box-shadow: 0 5px 15px rgb(219 234 254 / 0.5);
   position: relative;
   z-index: 1;

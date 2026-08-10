@@ -258,6 +258,8 @@ export default function Profile() {
 
       {error && <div className="profile-error">{error}</div>}
 
+      <ProfileCompletionHint steps={profileCompletionSteps} />
+
       {/* Name block */}
       <div className="profile-name-block">
         {loading ? (
@@ -275,8 +277,6 @@ export default function Profile() {
           {entryType}
         </div>
       </div>
-
-      <ProfileCompletionHint steps={profileCompletionSteps} />
 
       {/* Account info */}
       <p className="profile-section-label">ACCOUNT INFO</p>
