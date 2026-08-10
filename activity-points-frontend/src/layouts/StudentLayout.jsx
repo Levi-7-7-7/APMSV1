@@ -6,6 +6,7 @@ import BottomNav from '../components/BottomNav';
 import useSwipeNavigation from '../hooks/useSwipeNavigation';
 import useOnlineStatus from '../hooks/useOnlineStatus';
 import PasswordSetupPrompt from '../components/PasswordSetupPrompt';
+import ProfileCompletionRing from '../components/ProfileCompletionRing';
 import NotificationPermissionBanner from '../components/NotificationPermissionBanner';
 import InstallAppBanner from '../components/InstallAppBanner';
 import OfflineBanner from '../components/OfflineBanner';
@@ -113,6 +114,12 @@ const StudentLayout = () => {
     return null;
   });
 
+  const [certificateCount, setCertificateCount] = useState(() => {
+    const ud = localStorage.getItem('userData');
+    if (ud) { try { return Number(JSON.parse(ud).certificateCount || 0); } catch (_) {} }
+    return 0;
+  });
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [avatarEnlarged, setAvatarEnlarged] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -196,6 +203,7 @@ const StudentLayout = () => {
           const parsed = JSON.parse(ud);
           if (parsed?.name) setUserName(parsed.name);
           setProfilePhoto(parsed?.profilePhoto || null);
+          setCertificateCount(Number(parsed?.certificateCount || 0));
           if (typeof parsed?.firstTimePasswordSet === 'boolean') {
             setFirstTimePasswordSet(parsed.firstTimePasswordSet);
             localStorage.setItem('firstTimePasswordSet', String(parsed.firstTimePasswordSet));
@@ -280,10 +288,15 @@ const StudentLayout = () => {
     .join('')
     .toUpperCase();
 
+  const profileCompletion = (firstTimePasswordSet === true ? 50 : 25)
+    + (profilePhoto ? 25 : 0)
+    + (certificateCount > 0 ? 25 : 0);
+
   return (
     <div className="student-dashboard">
       {/* Fixed WhatsApp-style top bar: stays put while everything else scrolls */}
       <header className={`app-topbar ${scrolled ? 'scrolled' : ''}`}>
+        <ProfileCompletionRing percent={profileCompletion} size={46} className="compact">
         <button
           className="app-topbar-avatar"
           onClick={() => setAvatarEnlarged(true)}
@@ -296,6 +309,7 @@ const StudentLayout = () => {
             <span className="avatar-fallback">{avatarInitials}</span>
           )}
         </button>
+        </ProfileCompletionRing>
 
         <span className="app-topbar-page-title">{pageTitle}</span>
 

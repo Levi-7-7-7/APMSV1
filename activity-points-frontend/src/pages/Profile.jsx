@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Camera,
@@ -14,7 +14,9 @@ import {
 } from 'lucide-react';
 import axiosInstance from '../api/axiosInstance';
 import PhotoCropModal from '../components/PhotoCropModal';
+import ProfileCompletionRing from '../components/ProfileCompletionRing';
 import { getCached, setCached, isSessionCached } from '../utils/pageDataCache';
+import useStudentTabContext from '../context/StudentTabContext';
 import { noImgCallout } from '../utils/noImgCallout';
 import '../css/Profile.css';
 
@@ -33,7 +35,7 @@ function getInitials(name) {
 export default function Profile() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const { refreshToken } = useOutletContext() || {};
+  const { refreshToken, triggerRefresh } = useStudentTabContext();
   const lastRefreshToken = useRef(refreshToken);
 
   const cached = getCached(CACHE_KEY);
@@ -180,6 +182,8 @@ export default function Profile() {
         return updated;
       });
       setPendingFile(null);
+      window.dispatchEvent(new Event('storage'));
+      triggerRefresh?.();
     } catch (err) {
       setError(err?.response?.data?.error || 'Could not upload photo. Please try again.');
     } finally {
@@ -194,6 +198,9 @@ export default function Profile() {
   const branchName = user?.branch?.name ?? '—';
   const entryType = user?.isLateralEntry ? 'Lateral Entry' : 'Regular';
   const initials = getInitials(userName);
+  const profileCompletion = (user?.firstTimePasswordSet === true ? 50 : 25)
+    + (user?.profilePhoto ? 25 : 0)
+    + (Number(user?.certificateCount || 0) > 0 ? 25 : 0);
 
   return (
     <div className="profile-page">
@@ -205,22 +212,24 @@ export default function Profile() {
         <h1 className="profile-hero-title">Profile</h1>
 
         <div className="profile-avatar-wrapper">
-          {user?.profilePhoto ? (
-            <img
-              src={user.profilePhoto}
-              alt={userName}
-              className="profile-avatar-img profile-avatar-clickable no-img-callout"
-              onClick={() => setViewerImage(user.profilePhoto)}
-              {...noImgCallout}
-            />
-          ) : (
-            <div
-              className="profile-avatar-fallback profile-avatar-clickable"
-              onClick={handlePhotoClick}
-            >
-              <span>{initials || 'S'}</span>
-            </div>
-          )}
+          <ProfileCompletionRing percent={profileCompletion} size={112}>
+            {user?.profilePhoto ? (
+              <img
+                src={user.profilePhoto}
+                alt={userName}
+                className="profile-avatar-img profile-avatar-clickable no-img-callout"
+                onClick={() => setViewerImage(user.profilePhoto)}
+                {...noImgCallout}
+              />
+            ) : (
+              <div
+                className="profile-avatar-fallback profile-avatar-clickable"
+                onClick={handlePhotoClick}
+              >
+                <span>{initials || 'S'}</span>
+              </div>
+            )}
+          </ProfileCompletionRing>
 
           <button
             className="profile-camera-badge"

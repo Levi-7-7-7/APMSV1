@@ -29,7 +29,7 @@ export default function CertificateUploadScreen() {
   // The page's own scroll container now lives in StudentLayout (the
   // document/body no longer scrolls), so scrolling to top on submit goes
   // through this instead of window.scrollTo.
-  const { scrollToTop, refreshToken } = useStudentTabContext();
+  const { scrollToTop, refreshToken, triggerRefresh } = useStudentTabContext();
   const isOnline = useOnlineStatus();
   const lastRefreshToken = useRef(refreshToken);
 
@@ -322,6 +322,7 @@ export default function CertificateUploadScreen() {
       // fetch fresh instead of needing an explicit refresh-button tap.
       clearCached('dashboard');
       clearCached('certificatesPage');
+      triggerRefresh?.();
 
       setSubmitted(true);
       // Show the success screen briefly, then reset the form and land the

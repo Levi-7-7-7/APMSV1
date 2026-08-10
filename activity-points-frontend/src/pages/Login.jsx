@@ -6,6 +6,7 @@ import axiosInstance from '../api/axiosInstance';
 import adminAxios from '../api/adminAxios';
 import tutorAxios from '../api/tutorAxios';
 import BootLoader from '../components/BootLoader';
+import { clearAllOfflineCaches } from '../utils/pageDataCache';
 import InstallAppBanner from '../components/InstallAppBanner';
 import '../css/Login.css';
 
@@ -104,6 +105,10 @@ export default function Login() {
         localStorage.setItem('role', 'student');
         localStorage.setItem('userName', res.data.student?.name || 'Student');
         localStorage.setItem('firstTimePasswordSet', String(!!res.data.student?.firstTimePasswordSet));
+        // A password reset/change happens outside the dashboard. Drop stale
+        // cached dashboard data so the newly logged-in session always paints
+        // the fresh firstTimePasswordSet/photo/certificate state.
+        clearAllOfflineCaches();
         setSuccess(res.data.message || 'Login successful');
         navigate('/student');
 

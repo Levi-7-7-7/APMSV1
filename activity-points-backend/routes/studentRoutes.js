@@ -35,6 +35,7 @@ const auth = require('../middleware/auth');
 const Tutor = require('../models/Tutor');
 const logActivity = require('../utils/activityLog');
 const { registerDeviceToken } = require('../utils/fcm');
+const Certificate = require('../models/Certificate');
 
 const router = express.Router();
 
@@ -107,7 +108,13 @@ router.get('/me', auth, async (req, res) => {
       });
     }
 
-    res.json(student);
+    // Used by the frontend profile-completion ring: the fourth 25% step is
+    // reached as soon as the student has submitted their first certificate.
+    const certificateCount = await Certificate.countDocuments({ student: student._id });
+    const result = student.toObject();
+    result.certificateCount = certificateCount;
+
+    res.json(result);
   } catch (err) {
     res.status(500).json({
       error: err.message,

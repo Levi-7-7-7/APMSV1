@@ -1,0 +1,96 @@
+.profile-completion-ring {
+  position: relative;
+  width: var(--profile-ring-size);
+  height: var(--profile-ring-size);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.profile-completion-ring-track,
+.profile-completion-ring-progress {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.profile-completion-ring-track {
+  background: conic-gradient(
+    from -90deg,
+    var(--slate-200, #e2e8f0) 0deg 360deg
+  );
+}
+
+.profile-completion-ring-progress {
+  background: conic-gradient(
+    from -90deg,
+    var(--blue-600, #2563eb) 0deg var(--profile-ring-progress),
+    transparent var(--profile-ring-progress) 360deg
+  );
+  filter: drop-shadow(0 2px 5px rgba(37, 99, 235, 0.24));
+}
+
+.profile-completion-ring-track::after,
+.profile-completion-ring-progress::after {
+  content: '';
+  position: absolute;
+  inset: var(--profile-ring-stroke);
+  border-radius: 50%;
+  background: var(--surface, #fff);
+}
+
+.profile-completion-ring-content {
+  position: relative;
+  z-index: 1;
+  width: calc(100% - (var(--profile-ring-stroke) * 2));
+  height: calc(100% - (var(--profile-ring-stroke) * 2));
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.profile-completion-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--blue-tint-100, #eff6ff);
+  color: var(--blue-600, #2563eb);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.profile-completion-label-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .profile-completion-ring-progress {
+    animation: profile-ring-in 500ms ease-out both;
+  }
+}
+
+@keyframes profile-ring-in {
+  from { transform: rotate(-90deg) scale(0.96); opacity: 0; }
+  to { transform: rotate(0deg) scale(1); opacity: 1; }
+}
+
+/* Compact version for admin's top-bar avatar. */
+.profile-completion-ring.compact .profile-completion-ring-track,
+.profile-completion-ring.compact .profile-completion-ring-progress {
+  opacity: 0.95;
+}
+
+@media (prefers-color-scheme: dark) {
+  .profile-completion-ring-track {
+    background: conic-gradient(from -90deg, rgba(148,163,184,.28) 0deg 360deg);
+  }
+}

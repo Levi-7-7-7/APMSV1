@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import tutorAxios from '../api/tutorAxios';
 import PhotoCropModal from '../components/PhotoCropModal';
+import ProfileCompletionRing from '../components/ProfileCompletionRing';
 import { getCached, setCached, isSessionCached } from '../utils/pageDataCache';
 import { noImgCallout } from '../utils/noImgCallout';
 import '../css/TutorProfile.css';
@@ -194,22 +195,24 @@ export default function TutorProfile() {
         </div>
 
         <div className="tprofile-avatar-wrapper">
-          {hasPhoto ? (
-            <img
-              src={localPhoto}
-              alt={tutorName}
-              className="tprofile-avatar-img tprofile-avatar-clickable no-img-callout"
-              onClick={() => setViewerImage(localPhoto)}
-              {...noImgCallout}
-            />
-          ) : (
-            <div
-              className="tprofile-avatar-fallback tprofile-avatar-clickable"
-              onClick={handlePhotoClick}
-            >
-              <span>{initials || 'T'}</span>
-            </div>
-          )}
+          <ProfileCompletionRing hasPhoto={hasPhoto} size={112}>
+            {hasPhoto ? (
+              <img
+                src={localPhoto}
+                alt={tutorName}
+                className="tprofile-avatar-img tprofile-avatar-clickable no-img-callout"
+                onClick={() => setViewerImage(localPhoto)}
+                {...noImgCallout}
+              />
+            ) : (
+              <div
+                className="tprofile-avatar-fallback tprofile-avatar-clickable"
+                onClick={handlePhotoClick}
+              >
+                <span>{initials || 'T'}</span>
+              </div>
+            )}
+          </ProfileCompletionRing>
 
           <button
             className="tprofile-camera-badge"
@@ -232,6 +235,11 @@ export default function TutorProfile() {
       </div>
 
       {error && <div className="tprofile-error">{error}</div>}
+
+      <div className="profile-completion-label" style={{ marginLeft: 'auto', marginRight: 'auto', width: 'fit-content' }}>
+        <span className="profile-completion-label-dot" />
+        Profile {hasPhoto ? '50' : '25'}% complete
+      </div>
 
       {/* Name block */}
       <div className="tprofile-name-block">

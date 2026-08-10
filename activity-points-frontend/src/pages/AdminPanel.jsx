@@ -8,6 +8,7 @@ import {
   History, Filter, ChevronLeft, ChevronRight, MoreVertical, Camera, Loader2, X, MessageSquare, Bell, Palette
 } from "lucide-react";
 import PhotoCropModal from "../components/PhotoCropModal";
+import ProfileCompletionRing from "../components/ProfileCompletionRing";
 import AppearanceSettings from "./AppearanceSettings";
 import NotificationPermissionBanner from "../components/NotificationPermissionBanner";
 import OfflineBanner from "../components/OfflineBanner";
@@ -888,14 +889,16 @@ export default function AdminPanel() {
       {/* ── Fixed WhatsApp-style top bar: avatar, admin name, current page title, three-dot menu ── */}
       <header className="ap-topbar">
         <div className="ap-topbar-avatar-wrap">
-          <button
-            className="ap-topbar-avatar"
-            onClick={() => adminPhoto ? setViewerPhoto({ src: adminPhoto, name: adminEmail }) : handleAdminPhotoClick()}
-            aria-label={adminPhoto ? "View profile photo" : "Add profile photo"}
-            type="button"
-          >
-            {adminPhoto ? <img src={adminPhoto} alt={adminEmail} className="no-img-callout" {...noImgCallout}/> : <span>{adminInitials}</span>}
-          </button>
+          <ProfileCompletionRing hasPhoto={Boolean(adminPhoto)} size={46} className="compact">
+            <button
+              className="ap-topbar-avatar"
+              onClick={() => adminPhoto ? setViewerPhoto({ src: adminPhoto, name: adminEmail }) : handleAdminPhotoClick()}
+              aria-label={adminPhoto ? "View profile photo" : "Add profile photo"}
+              type="button"
+            >
+              {adminPhoto ? <img src={adminPhoto} alt={adminEmail} className="no-img-callout" {...noImgCallout}/> : <span>{adminInitials}</span>}
+            </button>
+          </ProfileCompletionRing>
           <input ref={adminPhotoInputRef} type="file" accept="image/*" hidden onChange={handleAdminPhotoFileChange}/>
         </div>
 
