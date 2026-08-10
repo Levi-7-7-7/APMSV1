@@ -265,6 +265,16 @@ export default function TutorProfile() {
           <Mail size={13} />
           <span>{tutorEmail}</span>
         </div>
+
+        <button
+          type="button"
+          className="tprofile-photo-action"
+          onClick={handlePhotoClick}
+          disabled={uploading}
+        >
+          {uploading ? <Loader2 size={15} className="icon-spin" /> : <Camera size={15} />}
+          <span>{hasPhoto ? 'Replace my image' : 'Add profile photo'}</span>
+        </button>
       </div>
 
       {/* Stats row */}
