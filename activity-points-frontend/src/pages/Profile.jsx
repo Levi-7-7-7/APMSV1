@@ -246,16 +246,6 @@ export default function Profile() {
             {uploading ? <Loader2 size={13} className="icon-spin" /> : <Camera size={13} />}
           </button>
 
-          <button
-            type="button"
-            className="profile-photo-action"
-            onClick={handlePhotoClick}
-            disabled={uploading}
-          >
-            {uploading ? <Loader2 size={14} className="icon-spin" /> : <Camera size={14} />}
-            <span>{user?.profilePhoto ? 'Replace my image' : 'Add profile photo'}</span>
-          </button>
-
           <input
             ref={fileInputRef}
             type="file"
@@ -286,6 +276,16 @@ export default function Profile() {
         <div className={`profile-entry-badge ${user?.isLateralEntry ? 'warn' : 'success'}`}>
           {entryType}
         </div>
+
+        <button
+          type="button"
+          className="profile-photo-action"
+          onClick={handlePhotoClick}
+          disabled={uploading}
+        >
+          {uploading ? <Loader2 size={15} className="icon-spin" /> : <Camera size={15} />}
+          <span>{user?.profilePhoto ? 'Replace my image' : 'Add profile photo'}</span>
+        </button>
       </div>
 
       {/* Account info */}

@@ -351,6 +351,38 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+
+/* Explicit app-theme overrides: the app uses data-theme rather than only
+   the OS preference, so tutor profile controls must follow the selected theme. */
+:root[data-theme="dark"] .tprofile-name-block,
+:root[data-theme="teal"] .tprofile-name-block,
+:root[data-theme="custom"] .tprofile-name-block,
+:root[data-theme="dark"] .tprofile-stat-card,
+:root[data-theme="teal"] .tprofile-stat-card,
+:root[data-theme="custom"] .tprofile-stat-card,
+:root[data-theme="dark"] .tprofile-card,
+:root[data-theme="teal"] .tprofile-card,
+:root[data-theme="custom"] .tprofile-card {
+  color: var(--slate-100, #f8fafc);
+  box-shadow: 0 8px 24px rgba(0,0,0,.24);
+}
+
+:root[data-theme="dark"] .tprofile-name,
+:root[data-theme="teal"] .tprofile-name,
+:root[data-theme="custom"] .tprofile-name,
+:root[data-theme="dark"] .tprofile-stat-value,
+:root[data-theme="teal"] .tprofile-stat-value,
+:root[data-theme="custom"] .tprofile-stat-value {
+  color: var(--slate-100, #f8fafc);
+}
+
+:root[data-theme="dark"] .tprofile-email-pill,
+:root[data-theme="teal"] .tprofile-email-pill,
+:root[data-theme="custom"] .tprofile-email-pill {
+  background: var(--blue-tint-100);
+  color: var(--blue-800-text, #93c5fd);
+}
+
 /* Mobile tightening */
 @media (max-width: 480px) {
   .tprofile-hero {
