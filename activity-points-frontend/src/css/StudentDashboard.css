@@ -487,7 +487,7 @@
 .dashboard-main {
   position: fixed;
   top: calc(64px + env(safe-area-inset-top)); /* app-topbar height, incl. notch clearance */
-  bottom: calc(80px + env(safe-area-inset-bottom)); /* bottom nav height, incl. home-indicator clearance */
+  bottom: 0; /* content extends to the viewport; scroll panels reserve nav space */
   left: 0;
   right: 0;
   max-width: 720px;
@@ -531,12 +531,14 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  padding: 1.25rem 1rem 1rem 1rem;
+  padding: 1.25rem 1rem calc(1rem + 80px + env(safe-area-inset-bottom)) 1rem;
   box-sizing: border-box;
 }
 
 /* Non-swipe routes (e.g. Profile), rendered through <Outlet/> as a single page. */
 .dashboard-page-scroll {
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
   position: absolute;
   inset: 0;
   overflow-y: auto;

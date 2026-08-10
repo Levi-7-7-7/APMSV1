@@ -442,7 +442,7 @@
 
 :root[data-theme="dark"] .profile-photo-action {
   background: #1e293b !important;
-  border-color: var(--slate-500, #64748b) !important;
+  border-color: #64748b !important;
   box-shadow: 0 4px 14px rgba(0,0,0,.28);
 }
 

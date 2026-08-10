@@ -38,7 +38,7 @@ export default function ForgotPassword() {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    color: 'var(--slate-500, #64748b)',
+    color: '#6b7280',
     padding: 0,
   };
 

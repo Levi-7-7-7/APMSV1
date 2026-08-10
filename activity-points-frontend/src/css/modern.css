@@ -475,7 +475,7 @@ button { -webkit-tap-highlight-color: transparent; }
 
 :root[data-theme="dark"] .checkbox-label {
   background: #111c2e !important;
-  border-color: var(--slate-700, #334155) !important;
+  border-color: #334155 !important;
   color: #cbd5e1 !important;
 }
 
@@ -539,7 +539,7 @@ button { -webkit-tap-highlight-color: transparent; }
 
   :root:not([data-theme="light"]):not([data-theme="teal"]) .checkbox-label {
     background: #111c2e !important;
-    border-color: var(--slate-700, #334155) !important;
+    border-color: #334155 !important;
     color: #cbd5e1 !important;
   }
 
@@ -554,66 +554,5 @@ button { -webkit-tap-highlight-color: transparent; }
 
   :root:not([data-theme="light"]):not([data-theme="teal"]) .btn-outline:hover:not(:disabled) {
     background: rgba(34,197,94,.12) !important;
-  }
-}
-
-
-/* UNIVERSAL DARK-THEME TEXT CONTRAST
-   Neutral text must follow the theme tokens everywhere. This intentionally
-   targets text-bearing elements only; semantic status colors remain unchanged. */
-:root[data-theme="dark"] body,
-:root[data-theme="dark"] main,
-:root[data-theme="dark"] section,
-:root[data-theme="dark"] article,
-:root[data-theme="dark"] .page,
-:root[data-theme="dark"] .card,
-:root[data-theme="dark"] .profile-card,
-:root[data-theme="dark"] .profile-name-block,
-:root[data-theme="dark"] .tprofile-card,
-:root[data-theme="dark"] .tprofile-name-block,
-:root[data-theme="dark"] .tprofile-stat-card {
-  color: var(--slate-700) !important;
-}
-
-:root[data-theme="dark"] h1,
-:root[data-theme="dark"] h2,
-:root[data-theme="dark"] h3,
-:root[data-theme="dark"] h4,
-:root[data-theme="dark"] h5,
-:root[data-theme="dark"] h6 {
-  color: var(--slate-900) !important;
-}
-
-:root[data-theme="dark"] label,
-:root[data-theme="dark"] p,
-:root[data-theme="dark"] td,
-:root[data-theme="dark"] th,
-:root[data-theme="dark"] .text-primary,
-:root[data-theme="dark"] .text-secondary,
-:root[data-theme="dark"] .form-label {
-  color: var(--slate-700) !important;
-}
-
-/* System mode when the OS/browser is dark. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) body,
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) main,
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) section,
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) article {
-    color: var(--slate-700) !important;
-  }
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) h1,
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) h2,
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) h3,
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) h4,
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) h5,
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) h6 {
-    color: var(--slate-900) !important;
-  }
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) label,
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) p,
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) td,
-  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) th {
-    color: var(--slate-700) !important;
   }
 }

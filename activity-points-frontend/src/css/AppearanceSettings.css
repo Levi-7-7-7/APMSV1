@@ -103,7 +103,7 @@
 
 .apps-swatch-light {
   background: linear-gradient(135deg, #f8fafc, #cbd5e1);
-  color: var(--slate-700, #334155);
+  color: #334155;
 }
 
 .apps-swatch-dark {

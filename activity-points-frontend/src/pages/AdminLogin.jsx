@@ -96,11 +96,11 @@ const styles = {
   title: {
     fontSize: "1.6rem",
     fontWeight: "700",
-    color: 'var(--slate-900, #0f172a)',
+    color: "#0f172a",
     margin: "0 0 0.3rem",
   },
   subtitle: {
-    color: 'var(--slate-500, #64748b)',
+    color: "#64748b",
     fontSize: "0.9rem",
     margin: 0,
   },
@@ -117,7 +117,7 @@ const styles = {
   label: {
     fontSize: "0.85rem",
     fontWeight: "600",
-    color: "var(--slate-700, #334155)",
+    color: "#374151",
   },
   input: {
     padding: "0.7rem 1rem",
