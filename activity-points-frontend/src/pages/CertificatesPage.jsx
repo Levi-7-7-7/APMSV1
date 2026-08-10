@@ -62,7 +62,10 @@ export default function CertificatesPage() {
     // the key session-fetched. See pageDataCache.js for why.
     const alreadySessionCached = isSessionCached(CACHE_KEY);
     const existing = getCached(CACHE_KEY);
-    if (existing && !isRefresh && alreadySessionCached) {
+    // A notification deep-link must never rely on the session cache: the
+    // certificate may have been approved/rejected after that cache was built.
+    const hasCertDeepLink = !!new URLSearchParams(window.location.search).get('certId');
+    if (existing && !isRefresh && alreadySessionCached && !hasCertDeepLink) {
       setCertificates(existing.certificates);
       setCategories(existing.categories);
       setUser(existing.user);
@@ -121,15 +124,23 @@ export default function CertificatesPage() {
     setHighlightedCertId(certId);
     setSearchParams({}, { replace: true });
 
-    // Scroll to the card shortly after the filter/render settles.
-    const t = setTimeout(() => {
-      document.getElementById(`cert-card-${certId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 150);
-    // Drop the highlight after a few seconds so it doesn't linger forever.
+    // The filter change and card render happen asynchronously. Retry for a
+    // short window instead of assuming 150ms is enough, especially when the
+    // notification opened the page from a cached/remounted dashboard.
+    let attempts = 0;
+    const scrollToCard = () => {
+      const el = document.getElementById(`cert-card-${certId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      if (++attempts < 20) setTimeout(scrollToCard, 100);
+    };
+    const t = setTimeout(scrollToCard, 50);
     const clearHighlight = setTimeout(() => setHighlightedCertId(null), 4000);
     return () => { clearTimeout(t); clearTimeout(clearHighlight); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
+  }, [loading, certificates.length]);
 
   // Helpers
   const getCategoryById = (id) => {

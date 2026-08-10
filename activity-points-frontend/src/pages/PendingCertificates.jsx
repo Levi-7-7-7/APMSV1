@@ -97,7 +97,10 @@ const PendingCertificates = () => {
     // the key session-fetched. See pageDataCache.js for why.
     const alreadySessionCached = isSessionCached(CACHE_KEY);
     const existing = getCached(CACHE_KEY);
-    if (existing && !isRefresh && alreadySessionCached) {
+    // A notification deep-link must use fresh pending data. The certificate
+    // can be newer than the session cache, and the cache may not contain it.
+    const hasCertDeepLink = !!new URLSearchParams(window.location.search).get('certId');
+    if (existing && !isRefresh && alreadySessionCached && !hasCertDeepLink) {
       setPendingCerts(existing.pendingCerts);
       setCategories(existing.categories);
       setLoading(false);
@@ -140,17 +143,32 @@ const PendingCertificates = () => {
     const certIdParam = searchParams.get('certId');
     if (certIdParam) {
       setHighlightedCertId(certIdParam);
-      // Scroll to the card shortly after the detail view renders.
-      setTimeout(() => {
-        document.getElementById(`pending-card-${certIdParam}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 150);
-      // Drop the highlight after a few seconds so it doesn't linger forever.
-      setTimeout(() => setHighlightedCertId(null), 4000);
     }
 
     setSearchParams({}, { replace: true });
+    // Scrolling is handled after selectedStudentId has rendered its actual
+    // certificate cards below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, studentGroups]);
+
+  // Once the notification-selected student is rendered, wait for the card
+  // to exist before scrolling. This fixes the race introduced by the
+  // grouped student queue: setting selectedStudentId causes a second render.
+  useEffect(() => {
+    if (!highlightedCertId || !selectedStudentId || loading) return;
+    let attempts = 0;
+    const scrollToCard = () => {
+      const el = document.getElementById(`pending-card-${highlightedCertId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      if (++attempts < 20) setTimeout(scrollToCard, 100);
+    };
+    const t = setTimeout(scrollToCard, 50);
+    const clearHighlight = setTimeout(() => setHighlightedCertId(null), 4000);
+    return () => { clearTimeout(t); clearTimeout(clearHighlight); };
+  }, [highlightedCertId, selectedStudentId, loading]);
 
   const selectedGroup = selectedStudentId
     ? studentGroups.find(g => (g.student?._id || g.student) === selectedStudentId)
