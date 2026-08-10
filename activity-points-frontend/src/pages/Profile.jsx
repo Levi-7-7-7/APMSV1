@@ -269,6 +269,16 @@ export default function Profile() {
         <div className={`profile-entry-badge ${user?.isLateralEntry ? 'warn' : 'success'}`}>
           {entryType}
         </div>
+
+        <button
+          type="button"
+          className="profile-replace-photo-btn"
+          onClick={handlePhotoClick}
+          disabled={uploading}
+        >
+          <Camera size={15} />
+          <span>{user?.profilePhoto ? 'Replace my image' : 'Add profile image'}</span>
+        </button>
       </div>
 
       {/* Account info */}

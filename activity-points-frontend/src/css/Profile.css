@@ -51,12 +51,12 @@
 
 .profile-avatar-wrapper {
   position: absolute;
-  bottom: -48px;
-  width: 96px;
-  height: 96px;
+  bottom: -56px;
+  width: 112px;
+  height: 112px;
   z-index: 10;
-  left:50%;
-  transform:translateX(-50%);
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .profile-avatar-img,
@@ -81,8 +81,8 @@
 
 .profile-camera-badge {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
+  bottom: 4px;
+  right: 4px;
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -119,7 +119,7 @@
   background: var(--surface);
   border-radius: 16px;
   padding: 88px 20px 24px 20px;
-  margin: -40px 16px 24px 16px;
+  margin: 0 16px 24px 16px;
   box-shadow: 0 5px 15px rgb(219 234 254 / 0.5);
   position: relative;
   z-index: 1;
@@ -160,6 +160,35 @@
 .profile-entry-badge.warn {
   background: #fed7aa;
   color: #c2410c;
+}
+
+/* Clear profile-photo action */
+.profile-replace-photo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 4px;
+  padding: 8px 14px;
+  border: 1px solid var(--blue-tint-200, #bfdbfe);
+  border-radius: 999px;
+  background: var(--blue-tint-100, #eff6ff);
+  color: var(--blue-700, #1d4ed8);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .18s ease, transform .18s ease, border-color .18s ease;
+}
+
+.profile-replace-photo-btn:hover:not(:disabled) {
+  background: var(--blue-tint-200, #dbeafe);
+  border-color: var(--blue-600, #2563eb);
+  transform: translateY(-1px);
+}
+
+.profile-replace-photo-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
 }
 
 /* Section label */
