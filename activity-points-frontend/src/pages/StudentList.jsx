@@ -382,6 +382,28 @@ const StudentList = () => {
   };
 
   // ======================================================
+  // Progress summary
+  // ======================================================
+
+  const progressSummary = React.useMemo(() => {
+    const regular = filtered.filter((s) => !s.isLateralEntry);
+    const lateral = filtered.filter((s) => s.isLateralEntry);
+
+    const makeStats = (list, isLateral) => {
+      const required = PASS_THRESHOLD(isLateral);
+      const achieved = list.filter((s) => (s.totalPoints || 0) >= required).length;
+      const remaining = Math.max(0, list.length - achieved);
+      return { total: list.length, achieved, remaining, required };
+    };
+
+    return {
+      regular: makeStats(regular, false),
+      lateral: makeStats(lateral, true),
+      total: filtered.length
+    };
+  }, [filtered]);
+
+  // ======================================================
   // JSX
   // ======================================================
 
@@ -421,6 +443,43 @@ const StudentList = () => {
           </div>
         )}
       </div>
+
+      {/* Activity-point completion summary */}
+      {!loading && filtered.length > 0 && (
+        <section className="sl-progress-card" aria-label="Activity point completion">
+          <div className="sl-progress-header">
+            <div>
+              <h3>Activity Point Progress</h3>
+              <p>Students who have reached the required points in the current view.</p>
+            </div>
+            <span className="sl-progress-total">{progressSummary.total} students</span>
+          </div>
+
+          <div className="sl-progress-bars">
+            {[
+              { label: 'Regular', stats: progressSummary.regular, required: 60 },
+              { label: 'Lateral Entry', stats: progressSummary.lateral, required: 40 }
+            ].map(({ label, stats, required }) => {
+              const pct = stats.total ? Math.round((stats.achieved / stats.total) * 100) : 0;
+              return (
+                <div className="sl-progress-row" key={label}>
+                  <div className="sl-progress-label">
+                    <span>{label}</span>
+                    <strong>{stats.achieved}/{stats.total} achieved</strong>
+                  </div>
+                  <div className="sl-progress-track" role="progressbar" aria-valuenow={pct} aria-valuemin="0" aria-valuemax="100" aria-label={`${label}: ${stats.achieved} of ${stats.total} students achieved ${required} points`}>
+                    <div className="sl-progress-fill" style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="sl-progress-meta">
+                    <span>{pct}% reached requirement</span>
+                    <span>{stats.remaining} remaining · {required} points required</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Filters */}
       <div className="sl-filters">

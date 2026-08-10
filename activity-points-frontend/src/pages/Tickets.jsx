@@ -5,6 +5,7 @@ import { Plus, Image as ImageIcon, X, Clock, CheckCircle2, ChevronDown, Loader2 
 import { createStudentTicket, getMyTickets, markStudentTicketSeen } from '../utils/ticketApi';
 import { getCached, setCached, isSessionCached } from '../utils/pageDataCache';
 import '../css/Tickets.css';
+import ImageCropModal from '../components/ImageCropModal';
 
 const CACHE_KEY = 'tickets';
 
@@ -30,6 +31,7 @@ export default function Tickets() {
   const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [cropFile, setCropFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const fileInputRef = useRef(null);
@@ -73,13 +75,33 @@ export default function Tickets() {
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+
+    // Route image attachments through the same shared crop editor used by
+    // profile photos and certificate uploads. This gives Help & Support the
+    // same drag/zoom/corner-resize experience everywhere.
+    if (file.type.startsWith('image/')) {
+      setCropFile(file);
+    }
+
+    // Allow the user to pick the same file again after cancelling/removing it.
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const confirmImageCrop = (croppedFile) => {
+    setImageFile(croppedFile);
+    setImagePreview(URL.createObjectURL(croppedFile));
+    setCropFile(null);
+  };
+
+  const cancelImageCrop = () => {
+    setCropFile(null);
   };
 
   const clearImage = () => {
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImageFile(null);
     setImagePreview(null);
+    setCropFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -244,6 +266,22 @@ export default function Tickets() {
             </div>
           ))}
         </div>
+      )}
+
+      {cropFile && (
+        <ImageCropModal
+          file={cropFile}
+          title="Crop attachment"
+          subtitle="Drag the image, move the crop area, or grab any corner to frame your attachment exactly how you want."
+          shape="rectangle"
+          maxStageW={360}
+          maxStageH={360}
+          maxOutputLongSide={1600}
+          outputQuality={0.92}
+          outputName="support-attachment.jpg"
+          onCancel={cancelImageCrop}
+          onConfirm={confirmImageCrop}
+        />
       )}
     </div>
   );

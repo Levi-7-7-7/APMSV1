@@ -333,3 +333,97 @@
 
   .sl-scope-badge { padding: 0 0.75rem 0.5rem; }
 }
+
+
+/* ── Activity-point completion summary ── */
+.sl-progress-card {
+  margin: 1rem 1.5rem 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, .05);
+}
+
+.sl-progress-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: .9rem;
+}
+
+.sl-progress-header h3 {
+  margin: 0;
+  color: var(--slate-900);
+  font-size: .95rem;
+  font-weight: 750;
+}
+
+.sl-progress-header p {
+  margin: .25rem 0 0;
+  color: var(--slate-500);
+  font-size: .78rem;
+}
+
+.sl-progress-total {
+  flex: 0 0 auto;
+  padding: .3rem .65rem;
+  border-radius: 999px;
+  background: var(--blue-tint-50);
+  color: var(--blue-700);
+  font-size: .75rem;
+  font-weight: 700;
+}
+
+.sl-progress-bars { display: grid; gap: .85rem; }
+
+.sl-progress-row { min-width: 0; }
+
+.sl-progress-label,
+.sl-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+}
+
+.sl-progress-label {
+  color: var(--slate-700);
+  font-size: .8rem;
+  font-weight: 650;
+  margin-bottom: .4rem;
+}
+
+.sl-progress-label strong {
+  color: var(--slate-900);
+  font-size: .78rem;
+}
+
+.sl-progress-track {
+  width: 100%;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--slate-100);
+}
+
+.sl-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue-500), var(--green-500));
+  transition: width .35s ease;
+}
+
+.sl-progress-meta {
+  margin-top: .3rem;
+  color: var(--slate-400);
+  font-size: .7rem;
+}
+
+@media (max-width: 640px) {
+  .sl-progress-card { margin: .75rem .75rem 0; padding: .85rem; }
+  .sl-progress-header { flex-direction: column; gap: .45rem; }
+  .sl-progress-total { align-self: flex-start; }
+  .sl-progress-meta { align-items: flex-start; flex-direction: column; gap: .15rem; }
+}
