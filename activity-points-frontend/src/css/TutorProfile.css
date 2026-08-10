@@ -433,3 +433,24 @@
     border-color: rgba(148, 163, 184, .28);
   }
 }
+
+/* Photo action: explicit high-contrast dark-theme treatment. */
+:root[data-theme="dark"] .tprofile-photo-action,
+:root[data-theme="dark"] .tprofile-photo-action span,
+:root[data-theme="dark"] .tprofile-photo-action svg {
+  color: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .tprofile-photo-action {
+  background: #1e293b !important;
+  border-color: var(--slate-500, #64748b) !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) .tprofile-photo-action,
+  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) .tprofile-photo-action span,
+  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) .tprofile-photo-action svg {
+    color: #f8fafc !important;
+  }
+}

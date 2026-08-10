@@ -97,7 +97,7 @@ export default function OtpVerificationPage() {
             onChange={e => setIsLateralEntry(e.target.checked)}
           />
           I am a <strong>Lateral Entry</strong> student&nbsp;
-          <span style={{ color:'#6b7280', fontSize:'0.85rem' }}>(requires 40 pts instead of 60)</span>
+          <span style={{ color: 'var(--slate-500, #64748b)', fontSize: '0.85rem' }}>(requires 40 pts instead of 60)</span>
         </label>
 
         <button type="submit" disabled={loading} className="otp-button">

@@ -75,7 +75,7 @@ const REPORT_CSS = `
 .mti-pdf-doc, .mti-pdf-doc * { margin: 0; padding: 0; box-sizing: border-box; }
 .mti-pdf-doc {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  color: #1e293b;
+  color: var(--slate-800, #1e293b);
   background: #ffffff;
   font-size: 13px;
   width: ${RENDER_WIDTH_PX}px;
@@ -93,8 +93,8 @@ const REPORT_CSS = `
 .mti-pdf-doc .header-text { display: table-cell; vertical-align: middle; text-align: center; }
 .mti-pdf-doc .header-spacer-cell { display: table-cell; width: 150px; }
 .mti-pdf-doc .dept-name { font-size: 18px; font-weight: 800; color: #0f2864; letter-spacing: 0.6px; margin-bottom: 4px; }
-.mti-pdf-doc .inst-name { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
-.mti-pdf-doc .inst-sub { font-size: 10px; color: #64748b; margin-top: 1px; font-weight: 500; }
+.mti-pdf-doc .inst-name { font-size: 15px; font-weight: 700; color: var(--slate-800, #1e293b); margin-bottom: 3px; }
+.mti-pdf-doc .inst-sub { font-size: 10px; color: var(--slate-500, #64748b); margin-top: 1px; font-weight: 500; }
 .mti-pdf-doc .title-band {
   background: linear-gradient(135deg, #0f2864 0%, #1e40af 100%);
   color: #ffffff;
@@ -157,13 +157,13 @@ const REPORT_CSS = `
 .mti-pdf-doc .continued-tag {
   font-size: 10px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--slate-500, #64748b);
   text-transform: none;
   letter-spacing: 0.2px;
   margin-left: 6px;
 }
 .mti-pdf-doc .reg-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.mti-pdf-doc .reg-text { font-size: 10px; color: #475569; }
+.mti-pdf-doc .reg-text { font-size: 10px; color: var(--slate-600, #475569); }
 .mti-pdf-doc .lat-label {
   background: #fef3c7;
   color: #92400e;
@@ -188,7 +188,7 @@ const REPORT_CSS = `
   vertical-align: middle;
   background: #e8edfb !important;
   border: 1.5px solid #94a3b8 !important;
-  color: #64748b;
+  color: var(--slate-500, #64748b);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -200,11 +200,11 @@ const REPORT_CSS = `
   background: #ffffff;
 }
 .mti-pdf-doc .cert-item-row.alt td { background: #f8fafc; }
-.mti-pdf-doc .cert-name-cell { color: #334155; font-size: 11px; font-weight: 500; padding-left: 20px !important; }
+.mti-pdf-doc .cert-name-cell { color: var(--slate-700, #334155); font-size: 11px; font-weight: 500; padding-left: 20px !important; }
 .mti-pdf-doc .cert-index { color: #94a3b8; font-size: 10px; margin-right: 4px; font-weight: 600; }
 .mti-pdf-doc .cert-pts { color: #0f2864; font-weight: 700 !important; text-align: center; }
 .mti-pdf-doc .empty-certs-text { color: #94a3b8; font-style: italic; }
-.mti-pdf-doc .points-cell { text-align: center; font-weight: 600; color: #475569; width: 66px; }
+.mti-pdf-doc .points-cell { text-align: center; font-weight: 600; color: var(--slate-600, #475569); width: 66px; }
 .mti-pdf-doc .total-score-cell {
   text-align: center;
   background: #0f2864 !important;
@@ -233,7 +233,7 @@ const REPORT_CSS = `
   padding: 0 !important;
 }
 .mti-pdf-doc .divider { border: none; border-top: 2px solid #e2e8f0; margin: 20px 0 8px 0; }
-.mti-pdf-doc .report-meta-footer { font-size: 10px; color: #64748b; font-weight: 500; }
+.mti-pdf-doc .report-meta-footer { font-size: 10px; color: var(--slate-500, #64748b); font-weight: 500; }
 .mti-pdf-doc .footer-row { display: flex; justify-content: space-between; align-items: center; }
 `;
 

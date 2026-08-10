@@ -433,3 +433,23 @@
     margin-right: 10px;
   }
 }
+/* Photo action: always readable in the app's explicit dark theme. */
+:root[data-theme="dark"] .profile-photo-action,
+:root[data-theme="dark"] .profile-photo-action span,
+:root[data-theme="dark"] .profile-photo-action svg {
+  color: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .profile-photo-action {
+  background: #1e293b !important;
+  border-color: var(--slate-500, #64748b) !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) .profile-photo-action,
+  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) .profile-photo-action span,
+  :root:not([data-theme="light"]):not([data-theme="teal"]):not([data-theme="custom"]) .profile-photo-action svg {
+    color: #f8fafc !important;
+  }
+}

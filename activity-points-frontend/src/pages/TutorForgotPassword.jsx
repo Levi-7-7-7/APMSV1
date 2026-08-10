@@ -40,7 +40,7 @@ export default function TutorForgotPassword() {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    color: '#6b7280',
+    color: 'var(--slate-500, #64748b)',
     padding: 0,
   };
 
