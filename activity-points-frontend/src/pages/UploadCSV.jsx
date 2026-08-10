@@ -58,9 +58,13 @@ const UploadCSV = () => {
       const res = await tutorAxios.post('/tutors/students/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+      const summary = res.data.summary;
+      const countMessage = summary
+        ? ` ${summary.emailsSent} welcome email(s) sent successfully${summary.emailsFailed ? ` • ${summary.emailsFailed} email(s) failed` : ''}.`
+        : '';
       const note = res.data.note ? ` ${res.data.note}` : '';
-      setMsg((res.data.message || 'Upload successful!') + note);
-      setIsError(false);
+      setMsg((res.data.message || 'Upload successful!') + countMessage + note);
+      setIsError(!!(summary?.rowsFailed || summary?.emailsFailed));
       setFile(null);
     } catch (err) {
       setMsg(err.response?.data?.error || 'Upload failed. Check your CSV format.');
@@ -76,6 +80,7 @@ const UploadCSV = () => {
   const [singleMsg, setSingleMsg]     = useState('');
   const [singleError, setSingleError] = useState(false);
   const [createdPassword, setCreatedPassword] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
 
   const updateField = (field) => (e) => {
     const value = field === 'isLateralEntry' ? e.target.checked : e.target.value;
@@ -86,6 +91,7 @@ const UploadCSV = () => {
     e.preventDefault();
     setSingleMsg('');
     setCreatedPassword('');
+    setEmailSent(false);
 
     if (!form.name.trim() || !form.registerNumber.trim() || !form.email.trim()) {
       setSingleError(true);
@@ -99,6 +105,7 @@ const UploadCSV = () => {
       setSingleError(false);
       setSingleMsg(res.data.message || 'Student added successfully');
       setCreatedPassword(res.data.defaultPassword || '');
+      setEmailSent(!!res.data.emailSent);
       setForm(EMPTY_FORM);
     } catch (err) {
       setSingleError(true);
@@ -112,7 +119,7 @@ const UploadCSV = () => {
     <div className="upload-csv-card">
       <div className="upload-csv-header">
         <h2>Add Students</h2>
-        <p className="upload-csv-sub">Students will be assigned to your batch &amp; branch automatically, with a default password of <strong>firstname + 12345</strong> (e.g. <code>arjun12345</code>).</p>
+        <p className="upload-csv-sub">Students will be assigned to your batch &amp; branch automatically. Each new student receives a secure random password by email.</p>
       </div>
 
       {/* Mode toggle */}
@@ -188,7 +195,7 @@ const UploadCSV = () => {
           {msg && (
             <div className={`upload-result ${isError ? 'error' : 'success'}`}>
               {isError ? <AlertCircle size={16}/> : <CheckCircle size={16}/>}
-              {msg}
+              <span>{msg}</span>
             </div>
           )}
         </>
@@ -246,9 +253,11 @@ const UploadCSV = () => {
           )}
 
           {createdPassword && (
-            <div className="upload-result success">
-              <KeyRound size={16}/>
-              Default password: <code>{createdPassword}</code> — share this with the student.
+            <div className={`upload-result ${emailSent ? 'success' : 'error'}`}>
+              {emailSent ? <CheckCircle size={16}/> : <KeyRound size={16}/>}
+              {emailSent
+                ? 'Welcome email sent successfully to the student with their login details.'
+                : <>Welcome email could not be sent. Temporary password: <code>{createdPassword}</code></>}
             </div>
           )}
         </form>

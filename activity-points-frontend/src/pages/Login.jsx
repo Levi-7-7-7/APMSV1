@@ -189,7 +189,7 @@ export default function Login() {
           </label>
           <input
             type={showPassword ? 'text' : 'password'}
-            placeholder={role === 'student' ? 'Default: firstname + 12345 (e.g. arjun12345)' : 'Enter your password'}
+            placeholder={role === 'student' ? 'Enter the password from your welcome email' : 'Enter your password'}
             className="form-input"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

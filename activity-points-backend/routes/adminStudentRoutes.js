@@ -15,6 +15,7 @@ const Branch   = require('../models/Branch');
 const adminAuth = require('../middleware/adminAuth');
 
 const generateDefaultPassword = require('../utils/defaultPassword');
+const sendWelcomeEmail = require('../utils/sendWelcomeEmail');
 const deleteStudentCascade    = require('../utils/deleteStudentCascade');
 const syncStudentCertFolder   = require('../utils/syncStudentCertFolder');
 const logActivity = require('../utils/activityLog');
@@ -87,9 +88,28 @@ router.post('/students', adminAuth, async (req, res) => {
       meta: { batch: batch.name, branch: branch.name },
     });
 
+    let emailSent = false;
+    let emailError = null;
+    try {
+      await sendWelcomeEmail({
+        name: student.name,
+        email: student.email,
+        registerNumber: student.registerNumber,
+        password: defaultPassword,
+      });
+      emailSent = true;
+    } catch (emailErr) {
+      console.error('Welcome email failed:', emailErr.response?.body || emailErr.message);
+      emailError = 'Welcome email could not be sent';
+    }
+
     res.json({
-      message: 'Student added successfully',
+      message: emailSent
+        ? 'Student added successfully and welcome email sent'
+        : 'Student added successfully, but the welcome email could not be sent',
       defaultPassword,
+      emailSent,
+      emailError,
       student: {
         id: student._id,
         name: student.name,

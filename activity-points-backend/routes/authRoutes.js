@@ -2,16 +2,14 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const Student = require('../models/Student');
-const { requestPasswordReset, resetPassword } = require('../controllers/authController');
+const { requestPasswordReset, resetPassword, changePassword } = require('../controllers/authController');
 const logActivity = require('../utils/activityLog');
 
 const router = express.Router();
 
 // Student login — register number + password.
-// Every student account has a password from the moment it's created by a
-// tutor (default: firstName + "12345"), so there's no separate
-// first-time-setup step. Students who don't know/remember their password
-// use "Reset / Forgot Password" (below) at any time.
+// New accounts receive a secure random password in their welcome email.
+// Students may change it later or use the OTP flow if they forget it.
 router.post('/login', async (req, res) => {
   const { registerNumber, password } = req.body;
   try {
@@ -54,5 +52,8 @@ router.post('/forgot-password', requestPasswordReset);
 
 // Verify OTP and set a new password
 router.post('/reset-password', resetPassword);
+
+// Change password using the current password — no OTP required
+router.post('/change-password', changePassword);
 
 module.exports = router;

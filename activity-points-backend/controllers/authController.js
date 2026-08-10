@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const Student = require('../models/Student');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const logActivity = require('../utils/activityLog');
@@ -41,7 +42,7 @@ exports.requestPasswordReset = async (req, res) => {
     const student = await Student.findOne({ registerNumber });
     if (!student) return res.status(404).json({ message: 'No account found with that register number' });
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
     student.resetPasswordToken = otp;
     student.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
     await student.save();
@@ -100,6 +101,60 @@ exports.resetPassword = async (req, res) => {
     res.json({ message: 'Password reset successfully. You can now log in.' });
   } catch (error) {
     console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Server error. Please try again.' });
+  }
+};
+
+
+// Change password using the current password. This is intentionally separate
+// from the OTP flow and is available before login so a student can change the
+// random password from the welcome email at any time.
+exports.changePassword = async (req, res) => {
+  const { registerNumber, oldPassword, newPassword, confirmPassword } = req.body;
+  try {
+    if (!registerNumber || !oldPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: 'New passwords do not match' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    }
+
+    const student = await Student.findOne({ registerNumber: registerNumber.trim() });
+    if (!student) {
+      return res.status(404).json({ message: 'No account found with that register number' });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, student.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+    if (newPassword === oldPassword) {
+      return res.status(400).json({ message: 'New password must be different from the current password' });
+    }
+
+    student.password = await bcrypt.hash(newPassword, 10);
+    student.firstTimePasswordSet = true;
+    await student.save();
+
+    logActivity({
+      req,
+      actorType: 'student',
+      actorId: student._id,
+      actorName: student.name,
+      actorEmail: student.email,
+      action: 'student_password_changed',
+      description: `${student.name} (${student.registerNumber}) changed their password`,
+      targetType: 'Student',
+      targetId: student._id,
+      targetName: student.name,
+    });
+
+    res.json({ message: 'Password changed successfully. You can now log in.' });
+  } catch (error) {
+    console.error('Change password error:', error);
     res.status(500).json({ message: 'Server error. Please try again.' });
   }
 };

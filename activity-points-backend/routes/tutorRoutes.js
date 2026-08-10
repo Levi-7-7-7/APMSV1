@@ -12,6 +12,7 @@ const Certificate = require('../models/Certificate');
 const Category    = require('../models/Category');
 
 const generateDefaultPassword = require('../utils/defaultPassword');
+const sendWelcomeEmail = require('../utils/sendWelcomeEmail');
 const deleteStudentCascade = require('../utils/deleteStudentCascade');
 const { validateTutorRoleConfig } = require('../utils/tutorRoleRules');
 
@@ -285,20 +286,20 @@ router.post('/students', tutorAuth, async (req, res) => {
 
     const { name, registerNumber, email, isLateralEntry } = req.body;
     if (!name || !registerNumber || !email) {
-      return res.status(400).json({ error: 'name, registerNumber and email are required' });
+      return res.status(400).json({ error: 'name, register number and email are required' });
     }
 
     const defaultPassword = generateDefaultPassword(name);
-    const hashedPassword  = await bcrypt.hash(defaultPassword, 10);
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
 
     const student = await Student.create({
-      name:           name.trim(),
+      name: name.trim(),
       registerNumber: registerNumber.trim(),
-      email:          email.trim(),
+      email: email.trim(),
       isLateralEntry: !!isLateralEntry,
-      batch:          tutor.batch  || undefined,
-      branch:         tutor.branch || undefined,
-      password:       hashedPassword,
+      batch: tutor.batch || undefined,
+      branch: tutor.branch || undefined,
+      password: hashedPassword,
     });
 
     logActivity({
@@ -314,9 +315,25 @@ router.post('/students', tutorAuth, async (req, res) => {
       targetName: student.name,
     });
 
+    let emailSent = false;
+    try {
+      await sendWelcomeEmail({
+        name: student.name,
+        email: student.email,
+        registerNumber: student.registerNumber,
+        password: defaultPassword,
+      });
+      emailSent = true;
+    } catch (emailErr) {
+      console.error('Welcome email failed:', emailErr.response?.body || emailErr.message);
+    }
+
     res.json({
-      message: 'Student added successfully',
-      defaultPassword, // show this to the tutor once — share it with the student
+      message: emailSent
+        ? 'Student added successfully and welcome email sent'
+        : 'Student added successfully, but the welcome email could not be sent',
+      defaultPassword,
+      emailSent,
       student: {
         id: student._id,
         name: student.name,
@@ -334,14 +351,20 @@ router.post('/students', tutorAuth, async (req, res) => {
 });
 
 // ─── UPLOAD STUDENTS via CSV ──────────────────────────────────────────────────
-// CSV columns: name, registerNumber, email, isLateralEntry (true/false)
-// Each student is created with a default password of firstName + "12345".
+// CSV columns: name, registerNumber, email, isLateralEntry (true/false).
+// Each successful account gets its own random password and welcome email.
 router.post('/students/upload', tutorAuth, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
   const tutor = await fetchConfiguredTutor(req, res);
-  if (!tutor) { if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); return; }
-  if (!requireFullTutor(tutor, res)) { if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path); return; }
+  if (!tutor) {
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return;
+  }
+  if (!requireFullTutor(tutor, res)) {
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return;
+  }
 
   const results = [];
 
@@ -349,23 +372,84 @@ router.post('/students/upload', tutorAuth, upload.single('file'), async (req, re
     .pipe(csv())
     .on('data', (data) => results.push(data))
     .on('end', async () => {
+      const summary = {
+        totalRows: results.length,
+        studentsCreated: 0,
+        emailsSent: 0,
+        emailsFailed: 0,
+        rowsFailed: 0,
+        emailFailures: [],
+        rowFailures: [],
+      };
+
       try {
-        const studentsToInsert = await Promise.all(results.map(async (s) => {
-          const defaultPassword = generateDefaultPassword(s.name);
-          const hashedPassword  = await bcrypt.hash(defaultPassword, 10);
+        for (let i = 0; i < results.length; i++) {
+          const row = results[i];
+          const name = row.name?.trim();
+          const registerNumber = row.registerNumber?.trim();
+          const email = row.email?.trim();
 
-          return {
-            name:               s.name?.trim(),
-            registerNumber:     s.registerNumber?.trim(),
-            email:              s.email?.trim(),
-            isLateralEntry:     /^(true|yes|1)$/i.test((s.isLateralEntry || '').trim()),
-            batch:              tutor?.batch  || undefined,
-            branch:             tutor?.branch || undefined,
-            password:           hashedPassword,
-          };
-        }));
+          if (!name || !registerNumber || !email) {
+            summary.rowsFailed++;
+            summary.rowFailures.push(`Row ${i + 2}: name, registerNumber and email are required`);
+            continue;
+          }
 
-        const inserted = await Student.insertMany(studentsToInsert, { ordered: false });
+          const defaultPassword = generateDefaultPassword(name);
+
+          try {
+            const student = await Student.create({
+              name,
+              registerNumber,
+              email,
+              isLateralEntry: /^(true|yes|1)$/i.test((row.isLateralEntry || '').trim()),
+              batch: tutor.batch || undefined,
+              branch: tutor.branch || undefined,
+              password: await bcrypt.hash(defaultPassword, 10),
+            });
+
+            summary.studentsCreated++;
+
+            try {
+              await sendWelcomeEmail({
+                name: student.name,
+                email: student.email,
+                registerNumber: student.registerNumber,
+                password: defaultPassword,
+              });
+              summary.emailsSent++;
+            } catch (emailErr) {
+              summary.emailsFailed++;
+              summary.emailFailures.push({
+                row: i + 2,
+                name: student.name,
+                email: student.email,
+                reason: emailErr.message || 'Email sending failed',
+              });
+              console.error(`Welcome email failed for row ${i + 2}:`, emailErr.response?.body || emailErr.message);
+            }
+
+            logActivity({
+              req,
+              actorType: 'tutor',
+              actorId: tutor._id,
+              actorName: tutor.name,
+              actorEmail: tutor.email,
+              action: 'student_created',
+              description: `${tutor.name} added student ${student.name} (${student.registerNumber}) via CSV`,
+              targetType: 'Student',
+              targetId: student._id,
+              targetName: student.name,
+            });
+          } catch (studentErr) {
+            summary.rowsFailed++;
+            const duplicate = studentErr.code === 11000;
+            summary.rowFailures.push(
+              `Row ${i + 2}: ${duplicate ? 'register number or email already exists' : (studentErr.message || 'student could not be created')}`
+            );
+          }
+        }
+
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 
         logActivity({
@@ -375,18 +459,27 @@ router.post('/students/upload', tutorAuth, upload.single('file'), async (req, re
           actorName: tutor.name,
           actorEmail: tutor.email,
           action: 'students_bulk_uploaded',
-          description: `${tutor.name} uploaded ${inserted.length} student(s) via CSV`,
-          meta: { count: inserted.length },
+          description: `${tutor.name} processed ${summary.totalRows} CSV row(s): ${summary.studentsCreated} student(s) created and ${summary.emailsSent} welcome email(s) sent`,
+          meta: summary,
         });
 
+        const message = `${summary.studentsCreated} student(s) created • ${summary.emailsSent} welcome email(s) sent`;
         res.json({
-          message: `${inserted.length} students uploaded successfully`,
-          note: "Each student's default password is their first name (lowercase) + \"12345\", e.g. \"arjun12345\". They can change it via Reset / Forgot Password.",
+          success: true,
+          message,
+          summary,
+          note: summary.emailsFailed
+            ? 'Some accounts were created but their welcome emails could not be sent. Please follow up with those students.'
+            : 'Every created student received a welcome email.',
         });
       } catch (err) {
         if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-        res.status(400).json({ error: err.message });
+        res.status(500).json({ error: err.message || 'CSV processing failed' });
       }
+    })
+    .on('error', (err) => {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      res.status(400).json({ error: `Could not read CSV: ${err.message}` });
     });
 });
 

@@ -271,6 +271,7 @@ export default function AdminPanel() {
   const [studentBatchFilter, setStudentBatchFilter]   = useState("");
   const [studentBranchFilter, setStudentBranchFilter] = useState("");
   const [createdStudentPassword, setCreatedStudentPassword] = useState("");
+  const [studentWelcomeEmailSent, setStudentWelcomeEmailSent] = useState(false);
 
   // Move-student panel: which student is currently being reassigned
   const [movingStudentId, setMovingStudentId] = useState(null);
@@ -564,10 +565,12 @@ export default function AdminPanel() {
   const handleAddStudent = async (e) => {
     e.preventDefault();
     setCreatedStudentPassword("");
+    setStudentWelcomeEmailSent(false);
     try {
       const res = await adminAxios.post("/admin/students", studentForm);
       flash(res.data.message || "Student added");
       setCreatedStudentPassword(res.data.defaultPassword || "");
+      setStudentWelcomeEmailSent(!!res.data.emailSent);
       setStudentForm({ name: "", registerNumber: "", email: "", isLateralEntry: false, batchId: "", branchId: "" });
       fetchStudents();
     } catch (err) { flash(err.response?.data?.error || "Failed to add student", "error"); }
@@ -1116,8 +1119,10 @@ export default function AdminPanel() {
                     <button className="btn-primary ap-btn" type="submit"><UserPlus size={15}/> Add Student</button>
                   </form>
                   {createdStudentPassword && (
-                    <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: "var(--ap-muted)" }}>
-                      Default password: <strong style={{ color: "var(--ap-text)" }}>{createdStudentPassword}</strong> — share this with the student.
+                    <p style={{ marginTop: "0.75rem", fontSize: "0.85rem", color: studentWelcomeEmailSent ? "var(--ap-muted)" : "#b91c1c" }}>
+                      {studentWelcomeEmailSent
+                        ? "✓ Welcome email sent successfully to the student with their login details."
+                        : <>Welcome email could not be sent. Temporary password: <strong style={{ color: "var(--ap-text)" }}>{createdStudentPassword}</strong></>}
                     </p>
                   )}
                 </div>

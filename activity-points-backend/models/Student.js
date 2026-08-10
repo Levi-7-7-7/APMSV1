@@ -5,11 +5,10 @@
  *   profilePhoto       — full ImageKit URL of the student's profile photo
  *   profilePhotoFileId — ImageKit fileId used to delete the old photo on re-upload
  *
- * Account creation model (no more OTP-based first-time login):
- *   Students are created by a tutor (single-add or CSV) with a default
- *   password of firstName + "12345". They log in immediately with
- *   registerNumber + that password, and can change it any time via the
- *   "Reset / Forgot Password" flow.
+ * Account creation:
+ *   Students are created by an admin or tutor with a cryptographically random
+ *   password. The password is sent once in the welcome email and can be changed
+ *   later through the Reset / Forgot Password flow.
  */
 
 const mongoose = require('mongoose');
@@ -29,11 +28,9 @@ const StudentSchema = new mongoose.Schema({
   resetPasswordToken:   { type: String, default: null },
   resetPasswordExpires: { type: Date,   default: null },
 
-  // Security flag: every student account starts with a predictable default
-  // password (firstName + "12345"), so we prompt them to change it the
-  // moment they land on the dashboard after login. Flips to true the first
-  // time they successfully complete the "Reset / Forgot Password" flow —
-  // after that the dashboard popup never shows again.
+  // Retained for compatibility with existing data. New accounts receive a
+  // random password and are not forced to change it on first login. The flag
+  // becomes true after the student changes/resets their password.
   firstTimePasswordSet: { type: Boolean, default: false },
 
   totalPoints: { type: Number, default: 0 },

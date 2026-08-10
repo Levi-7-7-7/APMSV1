@@ -1,23 +1,16 @@
-/**
- * utils/defaultPassword.js
- *
- * Generates a student's default password as: firstName (lowercase) + "12345".
- * e.g. name = "Arjun Menon"  ->  "arjun12345"
- *
- * Used when a tutor adds a student (single-add or CSV) so the student has a
- * working password from the moment their account is created — no OTP-based
- * first-time setup step needed. Students should change this via the
- * "Reset / Forgot Password" flow after their first login.
- */
+const crypto = require('crypto');
 
-function generateDefaultPassword(name) {
-  const firstName = (name || '')
-    .trim()
-    .split(/\s+/)[0]
-    ?.toLowerCase()
-    .replace(/[^a-z]/g, '') || 'student';
+// Generates a secure random password for newly created accounts.
+// Ambiguous characters (0/O, 1/l/I) are excluded for readability.
+const CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+const LENGTH = 10;
 
-  return `${firstName}12345`;
+function generateDefaultPassword(_name) {
+  let password = '';
+  for (let i = 0; i < LENGTH; i++) {
+    password += CHARSET[crypto.randomInt(0, CHARSET.length)];
+  }
+  return password;
 }
 
 module.exports = generateDefaultPassword;
