@@ -15,6 +15,7 @@ import {
 import axiosInstance from '../api/axiosInstance';
 import PhotoCropModal from '../components/PhotoCropModal';
 import ProfileCompletionRing from '../components/ProfileCompletionRing';
+import ProfileCompletionHint from '../components/ProfileCompletionHint';
 import { getCached, setCached, isSessionCached } from '../utils/pageDataCache';
 import useStudentTabContext from '../context/StudentTabContext';
 import { noImgCallout } from '../utils/noImgCallout';
@@ -198,9 +199,13 @@ export default function Profile() {
   const branchName = user?.branch?.name ?? '—';
   const entryType = user?.isLateralEntry ? 'Lateral Entry' : 'Regular';
   const initials = getInitials(userName);
-  const profileCompletion = (user?.firstTimePasswordSet === true ? 50 : 25)
-    + (user?.profilePhoto ? 25 : 0)
-    + (Number(user?.certificateCount || 0) > 0 ? 25 : 0);
+  const profileCompletionSteps = {
+    login: true,
+    password: user?.firstTimePasswordSet === true,
+    photo: Boolean(user?.profilePhoto),
+    certificate: Number(user?.certificateCount || 0) > 0,
+  };
+  const profileCompletion = Object.values(profileCompletionSteps).filter(Boolean).length * 25;
 
   return (
     <div className="profile-page">
@@ -253,6 +258,8 @@ export default function Profile() {
 
       {error && <div className="profile-error">{error}</div>}
 
+      <ProfileCompletionHint steps={profileCompletionSteps} />
+
       {/* Name block */}
       <div className="profile-name-block">
         {loading ? (
@@ -269,16 +276,6 @@ export default function Profile() {
         <div className={`profile-entry-badge ${user?.isLateralEntry ? 'warn' : 'success'}`}>
           {entryType}
         </div>
-
-        <button
-          type="button"
-          className="profile-replace-photo-btn"
-          onClick={handlePhotoClick}
-          disabled={uploading}
-        >
-          <Camera size={15} />
-          <span>{user?.profilePhoto ? 'Replace my image' : 'Add profile image'}</span>
-        </button>
       </div>
 
       {/* Account info */}

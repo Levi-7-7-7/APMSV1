@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import tutorAxios from '../api/tutorAxios';
 import { FileUp, Download, CheckCircle, AlertCircle, UserPlus, KeyRound } from 'lucide-react';
+import useTutorTabContext from '../context/TutorTabContext';
 import '../css/UploadCSV.css';
 
 // Generate and download a blank CSV template
@@ -19,6 +20,7 @@ const downloadTemplate = () => {
 const EMPTY_FORM = { name: '', registerNumber: '', email: '', isLateralEntry: false };
 
 const UploadCSV = () => {
+  const { triggerRefresh } = useTutorTabContext();
   const [mode, setMode] = useState('csv'); // 'csv' | 'single'
 
   // ── Bulk CSV state ──────────────────────────────────────────────────────
@@ -64,6 +66,7 @@ const UploadCSV = () => {
         : '';
       const note = res.data.note ? ` ${res.data.note}` : '';
       setMsg((res.data.message || 'Upload successful!') + countMessage + note);
+      triggerRefresh?.();
       setIsError(!!(summary?.rowsFailed || summary?.emailsFailed));
       setFile(null);
     } catch (err) {
@@ -107,6 +110,7 @@ const UploadCSV = () => {
       setCreatedPassword(res.data.defaultPassword || '');
       setEmailSent(!!res.data.emailSent);
       setForm(EMPTY_FORM);
+      triggerRefresh?.();
     } catch (err) {
       setSingleError(true);
       setSingleMsg(err.response?.data?.error || 'Failed to add student.');

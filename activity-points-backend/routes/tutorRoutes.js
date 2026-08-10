@@ -21,6 +21,7 @@ const { sendPushToUser, registerDeviceToken } = require('../utils/fcm');
 
 const { calcCappedPoints, syncStudentTotalPoints } = require('../utils/calcPoints');
 const logActivity = require('../utils/activityLog');
+const ActivityLog = require('../models/ActivityLog');
 
 const path    = require('path');
 const ImageKit = require('imagekit');
@@ -872,7 +873,32 @@ router.get('/me', tutorAuth, async (req, res) => {
       .populate('branch', 'name')
       .select('-password -resetPasswordToken -resetPasswordExpires -fcmToken');
     if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
-    res.json(tutor);
+
+    // Tutor onboarding/progress is milestone-based, not order-based. Each
+    // milestone is worth 25% and stays complete once it has happened at
+    // least once. ActivityLog is the source of truth, so this also works for
+    // existing tutors without adding migration-only flags to Tutor.
+    const actorId = tutor._id.toString();
+    const [loggedIn, changedPassword, addedFirstStudent, reviewedCertificate] = await Promise.all([
+      ActivityLog.exists({ actorType: 'tutor', actorId, action: 'tutor_login' }),
+      ActivityLog.exists({ actorType: 'tutor', actorId, action: 'tutor_password_reset' }),
+      ActivityLog.exists({ actorType: 'tutor', actorId, action: 'student_created' }),
+      ActivityLog.exists({ actorType: 'tutor', actorId, action: { $in: ['certificate_approved', 'certificate_rejected'] } }),
+    ]);
+
+    const completionSteps = {
+      login: Boolean(loggedIn),
+      password: Boolean(changedPassword || tutor.firstTimePasswordSet),
+      firstStudent: Boolean(addedFirstStudent),
+      certificateReview: Boolean(reviewedCertificate),
+    };
+    const completionPercent = Object.values(completionSteps).filter(Boolean).length * 25;
+
+    res.json({
+      ...tutor.toObject(),
+      completionPercent,
+      completionSteps,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

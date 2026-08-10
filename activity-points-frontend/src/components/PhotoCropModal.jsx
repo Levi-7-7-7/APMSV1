@@ -7,7 +7,7 @@ export default function PhotoCropModal(props) {
       {...props}
       title="Crop profile photo"
       subtitle="Drag the image, move the crop area, or grab any corner to frame your photo exactly how you want."
-      shape="rectangle"
+      shape="circle"
       maxStageW={300}
       maxStageH={300}
       maxOutputLongSide={600}

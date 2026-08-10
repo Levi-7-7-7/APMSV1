@@ -15,6 +15,7 @@ import { clearAllOfflineCaches } from '../utils/pageDataCache';
 import { TutorTabProvider } from '../context/TutorTabContext';
 import { noImgCallout } from '../utils/noImgCallout';
 import StudentList from './StudentList';
+import ProfileCompletionRing from '../components/ProfileCompletionRing';
 import UploadCSV from './UploadCSV';
 import PendingCertificates from './PendingCertificates';
 import ApprovedCertificates from './ApprovedCertificates';
@@ -179,6 +180,7 @@ const TutorDashboard = () => {
   const [tutorName, setTutorName] = useState(localStorage.getItem('tutorName') || 'Tutor');
   const [tutorPhoto, setTutorPhoto] = useState(null);
   const [tutorRole, setTutorRole] = useState(localStorage.getItem('tutorRole') || 'tutor');
+  const [tutorCompletion, setTutorCompletion] = useState(() => Number(localStorage.getItem('tutorCompletionPercent') || 25));
 
   // Whether the tutor is still on their original admin-set password.
   // Starts from the flag stashed at login (instant paint), refined once
@@ -281,6 +283,13 @@ const TutorDashboard = () => {
           localStorage.setItem('tutorName', res.data.name);
         }
         setTutorPhoto(res.data?.profilePhoto ?? null);
+        if (typeof res.data?.completionPercent === 'number') {
+          setTutorCompletion(res.data.completionPercent);
+          localStorage.setItem('tutorCompletionPercent', String(res.data.completionPercent));
+        }
+        if (res.data?.completionSteps) {
+          localStorage.setItem('tutorCompletionSteps', JSON.stringify(res.data.completionSteps));
+        }
         const role = res.data?.role || 'tutor';
         setTutorRole(role);
         localStorage.setItem('tutorRole', role);
@@ -294,7 +303,7 @@ const TutorDashboard = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshToken]);
 
   // Logout handler with confirmation
   const handleLogout = () => {
@@ -318,18 +327,20 @@ const TutorDashboard = () => {
     <div className="tutor-dashboard">
       {/* Fixed WhatsApp-style top bar: stays put while everything else scrolls */}
       <header className="tutor-topbar">
-        <button
-          className="tutor-topbar-avatar"
-          onClick={() => setAvatarEnlarged(true)}
-          aria-label="View profile photo"
-          type="button"
-        >
-          {tutorPhoto ? (
-            <img src={tutorPhoto} alt={tutorName} className="no-img-callout" {...noImgCallout} />
-          ) : (
-            <span>{avatarInitials}</span>
-          )}
-        </button>
+        <ProfileCompletionRing percent={tutorCompletion} size={46} className="compact">
+          <button
+            className="tutor-topbar-avatar"
+            onClick={() => setAvatarEnlarged(true)}
+            aria-label="View profile photo"
+            type="button"
+          >
+            {tutorPhoto ? (
+              <img src={tutorPhoto} alt={tutorName} className="no-img-callout" {...noImgCallout} />
+            ) : (
+              <span>{avatarInitials}</span>
+            )}
+          </button>
+        </ProfileCompletionRing>
 
         <span className="tutor-topbar-page-title">{pageTitle}</span>
 
@@ -461,7 +472,7 @@ const TutorDashboard = () => {
 
         <div className="tutor-track-viewport" ref={trackViewportRef}>
           {isSwipeTab ? (
-            <TutorTabProvider value={{ refreshPendingCount, refreshTicketUnreadCount, refreshNewTicketCount, refreshToken }}>
+            <TutorTabProvider value={{ refreshPendingCount, refreshTicketUnreadCount, refreshNewTicketCount, refreshToken, triggerRefresh }}>
               <div
                 className="tutor-track"
                 style={{
@@ -499,7 +510,7 @@ const TutorDashboard = () => {
               >
                 <div className="nested-content">
                   <React.Suspense fallback={<p className="loading-text">Loading...</p>}>
-                    <Outlet context={{ refreshPendingCount, refreshTicketUnreadCount, refreshNewTicketCount, refreshToken }} />
+                    <Outlet context={{ refreshPendingCount, refreshTicketUnreadCount, refreshNewTicketCount, refreshToken, triggerRefresh }} />
                   </React.Suspense>
                 </div>
               </motion.div>

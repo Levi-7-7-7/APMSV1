@@ -15,7 +15,7 @@ const PendingCertificates = () => {
   // bottom-nav badge count to refresh immediately after an
   // approve/reject/reassign, instead of waiting for its own poll.
   // refreshToken bumps whenever the top-bar refresh button is tapped.
-  const { refreshPendingCount, refreshToken } = useTutorTabContext();
+  const { refreshPendingCount, refreshToken, triggerRefresh } = useTutorTabContext();
   const lastRefreshToken = useRef(refreshToken);
 
   const cached = getCached(CACHE_KEY);
@@ -200,6 +200,7 @@ const PendingCertificates = () => {
       await tutorAxios.post(`/tutors/certificates/${certId}/approve`);
       await fetchPending();
       refreshPendingCount?.();
+      triggerRefresh?.();
       // Approval changes the student's total points and adds to their
       // approved list — invalidate those cached pages so switching to
       // Students/Approved doesn't show stale numbers.
@@ -236,6 +237,7 @@ const PendingCertificates = () => {
       });
       await fetchPending();
       refreshPendingCount?.();
+      triggerRefresh?.();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to reject certificate');
     } finally {

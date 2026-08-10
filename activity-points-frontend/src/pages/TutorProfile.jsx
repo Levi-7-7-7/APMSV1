@@ -16,6 +16,7 @@ import {
 import tutorAxios from '../api/tutorAxios';
 import PhotoCropModal from '../components/PhotoCropModal';
 import ProfileCompletionRing from '../components/ProfileCompletionRing';
+import ProfileCompletionHint from '../components/ProfileCompletionHint';
 import { getCached, setCached, isSessionCached } from '../utils/pageDataCache';
 import { noImgCallout } from '../utils/noImgCallout';
 import '../css/TutorProfile.css';
@@ -178,6 +179,15 @@ export default function TutorProfile() {
   const branchName = profile?.branch?.name ?? (tutorRole === 'principal' ? 'All Branches' : '—');
   const initials = getInitials(tutorName);
   const hasPhoto = Boolean(localPhoto);
+  const completionSteps = profile?.completionSteps || {
+    login: true,
+    password: Boolean(profile?.firstTimePasswordSet),
+    firstStudent: false,
+    certificateReview: false,
+  };
+  const completionPercent = typeof profile?.completionPercent === 'number'
+    ? profile.completionPercent
+    : Object.values(completionSteps).filter(Boolean).length * 25;
 
   return (
     <div className="tprofile-page">
@@ -195,7 +205,7 @@ export default function TutorProfile() {
         </div>
 
         <div className="tprofile-avatar-wrapper">
-          <ProfileCompletionRing hasPhoto={hasPhoto} size={112}>
+          <ProfileCompletionRing percent={completionPercent} size={112}>
             {hasPhoto ? (
               <img
                 src={localPhoto}
@@ -238,8 +248,10 @@ export default function TutorProfile() {
 
       <div className="profile-completion-label" style={{ marginLeft: 'auto', marginRight: 'auto', width: 'fit-content' }}>
         <span className="profile-completion-label-dot" />
-        Profile {hasPhoto ? '50' : '25'}% complete
+        Profile {completionPercent}% complete
       </div>
+
+      <ProfileCompletionHint steps={completionSteps} tutor />
 
       {/* Name block */}
       <div className="tprofile-name-block">
