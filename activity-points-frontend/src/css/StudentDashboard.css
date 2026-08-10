@@ -487,7 +487,7 @@
 .dashboard-main {
   position: fixed;
   top: calc(64px + env(safe-area-inset-top)); /* app-topbar height, incl. notch clearance */
-  bottom: calc(80px + env(safe-area-inset-bottom)); /* bottom nav height, incl. home-indicator clearance */
+  bottom: 0; /* content extends behind the fixed mobile nav; scroll panels reserve nav space */
   left: 0;
   right: 0;
   max-width: 720px;
@@ -531,7 +531,7 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  padding: 1.25rem 1rem 1rem 1rem;
+  padding: 1.25rem 1rem calc(1rem + 80px + env(safe-area-inset-bottom, 0px)) 1rem;
   box-sizing: border-box;
 }
 
@@ -542,7 +542,7 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  padding: 1.25rem 1rem 1rem 1rem;
+  padding: 1.25rem 1rem calc(1rem + 80px + env(safe-area-inset-bottom, 0px)) 1rem;
 }
 
 .dashboard-main h3 {
@@ -705,6 +705,11 @@
 /* On wider screens the nav moves to a fixed left sidebar, WhatsApp/Slack
    style. Phones (<=768px) keep the bottom bar. */
 @media (min-width: 769px) {
+  .dashboard-page-panel,
+  .dashboard-page-scroll {
+    padding-bottom: 1rem;
+  }
+
   .student-bottom-nav {
     top: 0;
     bottom: 0;

@@ -5,6 +5,7 @@ export default function PhotoCropModal(props) {
   return (
     <ImageCropModal
       {...props}
+      busy={props.busy ?? props.uploading ?? false}
       title="Crop profile photo"
       subtitle="Drag the image, move the crop area, or grab any corner to frame your photo exactly how you want."
       shape="rectangle"

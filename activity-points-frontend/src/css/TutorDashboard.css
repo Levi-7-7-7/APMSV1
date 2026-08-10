@@ -382,7 +382,7 @@
 .tutor-main {
   position: fixed;
   top: 64px; /* .tutor-topbar height */
-  bottom: calc(80px + env(safe-area-inset-bottom)); /* bottom nav height, incl. home-indicator clearance */
+  bottom: 0; /* content extends behind the fixed mobile nav; scroll panels reserve nav space */
   left: 0;
   right: 0;
   overflow: hidden; /* clips the sliding pages; each page scrolls itself below */
@@ -425,6 +425,7 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   padding: 1rem;
+  padding-bottom: calc(1rem + 80px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
 }
 
@@ -437,6 +438,7 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   padding: 1rem;
+  padding-bottom: calc(1rem + 80px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
 }
 
@@ -538,6 +540,11 @@
    style, stacked from the top — same treatment as the student sidebar.
    Phones (<=768px) keep the bottom bar. */
 @media (min-width: 769px) {
+  .tutor-page-panel,
+  .tutor-page-scroll {
+    padding-bottom: 1rem;
+  }
+
   .tutor-nav-sidebar {
     top: 0;
     bottom: 0;
@@ -665,6 +672,7 @@
   .tutor-page-panel,
   .tutor-page-scroll {
     padding: 0.5rem;
+    padding-bottom: calc(0.5rem + 80px + env(safe-area-inset-bottom, 0px));
   }
 
   .dashboard-header {
