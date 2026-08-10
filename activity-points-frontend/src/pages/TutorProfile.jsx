@@ -251,8 +251,6 @@ export default function TutorProfile() {
         Profile {completionPercent}% complete
       </div>
 
-      <ProfileCompletionHint steps={completionSteps} tutor />
-
       {/* Name block */}
       <div className="tprofile-name-block">
         {profileLoading ? (
@@ -266,6 +264,8 @@ export default function TutorProfile() {
           <span>{tutorEmail}</span>
         </div>
       </div>
+
+      <ProfileCompletionHint steps={completionSteps} tutor />
 
       {/* Stats row */}
       <div className="tprofile-stats-row">
