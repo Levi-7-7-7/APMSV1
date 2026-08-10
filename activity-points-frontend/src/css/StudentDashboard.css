@@ -385,6 +385,104 @@
   font-size: 2.5rem;
 }
 
+/* Activity progress */
+.progress-section {
+  margin-top: 1rem;
+}
+
+.progress-card {
+  background: var(--surface);
+  border: 1px solid var(--slate-200);
+  border-radius: 18px;
+  padding: 1.25rem 1.35rem;
+  box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+.progress-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.progress-card-header h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1.05rem;
+  color: var(--slate-800);
+}
+
+.progress-card-header p {
+  margin: 0;
+  color: var(--slate-500);
+  font-size: 0.82rem;
+}
+
+.progress-value {
+  display: flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.progress-value strong {
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--blue-600);
+}
+
+.progress-value span {
+  margin-left: 0.2rem;
+  color: var(--slate-500);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.progress-track {
+  width: 100%;
+  height: 12px;
+  margin-top: 1.15rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--slate-100);
+  box-shadow: inset 0 1px 2px rgb(15 23 42 / 0.08);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue-500), var(--green-500));
+  transition: width 0.6s ease;
+}
+
+.progress-fill.progress-complete {
+  background: linear-gradient(90deg, var(--green-500), var(--green-600));
+}
+
+.progress-footer,
+.progress-scale {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.progress-footer {
+  margin-top: 0.7rem;
+  color: var(--slate-500);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.progress-footer span:last-child {
+  color: var(--slate-700);
+  font-weight: 700;
+}
+
+.progress-scale {
+  margin-top: 0.45rem;
+  color: var(--slate-400);
+  font-size: 0.7rem;
+}
+
 /* Main dashboard */
 .dashboard-main {
   position: fixed;
@@ -679,6 +777,18 @@
 
   .greeting h1 {
     font-size: 1.25rem;
+  }
+
+  .progress-card {
+    padding: 1rem;
+  }
+
+  .progress-card-header h3 {
+    font-size: 0.98rem;
+  }
+
+  .progress-value strong {
+    font-size: 1.3rem;
   }
 
   .points-card {

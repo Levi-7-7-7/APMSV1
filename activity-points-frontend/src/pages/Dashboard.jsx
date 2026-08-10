@@ -99,6 +99,41 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Progress Card */}
+      <section className="progress-section" aria-label="Activity points progress">
+        <div className="progress-card">
+          <div className="progress-card-header">
+            <div>
+              <h3>Activity Progress</h3>
+              <p>
+                {user?.isLateralEntry ? 'Lateral entry · 40 points required' : 'Regular entry · 60 points required'}
+              </p>
+            </div>
+            <div className="progress-value">
+              <strong>{Math.min(cappedTotal, PASS_POINTS)}</strong>
+              <span>/ {PASS_POINTS}</span>
+            </div>
+          </div>
+
+          <div className="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax={PASS_POINTS} aria-valuenow={Math.min(cappedTotal, PASS_POINTS)}>
+            <div
+              className={`progress-fill ${hasPassed ? 'progress-complete' : ''}`}
+              style={{ width: `${loading ? 0 : Math.min((cappedTotal / PASS_POINTS) * 100, 100)}%` }}
+            />
+          </div>
+
+          <div className="progress-footer">
+            <span>{loading ? 'Loading progress…' : hasPassed ? 'Requirement completed' : `${Math.max(PASS_POINTS - cappedTotal, 0)} points remaining`}</span>
+            <span>{loading ? '—' : `${Math.round(Math.min((cappedTotal / PASS_POINTS) * 100, 100))}%`}</span>
+          </div>
+
+          <div className="progress-scale">
+            <span>0</span>
+            <span>{PASS_POINTS} points</span>
+          </div>
+        </div>
+      </section>
+
       {/* Pass badge */}
       {!loading && hasPassed && (
         <div className="pass-card">
