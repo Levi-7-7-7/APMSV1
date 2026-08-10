@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import PhotoCropModal from "../components/PhotoCropModal";
 import ProfileCompletionRing from "../components/ProfileCompletionRing";
+import ProfileCompletionHint from "../components/ProfileCompletionHint";
 import AppearanceSettings from "./AppearanceSettings";
 import NotificationPermissionBanner from "../components/NotificationPermissionBanner";
 import OfflineBanner from "../components/OfflineBanner";
@@ -55,7 +56,7 @@ const ACTIONS_BY_ACTOR = {
     "certificate_approved", "certificate_rejected", "certificate_reassigned", "certificate_reverted_to_pending",
   ],
   admin: [
-    "admin_login", "admin_profile_photo_updated", "admin_created", "admin_deleted",
+    "admin_login", "admin_profile_photo_updated", "admin_profile_photo_deleted", "admin_created", "admin_deleted",
     "student_created", "student_updated", "student_deleted",
     "tutor_created", "tutor_deleted", "tutor_assigned", "tutors_bulk_uploaded",
     "batch_created", "batch_deleted", "batch_students_deleted",
@@ -191,6 +192,8 @@ export default function AdminPanel() {
 
   // ── Admin's own profile photo ──
   const [adminPhoto, setAdminPhoto] = useState(null);
+  const [adminCompletion, setAdminCompletion] = useState(25);
+  const [adminCompletionSteps, setAdminCompletionSteps] = useState({ login: true, photo: false, adminAction1: false, adminAction2: false });
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [pendingAdminPhoto, setPendingAdminPhoto] = useState(null); // file picked, pre-crop
@@ -198,7 +201,11 @@ export default function AdminPanel() {
 
   useEffect(() => {
     adminAxios.get("/admin/auth/me")
-      .then(res => setAdminPhoto(res.data?.admin?.profilePhoto ?? null))
+      .then(res => {
+        setAdminPhoto(res.data?.admin?.profilePhoto ?? null);
+        if (typeof res.data?.completionPercent === "number") setAdminCompletion(res.data.completionPercent);
+        if (res.data?.completionSteps) setAdminCompletionSteps(res.data.completionSteps);
+      })
       .catch(() => {});
   }, []);
 
@@ -212,6 +219,39 @@ export default function AdminPanel() {
     setPendingAdminPhoto(file);
   };
 
+  const refreshAdminCompletion = async () => {
+    try {
+      const res = await adminAxios.get("/admin/auth/me");
+      setAdminPhoto(res.data?.admin?.profilePhoto ?? null);
+      if (typeof res.data?.completionPercent === "number") setAdminCompletion(res.data.completionPercent);
+      if (res.data?.completionSteps) setAdminCompletionSteps(res.data.completionSteps);
+    } catch (_) {}
+  };
+
+  // Keep the ring live while the admin is using the panel. Any successful
+  // admin action is logged by the backend, so the next refresh can award the
+  // next 25% without requiring logout/login or a manual page refresh.
+  useEffect(() => {
+    const timer = setInterval(refreshAdminCompletion, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleAdminPhotoDelete = async () => {
+    if (!adminPhoto || photoUploading) return;
+    if (!window.confirm("Delete your profile photo?")) return;
+    setPhotoError("");
+    setPhotoUploading(true);
+    try {
+      await adminAxios.delete("/admin/auth/profile-photo");
+      setAdminPhoto(null);
+      await refreshAdminCompletion();
+    } catch (err) {
+      setPhotoError(err.response?.data?.error || "Could not delete photo. Please try again.");
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
   const confirmAdminPhotoUpload = async (croppedFile) => {
     setPhotoError("");
     setPhotoUploading(true);
@@ -223,6 +263,7 @@ export default function AdminPanel() {
       });
       setAdminPhoto(res.data.profilePhoto);
       setPendingAdminPhoto(null);
+      await refreshAdminCompletion();
     } catch (err) {
       setPhotoError(err.response?.data?.error || "Could not upload photo. Please try again.");
     } finally {
@@ -889,7 +930,11 @@ export default function AdminPanel() {
       {/* ── Fixed WhatsApp-style top bar: avatar, admin name, current page title, three-dot menu ── */}
       <header className="ap-topbar">
         <div className="ap-topbar-avatar-wrap">
-          <ProfileCompletionRing hasPhoto={Boolean(adminPhoto)} size={46} className="compact">
+          <div
+            className="ap-admin-completion-wrap"
+            title={`Admin profile completion: ${adminCompletion}%. Login = 25%, profile photo = 25%, and any two admin actions = 50%.`}
+          >
+            <ProfileCompletionRing percent={adminCompletion} size={46} className="compact">
             <button
               className="ap-topbar-avatar"
               onClick={() => adminPhoto ? setViewerPhoto({ src: adminPhoto, name: adminEmail }) : handleAdminPhotoClick()}
@@ -898,7 +943,8 @@ export default function AdminPanel() {
             >
               {adminPhoto ? <img src={adminPhoto} alt={adminEmail} className="no-img-callout" {...noImgCallout}/> : <span>{adminInitials}</span>}
             </button>
-          </ProfileCompletionRing>
+            </ProfileCompletionRing>
+          </div>
           <input ref={adminPhotoInputRef} type="file" accept="image/*" hidden onChange={handleAdminPhotoFileChange}/>
         </div>
 
@@ -973,6 +1019,12 @@ export default function AdminPanel() {
                 <Camera size={16}/>
                 <span>{adminPhoto ? "Change Photo" : "Add Photo"}</span>
               </button>
+              {adminPhoto && (
+                <button role="menuitem" type="button" className="danger" onClick={() => { setMenuOpen(false); handleAdminPhotoDelete(); }}>
+                  <Trash2 size={16}/>
+                  <span>Delete Photo</span>
+                </button>
+              )}
               <button role="menuitem" type="button" onClick={() => { setMenuOpen(false); exportExcel(); }}>
                 <Download size={16}/>
                 <span>Export Tutors</span>
@@ -1024,6 +1076,7 @@ export default function AdminPanel() {
         {/* ══════════════ DASHBOARD ══════════════ */}
         {tab === null && (
           <div className="ap-dashboard">
+            <ProfileCompletionHint admin steps={adminCompletionSteps} />
             <div className="ap-dashboard-search">
               <Search size={18}/>
               <input

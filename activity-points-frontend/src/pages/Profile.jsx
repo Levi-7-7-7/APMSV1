@@ -164,30 +164,6 @@ export default function Profile() {
     setPendingFile(null);
   }, []);
 
-  const deletePhoto = useCallback(async () => {
-    if (!user?.profilePhoto || uploading) return;
-    const confirmed = window.confirm('Delete your profile photo? You can upload a new one anytime.');
-    if (!confirmed) return;
-
-    setError('');
-    setUploading(true);
-    try {
-      await axiosInstance.delete('/students/profile-photo');
-      setUser(prev => {
-        const updated = { ...prev, profilePhoto: null };
-        localStorage.setItem('userData', JSON.stringify(updated));
-        setCached(CACHE_KEY, { ...getCached(CACHE_KEY), user: updated });
-        return updated;
-      });
-      window.dispatchEvent(new Event('storage'));
-      triggerRefresh?.();
-    } catch (err) {
-      setError(err?.response?.data?.error || 'Could not delete photo. Please try again.');
-    } finally {
-      setUploading(false);
-    }
-  }, [user?.profilePhoto, uploading, triggerRefresh]);
-
   const confirmUpload = useCallback(async croppedFile => {
     setError('');
     setUploading(true);
@@ -301,27 +277,15 @@ export default function Profile() {
           {entryType}
         </div>
 
-        <div className="profile-photo-actions">
-          <button
-            type="button"
-            className="profile-photo-action"
-            onClick={handlePhotoClick}
-            disabled={uploading}
-          >
-            {uploading ? <Loader2 size={15} className="icon-spin" /> : <Camera size={15} />}
-            <span>{uploading ? 'Uploading...' : (user?.profilePhoto ? 'Replace my image' : 'Add profile photo')}</span>
-          </button>
-          {user?.profilePhoto && (
-            <button
-              type="button"
-              className="profile-photo-delete"
-              onClick={deletePhoto}
-              disabled={uploading}
-            >
-              Delete photo
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          className="profile-photo-action"
+          onClick={handlePhotoClick}
+          disabled={uploading}
+        >
+          {uploading ? <Loader2 size={15} className="icon-spin" /> : <Camera size={15} />}
+          <span>{user?.profilePhoto ? 'Replace my image' : 'Add profile photo'}</span>
+        </button>
       </div>
 
       {/* Account info */}

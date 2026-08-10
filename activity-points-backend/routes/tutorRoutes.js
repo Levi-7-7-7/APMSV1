@@ -950,32 +950,4 @@ router.patch('/profile-photo', tutorAuth, photoUpload.single('photo'), async (re
   }
 });
 
-// ─── DELETE TUTOR PROFILE PHOTO ──────────────────────────────────────────────
-router.delete('/profile-photo', tutorAuth, async (req, res) => {
-  try {
-    const tutor = await Tutor.findById(req.tutor.id).select('name profilePhoto profilePhotoFileId');
-    if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
-
-    if (tutor.profilePhotoFileId) {
-      try { await imagekit.deleteFile(tutor.profilePhotoFileId); } catch (_) {}
-    }
-
-    tutor.profilePhoto = null;
-    tutor.profilePhotoFileId = null;
-    await tutor.save();
-
-    logActivity({
-      req, actorType: 'tutor', actorId: tutor._id, actorName: tutor.name,
-      action: 'tutor_profile_photo_deleted',
-      description: `${tutor.name || 'A tutor'} deleted their profile photo`,
-      targetType: 'Tutor', targetId: tutor._id, targetName: tutor.name,
-    });
-
-    res.json({ success: true, profilePhoto: null });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message || 'Profile photo deletion failed' });
-  }
-});
-
 module.exports = router;

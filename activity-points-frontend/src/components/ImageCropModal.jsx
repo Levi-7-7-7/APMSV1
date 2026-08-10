@@ -330,7 +330,7 @@ export default function ImageCropModal({
         <div className="imc-actions">
           <button type="button" className="imc-btn secondary" onClick={onCancel} disabled={busy}>Cancel</button>
           <button type="button" className="imc-btn primary" onClick={handleConfirm} disabled={busy || !ready}>
-            {busy ? <> <Loader2 size={16} className="icon-spin" /> Uploading... </> : 'Use this crop'}
+            {busy ? <Loader2 size={16} className="icon-spin" /> : 'Use this crop'}
           </button>
         </div>
 

@@ -271,37 +271,6 @@ router.patch(
   },
 );
 /* ────────────────────────────────────────────────────────────
- * DELETE PROFILE PHOTO
- * ──────────────────────────────────────────────────────────── */
-router.delete('/profile-photo', auth, async (req, res) => {
-  try {
-    const student = await Student.findById(req.user.id).select('name profilePhoto profilePhotoFileId');
-    if (!student) return res.status(404).json({ error: 'Student not found' });
-
-    if (student.profilePhotoFileId) {
-      try { await imagekit.deleteFile(student.profilePhotoFileId); }
-      catch (deleteErr) { console.error('Failed to delete ImageKit profile photo:', deleteErr.message); }
-    }
-
-    student.profilePhoto = null;
-    student.profilePhotoFileId = null;
-    await student.save();
-
-    logActivity({
-      req, actorType: 'student', actorId: student._id, actorName: student.name,
-      action: 'student_profile_photo_deleted',
-      description: `${student.name} deleted their profile photo`,
-      targetType: 'Student', targetId: student._id, targetName: student.name,
-    });
-
-    res.json({ success: true, profilePhoto: null });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message || 'Profile photo deletion failed' });
-  }
-});
-
-/* ────────────────────────────────────────────────────────────
  * GET MY TUTOR
  * Returns the tutor assigned to the student batch.
  * ──────────────────────────────────────────────────────────── */

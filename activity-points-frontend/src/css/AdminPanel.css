@@ -1852,3 +1852,13 @@ textarea:focus {
     display: none;
   }
 }
+
+
+/* Admin completion ring: keep the hover hint attached to the compact avatar
+   without changing the ring's sizing/alignment. */
+.ap-admin-completion-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}

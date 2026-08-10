@@ -99,7 +99,8 @@
 /* The compact avatar is nested inside the ring, so keep it inside the
    ring's inner circle instead of letting a 46px avatar cover the stroke. */
 .profile-completion-ring.compact > .profile-completion-ring-content > .app-topbar-avatar,
-.profile-completion-ring.compact > .profile-completion-ring-content > .tutor-topbar-avatar {
+.profile-completion-ring.compact > .profile-completion-ring-content > .tutor-topbar-avatar,
+.profile-completion-ring.compact > .profile-completion-ring-content > .ap-topbar-avatar {
   width: 100%;
   height: 100%;
   border-radius: 50%;

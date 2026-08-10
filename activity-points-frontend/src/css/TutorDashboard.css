@@ -382,7 +382,7 @@
 .tutor-main {
   position: fixed;
   top: 64px; /* .tutor-topbar height */
-  bottom: 0; /* content extends to the viewport; scroll panels reserve nav space */
+  bottom: calc(80px + env(safe-area-inset-bottom)); /* bottom nav height, incl. home-indicator clearance */
   left: 0;
   right: 0;
   overflow: hidden; /* clips the sliding pages; each page scrolls itself below */
@@ -424,7 +424,7 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  padding: 1rem 1rem calc(1rem + 80px + env(safe-area-inset-bottom));
+  padding: 1rem;
   box-sizing: border-box;
 }
 
@@ -433,8 +433,6 @@
 .tutor-page-scroll {
   position: absolute;
   inset: 0;
-  padding-bottom: calc(80px + env(safe-area-inset-bottom));
-  box-sizing: border-box;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
@@ -664,12 +662,9 @@
 }
 
 @media (max-width: 480px) {
-  .tutor-page-panel {
-    padding: 0.5rem 0.5rem calc(0.5rem + 80px + env(safe-area-inset-bottom));
-  }
-
+  .tutor-page-panel,
   .tutor-page-scroll {
-    padding: 0.5rem 0.5rem calc(0.5rem + 80px + env(safe-area-inset-bottom));
+    padding: 0.5rem;
   }
 
   .dashboard-header {

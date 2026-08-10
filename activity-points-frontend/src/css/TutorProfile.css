@@ -454,36 +454,3 @@
     color: #f8fafc !important;
   }
 }
-
-/* Profile photo controls: upload state + delete action */
-.tprofile-photo-actions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-.tprofile-photo-delete {
-  border: 1px solid rgba(239, 68, 68, .35);
-  border-radius: 10px;
-  padding: 9px 14px;
-  background: rgba(239, 68, 68, .08);
-  color: #dc2626;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.tprofile-photo-delete:hover:not(:disabled) { background: rgba(239, 68, 68, .14); }
-.tprofile-photo-delete:disabled { opacity: .55; cursor: not-allowed; }
-:root[data-theme="dark"] .tprofile-photo-delete {
-  color: #fca5a5;
-  background: rgba(127, 29, 29, .28);
-  border-color: rgba(248, 113, 113, .35);
-}
-@media (max-width: 480px) {
-  .tprofile-photo-actions { width: 100%; }
-  .tprofile-photo-actions .tprofile-photo-action,
-  .tprofile-photo-actions .tprofile-photo-delete { flex: 1 1 150px; }
-}

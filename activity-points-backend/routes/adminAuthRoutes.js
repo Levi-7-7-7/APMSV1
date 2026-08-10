@@ -9,6 +9,7 @@ const logActivity = require("../utils/activityLog");
 const imagekit = require("../utils/imagekit");
 const SibApiV3Sdk = require("sib-api-v3-sdk");
 const { registerDeviceToken } = require("../utils/fcm");
+const ActivityLog = require("../models/ActivityLog");
 
 const router = express.Router();
 
@@ -154,9 +155,42 @@ router.post("/login", async (req, res) => {
 // Get the logged-in admin's own profile (email + photo)
 router.get("/me", adminAuth, async (req, res) => {
   try {
-    const admin = await Admin.findById(req.admin.id).select("email profilePhoto");
+    const admin = await Admin.findById(req.admin.id).select("email profilePhoto profilePhotoFileId");
     if (!admin) return res.status(404).json({ error: "Admin not found" });
-    res.json({ success: true, admin });
+
+    // Admin completion is intentionally different from student/tutor completion:
+    // 25% is already earned by logging in, 25% is earned by having a profile
+    // photo, and the remaining 50% comes from ANY two meaningful admin actions.
+    // The actions do not need to be specific or happen in a particular order.
+    // Each qualifying action is worth 25%, capped at 50% total. Repeated or
+    // different admin actions both count because the requirement is simply to
+    // use the administration features. Login/photo actions are excluded from
+    // this pool because they already have their own milestones.
+    const actorId = String(admin._id);
+    const qualifyingAdminActionFilter = {
+      actorType: "admin",
+      actorId,
+      action: {
+        $nin: [
+          "admin_login",
+          "admin_profile_photo_updated",
+          "admin_profile_photo_deleted",
+        ],
+      },
+    };
+
+    const actionCount = await ActivityLog.countDocuments(qualifyingAdminActionFilter);
+
+    const adminActionSteps = Math.min(2, Number(actionCount || 0));
+    const completionSteps = {
+      login: true,
+      photo: Boolean(admin.profilePhoto),
+      adminAction1: adminActionSteps >= 1,
+      adminAction2: adminActionSteps >= 2,
+    };
+    const completionPercent = Object.values(completionSteps).filter(Boolean).length * 25;
+
+    res.json({ success: true, admin, completionPercent, completionSteps });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -179,6 +213,38 @@ router.patch("/fcm-token", adminAuth, async (req, res) => {
 });
 
 // Upload / update the logged-in admin's own profile photo
+router.delete("/profile-photo", adminAuth, async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.admin.id).select("email profilePhoto profilePhotoFileId");
+    if (!admin) return res.status(404).json({ error: "Admin not found" });
+
+    if (admin.profilePhotoFileId) {
+      try { await imagekit.deleteFile(admin.profilePhotoFileId); } catch (_) {}
+    }
+
+    admin.profilePhoto = null;
+    admin.profilePhotoFileId = null;
+    await admin.save();
+
+    logActivity({
+      req,
+      actorType: "admin",
+      actorId: req.admin.id,
+      actorEmail: admin.email,
+      action: "admin_profile_photo_deleted",
+      description: `${admin.email} deleted their profile photo`,
+      targetType: "Admin",
+      targetId: admin._id,
+      targetName: admin.email,
+    });
+
+    res.json({ success: true, profilePhoto: null });
+  } catch (err) {
+    console.error("Admin profile photo delete error:", err);
+    res.status(500).json({ error: err.message || "Profile photo deletion failed" });
+  }
+});
+
 router.patch("/profile-photo", adminAuth, photoUpload.single("photo"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No photo file provided" });

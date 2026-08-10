@@ -146,28 +146,6 @@ export default function TutorProfile() {
     setPendingFile(null);
   }, []);
 
-  const deletePhoto = useCallback(async () => {
-    if (!localPhoto || uploading) return;
-    const confirmed = window.confirm('Delete your profile photo? You can upload a new one anytime.');
-    if (!confirmed) return;
-
-    setError('');
-    setUploading(true);
-    try {
-      await tutorAxios.delete('/tutors/profile-photo');
-      setLocalPhoto(null);
-      setProfile(prev => {
-        const updated = prev ? { ...prev, profilePhoto: null } : prev;
-        setCached(CACHE_KEY, { ...getCached(CACHE_KEY), profile: updated });
-        return updated;
-      });
-    } catch (err) {
-      setError(err?.response?.data?.error || 'Could not delete photo. Please try again.');
-    } finally {
-      setUploading(false);
-    }
-  }, [localPhoto, uploading]);
-
   const confirmUpload = useCallback(async croppedFile => {
     setError('');
     setUploading(true);
@@ -288,27 +266,15 @@ export default function TutorProfile() {
           <span>{tutorEmail}</span>
         </div>
 
-        <div className="tprofile-photo-actions">
-          <button
-            type="button"
-            className="tprofile-photo-action"
-            onClick={handlePhotoClick}
-            disabled={uploading}
-          >
-            {uploading ? <Loader2 size={15} className="icon-spin" /> : <Camera size={15} />}
-            <span>{uploading ? 'Uploading...' : (hasPhoto ? 'Replace my image' : 'Add profile photo')}</span>
-          </button>
-          {hasPhoto && (
-            <button
-              type="button"
-              className="tprofile-photo-delete"
-              onClick={deletePhoto}
-              disabled={uploading}
-            >
-              Delete photo
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          className="tprofile-photo-action"
+          onClick={handlePhotoClick}
+          disabled={uploading}
+        >
+          {uploading ? <Loader2 size={15} className="icon-spin" /> : <Camera size={15} />}
+          <span>{hasPhoto ? 'Replace my image' : 'Add profile photo'}</span>
+        </button>
       </div>
 
       {/* Stats row */}

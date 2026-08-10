@@ -2,8 +2,15 @@ import React from 'react';
 import { Check, Circle } from 'lucide-react';
 import '../css/ProfileCompletionHint.css';
 
-export default function ProfileCompletionHint({ steps, tutor = false }) {
-  const items = tutor
+export default function ProfileCompletionHint({ steps, tutor = false, admin = false }) {
+  const items = admin
+    ? [
+        ['login', 'Log in'],
+        ['photo', 'Upload your profile photo'],
+        ['adminAction1', 'Complete any admin action'],
+        ['adminAction2', 'Complete another admin action'],
+      ]
+    : tutor
     ? [
         ['login', 'Log in'],
         ['password', 'Set your own password'],
