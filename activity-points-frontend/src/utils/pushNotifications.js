@@ -168,6 +168,21 @@ export async function syncPushToken(role) {
     const registration = await navigator.serviceWorker.register(SW_URL);
     await navigator.serviceWorker.ready;
 
+    // Force Firebase to refresh the token on every authenticated sync.
+    // This is important for the single-device model: a browser can keep a
+    // stale cached FCM token after an install/update/re-login. If that stale
+    // token is saved to the account, the backend may successfully store it
+    // but Firebase can no longer deliver to that device. Deleting the local
+    // cached token first makes getToken() mint a token for the CURRENT
+    // browser/service-worker installation. The backend still stores only one
+    // token per user, so logging in on another device continues to replace
+    // this one (exactly one active notification device per account).
+    try {
+      await deleteToken(messaging);
+    } catch (err) {
+      console.warn('[push] deleteToken before silent sync failed:', err.message);
+    }
+
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
       serviceWorkerRegistration: registration,
