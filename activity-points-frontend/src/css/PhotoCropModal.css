@@ -47,11 +47,9 @@
   line-height: 1.4;
 }
 
-/* Crop stage: shows the full image, draggable, with a circular mask
-   overlay so the user can see exactly what will be kept. */
+/* Crop stage: shows the full image with a normal rectangular crop area. */
 .pcm-stage {
   position: relative;
-  border-radius: 50%;
   overflow: hidden;
   background: var(--slate-100);
   border: 3px solid var(--blue-tint-100);
@@ -70,16 +68,6 @@
   top: 0;
   left: 0;
   max-width: none;
-  pointer-events: none;
-}
-
-/* Subtle ring drawn on top so the crop circle edge stays visible
-   against any photo. Doesn't intercept pointer events. */
-.pcm-circle-mask {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
   pointer-events: none;
 }
 
