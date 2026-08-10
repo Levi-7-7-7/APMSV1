@@ -267,6 +267,27 @@ export default function CertificateUploadScreen() {
         !uploading
       );
 
+  const resetForm = () => {
+    setCategoryId('');
+    setSubcategories([]);
+    setSubcategoryName('');
+    setLevelSelected('');
+    setPrizeType('');
+    setUploadedFile(null);
+    setEligiblePoints(null);
+    setDateFrom('');
+    setDateTo('');
+    setEventName('');
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowDropdown(false);
+    setIsOthers(false);
+    setOthersDescription('');
+    setPendingImageFile(null);
+    setWasOptimized(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSubmit = async () => {
     if (!canSubmit) return;
     if (!isOnline) {
@@ -303,7 +324,13 @@ export default function CertificateUploadScreen() {
       clearCached('certificatesPage');
 
       setSubmitted(true);
-      setTimeout(() => navigate('/student'), 2000);
+      // Show the success screen briefly, then reset the form and land the
+      // student back on a clean Upload page (not the Dashboard) so they can
+      // immediately submit another certificate if they want to.
+      setTimeout(() => {
+        resetForm();
+        setSubmitted(false);
+      }, 2000);
     } catch (err) {
       alert('Upload failed. Please try again.');
       console.error(err);
