@@ -9,6 +9,7 @@ import '../css/certificatespage.css';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useStudentTabContext from '../context/StudentTabContext';
 import CertModal from '../components/CertModal';
+import CertCropModal from '../components/CertCropModal';
 import { calcCappedPoints, passThreshold } from '../utils/calcPoints';
 import { getCached, setCached, isSessionCached } from '../utils/pageDataCache';
 
@@ -46,6 +47,7 @@ export default function CertificatesPage() {
   // is selected, which previously gave no chance to double-check or back
   // out before it was sent for review.
   const [pendingReupload, setPendingReupload] = useState({});
+  const [cropReupload, setCropReupload] = useState(null); // { certId, file }
   const fileInputRefs = React.useRef({});
 
   useEffect(() => {
@@ -224,10 +226,33 @@ export default function CertificatesPage() {
     }
 
     setReuploadError(prev => ({ ...prev, [cert._id]: '' }));
+
+    // Images use the same real crop editor as certificate submission.
+    // PDFs are already document-shaped, so they skip the image cropper.
+    if (isImage) {
+      setCropReupload({ certId: cert._id, file });
+      return;
+    }
+
     setPendingReupload(prev => ({
       ...prev,
-      [cert._id]: { file, previewUrl: isImage ? URL.createObjectURL(file) : null },
+      [cert._id]: { file, previewUrl: null },
     }));
+  };
+
+  const cancelReuploadCrop = () => setCropReupload(null);
+
+  const confirmReuploadCrop = croppedFile => {
+    if (!cropReupload) return;
+    const certId = cropReupload.certId;
+    setPendingReupload(prev => ({
+      ...prev,
+      [certId]: {
+        file: croppedFile,
+        previewUrl: URL.createObjectURL(croppedFile),
+      },
+    }));
+    setCropReupload(null);
   };
 
   // Discard the staged file without uploading anything.
@@ -301,6 +326,13 @@ export default function CertificatesPage() {
           onClose={() => { setModalUrl(null); setModalFile(''); }}
         />
       )}
+
+      <CertCropModal
+        file={cropReupload?.file}
+        busy={false}
+        onCancel={cancelReuploadCrop}
+        onConfirm={confirmReuploadCrop}
+      />
 
       <div className="header">
         <button onClick={() => navigate('/student')} className="back-button" aria-label="Back to dashboard">
