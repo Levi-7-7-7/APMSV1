@@ -1,0 +1,411 @@
+/* ================================================================
+   APMS MODERN UI LAYER
+   Visual-only polish: keeps existing component structure and behavior.
+   ================================================================ */
+
+:root {
+  --modern-radius-sm: 10px;
+  --modern-radius-md: 16px;
+  --modern-radius-lg: 22px;
+  --modern-radius-xl: 28px;
+  --modern-shadow-sm: 0 2px 8px rgba(15, 23, 42, .05);
+  --modern-shadow-md: 0 10px 30px rgba(15, 23, 42, .08);
+  --modern-shadow-lg: 0 20px 50px rgba(15, 23, 42, .12);
+  --modern-focus: 0 0 0 4px rgba(37, 99, 235, .12);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(59,130,246,.09), transparent 30%),
+    radial-gradient(circle at 100% 0%, rgba(34,197,94,.07), transparent 28%),
+    var(--slate-50) !important;
+  color: var(--slate-700);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  line-height: 1.5;
+}
+
+button, input, select, textarea { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+
+/* ---------- Shared surfaces ---------- */
+.student-list-card,
+.upload-csv-card,
+.profile-card,
+.profile-name-block,
+.points-card,
+.pass-card,
+.activities-card,
+.ticket-card,
+.summary-card,
+.certificate-card,
+.ap-card,
+.ap-dashboard-card,
+.admin-panel .ap-card,
+.tutor-main .nested-content {
+  border: 1px solid var(--slate-200) !important;
+  box-shadow: var(--modern-shadow-sm) !important;
+  transition: box-shadow .22s ease, transform .22s ease, border-color .22s ease;
+}
+
+.student-list-card:hover,
+.upload-csv-card:hover,
+.profile-card:hover,
+.points-card:hover,
+.pass-card:hover,
+.activities-card:hover,
+.ticket-card:hover,
+.certificate-card:hover,
+.ap-dashboard-card:hover {
+  border-color: var(--slate-300) !important;
+  box-shadow: var(--modern-shadow-md) !important;
+}
+
+/* ---------- Login ---------- */
+.login-container {
+  position: relative;
+  overflow: hidden;
+  padding: 24px !important;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(37,99,235,.16), transparent 28%),
+    radial-gradient(circle at 85% 85%, rgba(16,185,129,.13), transparent 30%),
+    linear-gradient(135deg, var(--blue-tint-25), var(--blue-tint-100), var(--green-tint-100)) !important;
+}
+
+.login-container::before,
+.login-container::after {
+  content: '';
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  filter: blur(2px);
+  pointer-events: none;
+  opacity: .35;
+}
+.login-container::before { background: rgba(59,130,246,.14); top: -150px; left: -90px; }
+.login-container::after { background: rgba(16,185,129,.12); bottom: -160px; right: -100px; }
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  max-width: 430px !important;
+  padding: 34px !important;
+  border: 1px solid rgba(255,255,255,.65) !important;
+  border-radius: var(--modern-radius-xl) !important;
+  background: rgba(255,255,255,.78) !important;
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: 0 25px 70px rgba(15,23,42,.13), 0 4px 18px rgba(15,23,42,.06) !important;
+}
+
+.login-header svg {
+  width: 58px !important;
+  height: 58px !important;
+  padding: 13px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-800));
+  color: white !important;
+  box-shadow: 0 12px 25px rgba(37,99,235,.25);
+}
+
+.login-header h1 { font-size: 2rem !important; letter-spacing: -.035em; }
+.login-header p { color: var(--slate-500); }
+
+.form-input,
+.form-select,
+.ap-input,
+.ap-select,
+.sl-input,
+.sl-select,
+.add-student-input {
+  border: 1px solid var(--slate-200) !important;
+  border-radius: 13px !important;
+  background: var(--surface) !important;
+  color: var(--slate-800) !important;
+  box-shadow: inset 0 1px 2px rgba(15,23,42,.025);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.form-input:focus,
+.form-select:focus,
+.ap-input:focus,
+.ap-select:focus,
+.sl-input:focus,
+.sl-select:focus,
+.add-student-input:focus {
+  border-color: var(--blue-500) !important;
+  box-shadow: var(--modern-focus) !important;
+  outline: none !important;
+}
+
+.btn-primary,
+.upload-btn,
+.ticket-form-submit,
+.tickets-new-btn,
+.upload-first-btn,
+.cert-reupload-submit-btn {
+  border: 0 !important;
+  border-radius: 13px !important;
+  min-height: 46px;
+  box-shadow: 0 7px 18px rgba(37,99,235,.18);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease !important;
+}
+
+.btn-primary:hover:not(:disabled),
+.upload-btn:hover:not(:disabled),
+.ticket-form-submit:hover:not(:disabled),
+.tickets-new-btn:hover:not(:disabled),
+.upload-first-btn:hover:not(:disabled),
+.cert-reupload-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(37,99,235,.23);
+}
+
+/* ---------- Student shell ---------- */
+.student-dashboard,
+.tutor-dashboard,
+.admin-panel {
+  background: transparent !important;
+}
+
+.dashboard-main,
+.tutor-main,
+.ap-content {
+  background: transparent !important;
+}
+
+.points-card {
+  border-radius: var(--modern-radius-lg) !important;
+  background: linear-gradient(135deg, var(--surface), var(--blue-tint-50)) !important;
+}
+
+.points-card .award-icon,
+.pass-icon,
+.profile-icon-bubble,
+.ap-card-icon,
+.ap-dashboard-card-icon {
+  border-radius: 14px !important;
+}
+
+.pass-card {
+  border-radius: var(--modern-radius-lg) !important;
+  background: var(--surface) !important;
+}
+
+.activities-card,
+.summary-card,
+.certificate-card,
+.ticket-card {
+  border-radius: var(--modern-radius-lg) !important;
+  background: var(--surface) !important;
+}
+
+/* ---------- Tutor / Admin chrome ---------- */
+.tutor-topbar,
+.ap-topbar {
+  border-bottom: 1px solid var(--slate-200) !important;
+  background: color-mix(in srgb, var(--surface) 88%, transparent) !important;
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 4px 18px rgba(15,23,42,.045) !important;
+}
+
+.tutor-topbar-menu-btn,
+.tutor-topbar-refresh-btn,
+.tutor-topbar-notif-btn,
+.ap-topbar-menu-btn,
+.ap-topbar-notif-btn,
+.ap-topbar-back {
+  border: 1px solid var(--slate-200) !important;
+  border-radius: 12px !important;
+  background: var(--surface) !important;
+  transition: all .18s ease;
+}
+
+.tutor-topbar-menu-btn:hover,
+.tutor-topbar-refresh-btn:hover,
+.tutor-topbar-notif-btn:hover,
+.ap-topbar-menu-btn:hover,
+.ap-topbar-notif-btn:hover,
+.ap-topbar-back:hover {
+  border-color: var(--blue-300, #93c5fd) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--modern-shadow-sm);
+}
+
+.tutor-topbar-dropdown,
+.ap-topbar-dropdown {
+  border: 1px solid var(--slate-200) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--modern-shadow-lg) !important;
+  overflow: hidden;
+}
+
+.ap-nav {
+  border-top: 1px solid var(--slate-200) !important;
+  background: color-mix(in srgb, var(--surface) 94%, transparent) !important;
+}
+
+.ap-tab {
+  border-radius: 12px !important;
+  margin: 5px 3px !important;
+  transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+.ap-tab:hover { transform: translateY(-1px); }
+.ap-tab.active { box-shadow: 0 5px 14px rgba(37,99,235,.12); }
+
+/* ---------- Admin dashboard cards ---------- */
+.ap-dashboard-card {
+  border-radius: var(--modern-radius-lg) !important;
+  background: linear-gradient(145deg, var(--surface), var(--slate-50)) !important;
+}
+
+.ap-card {
+  border-radius: var(--modern-radius-lg) !important;
+  overflow: hidden;
+}
+
+.ap-card-header,
+.sl-header,
+.upload-csv-header {
+  background: linear-gradient(180deg, var(--surface), var(--slate-50)) !important;
+}
+
+/* ---------- Student list ---------- */
+.student-list-card { border-radius: var(--modern-radius-lg) !important; overflow: hidden; }
+.sl-filters { background: var(--slate-50) !important; }
+.sl-table thead tr { background: var(--slate-50) !important; }
+.sl-table tbody tr { transition: background .15s ease; }
+.sl-table tbody tr:hover td { background: var(--blue-tint-50) !important; }
+.sl-btn { border-radius: 11px !important; transition: all .18s ease; }
+.sl-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--modern-shadow-sm); }
+
+/* ---------- Upload / forms ---------- */
+.upload-csv-card {
+  border-radius: var(--modern-radius-lg) !important;
+  overflow: hidden;
+}
+
+.mode-toggle {
+  background: var(--slate-100) !important;
+  border: 1px solid var(--slate-200) !important;
+  border-radius: 14px !important;
+  padding: 4px !important;
+}
+
+.mode-btn { border-radius: 10px !important; transition: all .18s ease; }
+.mode-btn.active { box-shadow: 0 4px 12px rgba(15,23,42,.08); }
+
+.csv-template-box,
+.csv-instructions,
+.upload-section,
+.single-add-form {
+  border-radius: 15px !important;
+}
+
+.upload-result {
+  border-radius: 13px !important;
+  border: 1px solid var(--slate-200);
+}
+
+/* ---------- Profile ---------- */
+.profile-page { max-width: 700px !important; }
+.profile-hero {
+  border-radius: 24px !important;
+  background: linear-gradient(135deg, #1d4ed8, #2563eb 55%, #0f766e) !important;
+  box-shadow: var(--modern-shadow-md) !important;
+}
+.profile-name-block { border-radius: 20px !important; }
+.profile-card { border-radius: 20px !important; }
+.profile-back-btn { backdrop-filter: blur(10px); }
+
+/* ---------- Certificates ---------- */
+.viewcertificates-container { max-width: 900px; margin-inline: auto; }
+.certificate-card { overflow: hidden; }
+.status-badge,
+.category-badge,
+.prize-level,
+.pass-badge,
+.ticket-badge { border-radius: 999px !important; }
+
+.filters {
+  background: var(--surface) !important;
+  border: 1px solid var(--slate-200);
+  border-radius: 14px;
+  padding: 5px !important;
+}
+.filter-btn { border-radius: 10px !important; }
+
+/* ---------- Tickets ---------- */
+.tickets-page { max-width: 900px; margin-inline: auto; }
+.ticket-form,
+.tickets-empty {
+  border: 1px solid var(--slate-200) !important;
+  border-radius: var(--modern-radius-lg) !important;
+  box-shadow: var(--modern-shadow-sm) !important;
+  background: var(--surface) !important;
+}
+.ticket-card { overflow: hidden; }
+.ticket-card-head { transition: background .18s ease; }
+.ticket-card-head:hover { background: var(--blue-tint-50); }
+
+/* ---------- Modals ---------- */
+.cert-modal-overlay,
+.photo-crop-overlay,
+.cert-crop-overlay {
+  backdrop-filter: blur(7px) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
+}
+
+.cert-modal,
+.cert-crop-modal,
+.photo-crop-modal {
+  border: 1px solid var(--slate-200) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 30px 80px rgba(15,23,42,.22) !important;
+}
+
+/* ---------- Toasts / banners ---------- */
+.ap-toast,
+.offline-banner,
+.notification-permission-banner,
+.install-app-banner {
+  border-radius: 14px !important;
+  box-shadow: var(--modern-shadow-md) !important;
+}
+
+/* ---------- Scrollbars ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--slate-300) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--slate-300); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 700px) {
+  .login-card { padding: 26px 20px !important; border-radius: 24px !important; }
+  .login-header h1 { font-size: 1.7rem !important; }
+  .profile-page { padding-inline: 4px; }
+  .student-list-card,
+  .upload-csv-card,
+  .profile-card,
+  .ticket-form { border-radius: 16px !important; }
+  .ap-dashboard-grid { gap: 12px !important; }
+}

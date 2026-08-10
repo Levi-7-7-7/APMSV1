@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { registerServiceWorkerForInstallability } from './utils/pushNotifications';
 import './css/theme.css';
 import './css/CertModal.css';
+import './css/modern.css';
 
 // Registers the SW immediately on load, decoupled from notification
 // permission — this is what makes the app installable on Android/Chrome
