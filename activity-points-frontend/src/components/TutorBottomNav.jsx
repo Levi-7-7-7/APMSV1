@@ -9,8 +9,12 @@ const navItems = [
   { id: 'approved', icon: BookOpen, label: 'Approved Certificates', path: '/tutor/dashboard/approved' },
 ];
 
-export default function TutorBottomNav({ activeTab, pendingCount = 0 }) {
+// `progress` mirrors BottomNav's — a continuous 0..navItems.length-1 value
+// fed from TutorDashboard's live drag position, so the indicator tracks a
+// swipe in progress rather than only jumping once the route settles.
+export default function TutorBottomNav({ activeTab, pendingCount = 0, progress, isDragging }) {
   const navigate = useNavigate();
+  const hasIndicator = typeof progress === 'number';
 
   return (
     <div className="tutor-nav-sidebar">
@@ -32,6 +36,13 @@ export default function TutorBottomNav({ activeTab, pendingCount = 0 }) {
           <span>{label}</span>
         </button>
       ))}
+      {hasIndicator && (
+        <span
+          className={`tutor-nav-indicator${isDragging ? ' dragging' : ''}`}
+          style={{ '--nav-count': navItems.length, '--nav-progress': progress }}
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 }

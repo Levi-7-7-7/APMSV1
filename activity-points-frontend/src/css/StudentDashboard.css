@@ -701,6 +701,32 @@
   font-weight: 700;
 }
 
+/* Thin bar riding along the top edge of the bar, tracking whichever tab
+   is active — and, while a swipe is mid-drag, tracking the drag itself
+   (see BottomNav's `progress` prop) rather than only snapping once the
+   route changes. One indicator, positioned with plain CSS math instead
+   of measuring anything in JS: it's exactly 1/N of the bar's width, and
+   moving it by its own width (a 100% translateX) lands it on the next
+   tab, so passing a fractional progress (e.g. 1.4) slides it partway
+   there for free. Desktop hides this — the sidebar's active-row
+   background highlight (below) already does the job there. */
+.student-nav-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: calc(100% / var(--nav-count, 3));
+  background: var(--blue-600);
+  border-radius: 0 0 3px 3px;
+  transform: translateX(calc(var(--nav-progress, 0) * 100%));
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.student-nav-indicator.dragging {
+  transition: none;
+}
+
 /* =================== DESKTOP / TABLET: LEFT SIDEBAR =================== */
 /* On wider screens the nav moves to a fixed left sidebar, WhatsApp/Slack
    style. Phones (<=768px) keep the bottom bar. */
@@ -751,6 +777,18 @@
 
   .student-nav-btn.active {
     background: var(--blue-tint-100);
+  }
+
+  .student-nav-btn {
+    transition: color 0.2s ease, background-color 0.2s ease;
+  }
+
+  /* The sidebar's own active-row background highlight already gives
+     desktop a clear "you are here" cue, so the mobile top-edge bar
+     (sized/positioned for a horizontal bar) is switched off rather
+     than adapted to a vertical layout it wasn't designed for. */
+  .student-nav-indicator {
+    display: none;
   }
 
   /* Topbar spans the FULL width and sits visually above the sidebar

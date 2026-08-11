@@ -8,6 +8,8 @@
 @media (prefers-reduced-motion: reduce) {
   .student-nav-icon-wrap,
   .tutor-nav-icon-wrap,
+  .student-nav-indicator,
+  .tutor-nav-indicator,
   .app-topbar-dropdown-badge,
   .tutor-nav-badge,
   .ap-topbar-notif-badge,

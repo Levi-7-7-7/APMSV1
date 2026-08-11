@@ -114,6 +114,12 @@ const TutorDashboard = () => {
     return () => ro.disconnect();
   }, []);
 
+  // Continuous 0..N-1 position for the sidebar/bottom-nav indicator — same
+  // treatment as StudentLayout's navIndicatorProgress.
+  const navIndicatorProgress = isSwipeTab
+    ? currentIndex + (isDragging && paneWidth ? dragX / paneWidth : 0)
+    : undefined;
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [avatarEnlarged, setAvatarEnlarged] = useState(false);
 
@@ -527,6 +533,8 @@ const TutorDashboard = () => {
       <TutorBottomNav
         activeTab={activeTab}
         pendingCount={pendingCount}
+        progress={navIndicatorProgress}
+        isDragging={isDragging}
       />
 
       {/* First-login nudge to change the admin-set password — auto-hides once firstTimePasswordSet flips to true */}

@@ -507,6 +507,26 @@
   font-weight: 700;
 }
 
+/* Same live-tracking top-edge indicator as the student bottom nav — see
+   StudentDashboard.css for the full rationale. Hidden on the desktop
+   sidebar, where the active-row background highlight already covers it. */
+.tutor-nav-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: calc(100% / var(--nav-count, 4));
+  background: var(--blue-600);
+  border-radius: 0 0 3px 3px;
+  transform: translateX(calc(var(--nav-progress, 0) * 100%));
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.tutor-nav-indicator.dragging {
+  transition: none;
+}
+
 .tutor-nav-btn .tutor-nav-icon-wrap {
   position: relative;
   display: inline-flex;
@@ -586,6 +606,14 @@
 
   .tutor-nav-btn.active {
     background: var(--blue-tint-100);
+  }
+
+  .tutor-nav-btn {
+    transition: color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .tutor-nav-indicator {
+    display: none;
   }
 
   /* Topbar spans the FULL width and sits visually above the sidebar

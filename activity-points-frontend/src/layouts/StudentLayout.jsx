@@ -97,6 +97,14 @@ const StudentLayout = () => {
     return () => ro.disconnect();
   }, []);
 
+  // Continuous 0..N-1 position for the bottom-nav indicator: the plain
+  // tab index at rest, nudged by the live drag fraction mid-swipe (only
+  // once paneWidth is known and there's actually somewhere to go — same
+  // "resistance at the edges" the track itself already applies via dragX).
+  const navIndicatorProgress = isSwipeTab
+    ? currentIndex + (isDragging && paneWidth ? dragX / paneWidth : 0)
+    : undefined;
+
   const [userName, setUserName] = useState(() => {
     // Try userData first (set after dashboard fetch), fall back to userName key
     const ud = localStorage.getItem('userData');
@@ -450,7 +458,7 @@ const StudentLayout = () => {
       </main>
 
       {/* Bottom navigation */}
-      <BottomNav />
+      <BottomNav progress={navIndicatorProgress} isDragging={isDragging} />
 
       {/* First-login nudge to change the default password — auto-hides once firstTimePasswordSet flips to true */}
       <PasswordSetupPrompt show={firstTimePasswordSet === false} resetPath="/forgot-password" />
