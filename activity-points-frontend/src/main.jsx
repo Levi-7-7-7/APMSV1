@@ -8,6 +8,7 @@ import { initAutoFullscreenOnFirstClick } from './utils/autoFullscreen';
 import './css/theme.css';
 import './css/CertModal.css';
 import './css/modern.css';
+import './css/microinteractions.css';
 
 // PC only: goes fullscreen (like F11) on the first click/keypress after the
 // page loads. Browsers block auto-fullscreen on page load itself, so this

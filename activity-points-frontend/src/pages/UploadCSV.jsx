@@ -49,7 +49,11 @@ const UploadCSV = () => {
   };
 
   const upload = async () => {
-    if (!file) return alert('Select a CSV file first!');
+    if (!file) {
+      setIsError(true);
+      setMsg('Select a CSV file first.');
+      return;
+    }
     setLoading(true);
     setMsg('');
 
@@ -182,8 +186,8 @@ const UploadCSV = () => {
 
           {/* File picker + upload */}
           <div className="upload-section">
-            <label className="file-input-label">
-              <FileUp size={16}/>
+            <label className={`file-input-label${file ? ' file-chosen' : ''}`}>
+              {file ? <CheckCircle size={16} className="file-chosen-icon" /> : <FileUp size={16}/>}
               <span>{file ? file.name : 'Choose CSV file…'}</span>
               <input
                 type="file"

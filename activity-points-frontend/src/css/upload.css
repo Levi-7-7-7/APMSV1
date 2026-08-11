@@ -101,6 +101,53 @@
   text-align: center;
 }
 
+.certificate-upload-container .upload-error-note {
+  margin: 8px 0 0 0;
+  font-size: 0.82rem;
+  color: var(--red-500, #dc2626);
+  text-align: center;
+  animation: upload-error-in .2s ease-out, upload-error-shake .4s ease-in-out .2s;
+}
+
+@keyframes upload-error-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes upload-error-shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-5px); }
+  40%      { transform: translateX(4px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(2px); }
+}
+
+/* Determinate progress while the request is in flight — the button label
+   changing to "Uploading…" was previously the only feedback, with no
+   sense of whether a large certificate scan was 10% done or about to
+   finish. Backed by axios' onUploadProgress in the submit handler. */
+.certificate-upload-container .upload-progress-track {
+  margin-top: 8px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--slate-200);
+  overflow: hidden;
+}
+
+.certificate-upload-container .upload-progress-fill {
+  height: 100%;
+  background: var(--blue-500);
+  border-radius: 999px;
+  transition: width .15s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .certificate-upload-container .upload-input-btn.file-attached,
+  .certificate-upload-container .upload-error-note {
+    animation: none !important;
+  }
+}
+
 .certificate-upload-container .upload-input {
   display: none;
 }
@@ -118,10 +165,24 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform .15s cubic-bezier(.34,1.56,.64,1);
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* Attaching a file swaps the blue "prompt" color for green "confirmed",
+   with a small pop — same acknowledgment pattern as the CSV upload's
+   file-chosen state. */
+.certificate-upload-container .upload-input-btn.file-attached {
+  background-color: var(--green-600);
+  animation: cert-file-attached-pop .28s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+@keyframes cert-file-attached-pop {
+  0%   { transform: scale(.97); }
+  55%  { transform: scale(1.02); }
+  100% { transform: scale(1); }
 }
 
 .certificate-upload-container .upload-input-btn-text {

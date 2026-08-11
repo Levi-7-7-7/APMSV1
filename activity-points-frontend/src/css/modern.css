@@ -155,14 +155,35 @@ button { -webkit-tap-highlight-color: transparent; }
   transition: transform .18s ease, box-shadow .18s ease, filter .18s ease !important;
 }
 
-.btn-primary:hover:not(:disabled),
-.upload-btn:hover:not(:disabled),
-.ticket-form-submit:hover:not(:disabled),
-.tickets-new-btn:hover:not(:disabled),
-.upload-first-btn:hover:not(:disabled),
-.cert-reupload-submit-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(37,99,235,.23);
+/* Hover-lift only for devices that actually have hover (mouse/trackpad).
+   Touch devices fire :hover on tap and then leave it "stuck" on until the
+   next tap elsewhere — without this guard, every primary button on phone
+   (the app's main platform) would visually stay lifted/glowing right after
+   the very tap that was supposed to submit it. */
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover:not(:disabled),
+  .upload-btn:hover:not(:disabled),
+  .ticket-form-submit:hover:not(:disabled),
+  .tickets-new-btn:hover:not(:disabled),
+  .upload-first-btn:hover:not(:disabled),
+  .cert-reupload-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(37,99,235,.23);
+  }
+}
+
+/* Real tactile feedback for the tap itself, on every pointer type —
+   this is what was missing: pressing one of these buttons previously
+   produced no visible response at all until the network request resolved. */
+.btn-primary:active:not(:disabled),
+.upload-btn:active:not(:disabled),
+.ticket-form-submit:active:not(:disabled),
+.tickets-new-btn:active:not(:disabled),
+.upload-first-btn:active:not(:disabled),
+.cert-reupload-submit-btn:active:not(:disabled) {
+  transform: scale(.97);
+  box-shadow: 0 4px 10px rgba(37,99,235,.16);
+  filter: brightness(.96);
 }
 
 /* ---------- Student shell ---------- */

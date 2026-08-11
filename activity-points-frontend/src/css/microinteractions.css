@@ -1,0 +1,105 @@
+/* ================================================================
+   MICRO-INTERACTIONS
+   Small, purely presentational touch-feedback rules layered on top of
+   the existing component CSS. Nothing here changes markup or behavior —
+   see the two categories below for what's covered and why.
+   ================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .student-nav-icon-wrap,
+  .tutor-nav-icon-wrap,
+  .app-topbar-dropdown-badge,
+  .tutor-nav-badge,
+  .ap-topbar-notif-badge,
+  .ap-tab-badge,
+  .ap-dashboard-card-badge,
+  .tutor-topbar-notif-badge,
+  .tutor-topbar-dropdown-badge {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- 1. Bottom nav tap feedback ----------
+   Both nav bars (student bottom bar, tutor sidebar) previously had a
+   color transition for the *active* tab but nothing at all for the
+   moment of the tap itself — pressing a tab looked and felt identical
+   to just looking at it. This bumps the icon down slightly on press and
+   pops it back on release/route-change, on every pointer type. */
+.student-nav-btn,
+.tutor-nav-btn {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.student-nav-btn .student-nav-icon-wrap,
+.tutor-nav-btn .tutor-nav-icon-wrap {
+  transition: transform .15s cubic-bezier(.4, 0, .2, 1);
+}
+
+.student-nav-btn:active .student-nav-icon-wrap,
+.tutor-nav-btn:active .tutor-nav-icon-wrap {
+  transform: scale(.82);
+}
+
+/* The nav buttons get their own icon-level press animation above, so the
+   app-wide fallback (section 3 below) shouldn't also scale the outer
+   button — that would compound into two nested elements shrinking at
+   once. Real specificity here always beats the fallback's :where(), so
+   this wins regardless of source order. */
+.student-nav-btn:active,
+.tutor-nav-btn:active {
+  transform: none;
+}
+
+/* Landing on a tab (including via swipe, not just tap) gets a small
+   overshoot "pop" instead of snapping straight to full size — the same
+   settle motion a native tab bar uses. */
+.student-nav-btn.active .student-nav-icon-wrap,
+.tutor-nav-btn.active .tutor-nav-icon-wrap {
+  animation: nav-icon-pop .32s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+@keyframes nav-icon-pop {
+  0%   { transform: scale(.82); }
+  60%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- 2. Notification-count badges ----------
+   These badges are conditionally rendered — React only mounts them once
+   the underlying count is > 0 — so a mount animation here plays exactly
+   once, right when a badge actually appears, with no extra JS needed to
+   detect the change. Scoped to *count* badges specifically (unread
+   tickets, pending certs) — the many static label badges elsewhere
+   (status tags, role tags) intentionally aren't included, since a pop-in
+   on every row of a list would read as noisy rather than meaningful. */
+.app-topbar-dropdown-badge,
+.tutor-nav-badge,
+.ap-topbar-notif-badge,
+.ap-tab-badge,
+.ap-dashboard-card-badge,
+.tutor-topbar-notif-badge,
+.tutor-topbar-dropdown-badge {
+  animation: badge-pop-in .28s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+
+@keyframes badge-pop-in {
+  0%   { transform: scale(0); opacity: 0; }
+  70%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* ---------- 3. App-wide fallback ----------
+   Zero-specificity (:where) safety net for any button that doesn't
+   already have its own hover/active treatment — so a press always shows
+   *some* feedback instead of nothing, without this rule ever
+   outranking a more specific, purpose-built style already in a
+   component's own CSS file. */
+@media (prefers-reduced-motion: no-preference) {
+  :where(button:not(:disabled)) {
+    transition: transform .12s cubic-bezier(.4, 0, .2, 1);
+  }
+  :where(button:not(:disabled):active) {
+    transform: scale(.96);
+  }
+}

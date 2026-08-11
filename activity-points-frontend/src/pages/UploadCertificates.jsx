@@ -42,6 +42,8 @@ export default function CertificateUploadScreen() {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [eligiblePoints, setEligiblePoints] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   const [dateFrom, setDateFrom] = useState('');
@@ -189,6 +191,7 @@ export default function CertificateUploadScreen() {
   const handleFileUpload = e => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setUploadError('');
     const sizeMB = file.size / 1024 / 1024;
     if (sizeMB > MAX_FILE_SIZE_MB) {
       alert(`File must be under ${MAX_FILE_SIZE_MB} MB`);
@@ -295,6 +298,8 @@ export default function CertificateUploadScreen() {
       return;
     }
     setUploading(true);
+    setUploadProgress(0);
+    setUploadError('');
     try {
       const formData = new FormData();
       if (isOthers) {
@@ -315,6 +320,10 @@ export default function CertificateUploadScreen() {
 
       await axiosInstance.post('/certificates/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (evt) => {
+          if (!evt.total) return;
+          setUploadProgress(Math.round((evt.loaded / evt.total) * 100));
+        },
       });
 
       // A new certificate exists now, so the cached Dashboard/My Certs data
@@ -333,10 +342,15 @@ export default function CertificateUploadScreen() {
         setSubmitted(false);
       }, 2000);
     } catch (err) {
-      alert('Upload failed. Please try again.');
+      // Was a native alert() before — jarring and inconsistent with the
+      // confetti success screen above it. An inline banner (see render
+      // below) matches the app's existing offline/optimized-note pattern
+      // and doesn't block the UI thread the way alert() does.
+      setUploadError('Upload failed. Please try again.');
       console.error(err);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -569,7 +583,10 @@ export default function CertificateUploadScreen() {
 
         {/* File Upload */}
         <div className="upload-input-wrapper">
-          <label htmlFor="file-upload" className="upload-input-btn">
+          <label
+            htmlFor="file-upload"
+            className={`upload-input-btn${uploadedFile && !processingImage ? ' file-attached' : ''}`}
+          >
             <Paperclip size={16} />
             <span className="upload-input-btn-text">
               {processingImage
@@ -599,8 +616,16 @@ export default function CertificateUploadScreen() {
           disabled={!canSubmit}
           className="upload-btn"
         >
-          {uploading ? 'Uploading...' : 'Submit Certificate'}
+          {uploading ? 'Uploading…' : 'Submit Certificate'}
         </button>
+        {uploading && (
+          <div className="upload-progress-track" role="progressbar" aria-valuenow={uploadProgress} aria-valuemin={0} aria-valuemax={100}>
+            <div className="upload-progress-fill" style={{ width: `${uploadProgress}%` }} />
+          </div>
+        )}
+        {uploadError && (
+          <p className="upload-error-note">{uploadError}</p>
+        )}
         {!isOnline && (
           <p className="upload-offline-note">You're offline — connect to the internet to submit.</p>
         )}
