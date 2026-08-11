@@ -66,13 +66,22 @@
   color: var(--slate-500);
 }
 
-/* Secondary line under the capped total — only rendered when the raw sum
-   and the capped sum actually differ, so a student whose points are
-   already under every cap never sees a redundant "0 trimmed" line. */
-.points-summary .raw-points-note {
-  font-size: 0.75rem;
-  color: var(--slate-400);
-  font-weight: 500;
+/* Link out to the dedicated "How Points Are Calculated" page — a plain
+   button styled as text so it doesn't compete with the total for
+   attention, but stays clearly tappable. */
+.points-summary .points-explain-link {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--blue-600);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ===================== FILTERS ===================== */

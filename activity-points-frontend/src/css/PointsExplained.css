@@ -1,0 +1,282 @@
+.pex-page {
+  min-height: 100vh;
+  background: var(--slate-50);
+  padding: 0 1rem 3rem;
+  box-sizing: border-box;
+}
+
+.pex-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: max(16px, env(safe-area-inset-top)) 0 1.1rem;
+}
+
+.pex-back-btn {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface);
+  color: var(--slate-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 4px var(--shadow-color);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pex-back-btn:hover,
+.pex-back-btn:active {
+  background: var(--slate-100);
+}
+
+.pex-hero-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--slate-900);
+  margin: 0;
+}
+
+.pex-intro {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--slate-600);
+  margin: 0 0 1.1rem;
+  max-width: 640px;
+}
+
+/* ---------- Official source link ---------- */
+.pex-source-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1.5px solid var(--blue-tint-200, var(--slate-200));
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.4rem;
+  text-decoration: none;
+  max-width: 640px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pex-source-link:hover {
+  border-color: var(--blue-300, var(--blue-600));
+  box-shadow: 0 4px 14px var(--shadow-color);
+}
+
+.pex-source-link:active {
+  transform: scale(0.99);
+}
+
+.pex-source-link > svg:first-child {
+  flex-shrink: 0;
+  color: var(--blue-600);
+}
+
+.pex-source-link span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pex-source-link strong {
+  font-size: 0.88rem;
+  color: var(--slate-800);
+  font-weight: 700;
+}
+
+.pex-source-link small {
+  font-size: 0.76rem;
+  color: var(--slate-500);
+}
+
+.pex-source-link-icon {
+  flex-shrink: 0;
+  color: var(--slate-400);
+}
+
+/* ---------- Section labels (shared look with other student pages) ---------- */
+.pex-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--slate-500);
+  margin: 0 0 0.6rem;
+}
+
+/* ---------- Rules ---------- */
+.pex-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  max-width: 640px;
+  margin-bottom: 1.6rem;
+}
+
+.pex-rule {
+  display: flex;
+  gap: 0.85rem;
+  background: var(--surface);
+  border: 1.5px solid var(--slate-200);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+}
+
+.pex-rule-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--blue-tint-100);
+  color: var(--blue-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pex-rule-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--slate-800);
+  margin: 0 0 0.25rem;
+}
+
+.pex-rule-body {
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--slate-600);
+  margin: 0;
+}
+
+.pex-rule-footnote {
+  margin-top: 0.5rem;
+  color: var(--slate-500);
+  font-size: 0.78rem;
+}
+
+.pex-rule-list {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.83rem;
+  line-height: 1.6;
+  color: var(--slate-600);
+}
+
+/* ---------- Personal breakdown ---------- */
+.pex-status-text {
+  font-size: 0.85rem;
+  color: var(--slate-500);
+  max-width: 640px;
+}
+
+.pex-status-error {
+  color: var(--red-600);
+}
+
+.pex-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-width: 640px;
+}
+
+.pex-breakdown-row {
+  background: var(--surface);
+  border: 1.5px solid var(--slate-200);
+  border-radius: 14px;
+  padding: 0.8rem 1rem;
+}
+
+.pex-breakdown-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.pex-breakdown-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--slate-800);
+}
+
+.pex-breakdown-counted {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--blue-600);
+  flex-shrink: 0;
+}
+
+.pex-breakdown-meta {
+  font-size: 0.75rem;
+  color: var(--slate-500);
+  margin-top: 0.2rem;
+}
+
+.pex-breakdown-trimmed {
+  color: var(--amber-600, #b45309);
+  font-weight: 600;
+}
+
+.pex-breakdown-bar-track {
+  margin-top: 0.55rem;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--slate-100);
+  overflow: hidden;
+}
+
+.pex-breakdown-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--blue-600);
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pex-breakdown-totals {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1.5px solid var(--slate-200);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  margin-top: 0.3rem;
+}
+
+.pex-totals-label {
+  font-size: 0.72rem;
+  color: var(--slate-500);
+  margin: 0 0 0.15rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pex-totals-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--slate-800);
+  margin: 0;
+}
+
+.pex-totals-trimmed {
+  color: var(--amber-600, #b45309);
+}
+
+.pex-totals-final {
+  color: var(--blue-600);
+}
+
+@media (min-width: 769px) {
+  .pex-page {
+    padding: 0 2rem 3rem;
+  }
+}

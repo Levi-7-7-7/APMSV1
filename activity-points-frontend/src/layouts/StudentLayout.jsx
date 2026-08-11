@@ -39,6 +39,7 @@ const PAGE_TITLES = {
   '/student/certificates': 'My Certificates',
   '/student/tickets': 'Help & Support',
   '/student/profile': 'Profile',
+  '/student/points-explained': 'How Points Are Calculated',
 };
 
 // Slide direction is based on tab order, not the browser's back/forward

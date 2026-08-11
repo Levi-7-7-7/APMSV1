@@ -179,18 +179,6 @@ export default function CertificatesPage() {
     return calcCappedPoints(approved, categories, user?.isLateralEntry ?? false);
   }, [certificates, categories, user]);
 
-  // Raw total: every approved certificate's awarded points added up as-is,
-  // with none of calcCappedPoints' rules applied — no per-segment cap, no
-  // per-category ceiling, and no "only the highest Arts/Sports award
-  // counts" clubbing restriction. Shown alongside the capped figure so a
-  // student can see how much of their raw total the SBTE rules are
-  // actually trimming, and by how much.
-  const rawPoints = useMemo(() => {
-    return certificates
-      .filter(c => c.status?.toLowerCase() === 'approved')
-      .reduce((sum, c) => sum + (c.pointsAwarded || 0), 0);
-  }, [certificates]);
-
   const filteredCertificates = activeFilter === 'all'
     ? certificates
     : certificates.filter(c => c.status?.toLowerCase() === activeFilter);
@@ -367,11 +355,13 @@ export default function CertificatesPage() {
         <div className="points-summary full-width">
           <p className="points">{totalPoints}</p>
           <p>Total Points (Capped)</p>
-          {rawPoints !== totalPoints && (
-            <p className="raw-points-note">
-              {rawPoints} raw &middot; {rawPoints - totalPoints} trimmed by cap rules
-            </p>
-          )}
+          <button
+            type="button"
+            className="points-explain-link"
+            onClick={() => navigate('/student/points-explained')}
+          >
+            How is this calculated?
+          </button>
         </div>
         <div className="certificates-count">
           <p>{certificates.length} certificate{certificates.length !== 1 ? 's' : ''} submitted</p>

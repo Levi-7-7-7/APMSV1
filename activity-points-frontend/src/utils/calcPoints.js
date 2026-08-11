@@ -18,12 +18,20 @@ export const PER_SEGMENT_CAP = { regular: 40, lateral: 30 };
 const DEFAULT_MAX = 40;
 
 /**
+ * Per-category breakdown behind calcCappedPoints — same grouping, same
+ * Rule 3 (highest-only) and Rule 6 (+exceptions) logic, but returns the
+ * intermediate numbers per category instead of just the grand total, so a
+ * "how was my total worked out" screen can show its work without
+ * re-implementing (and risking drifting from) the actual cap logic below.
+ *
  * @param {Array}   approvedCerts   - approved certs (category populated or ID)
  * @param {Array}   categories      - all Category objects for ID→doc lookup
  * @param {Boolean} isLateralEntry
- * @returns {Number}
+ * @returns {Array<{catId: string, name: string, raw: number, counted: number,
+ *   cap: number, hasExplicitCeiling: boolean, isHighestOnly: boolean,
+ *   certCount: number}>}
  */
-export function calcCappedPoints(approvedCerts, categories = [], isLateralEntry = false) {
+export function getPointsBreakdown(approvedCerts, categories = [], isLateralEntry = false) {
   const perSegmentCap = isLateralEntry ? PER_SEGMENT_CAP.lateral : PER_SEGMENT_CAP.regular;
 
   const grouped = {};
@@ -36,35 +44,48 @@ export function calcCappedPoints(approvedCerts, categories = [], isLateralEntry 
         (cert.category && typeof cert.category === 'object' && cert.category.name)
           ? cert.category
           : categories.find(c => (c._id === catKey) || (c._id?.toString() === catKey)) || null;
-      grouped[catKey] = { certs: [], catDoc };
+      grouped[catKey] = { certs: [], catDoc, catKey };
     }
     grouped[catKey].certs.push(cert);
   });
 
-  let grandTotal = 0;
-
-  Object.values(grouped).forEach(({ certs, catDoc }) => {
+  return Object.values(grouped).map(({ certs, catDoc, catKey }) => {
     const catName   = (catDoc?.name || '').toLowerCase();
     const catMaxPts = catDoc?.maxPoints ?? DEFAULT_MAX;
 
-    // Explicit ceiling (NCC=50, NSS=50, Sports=30, Arts=30, Disaster=20) vs generic (40)
     const hasExplicitCeiling = catMaxPts !== DEFAULT_MAX;
     const effectiveCap = hasExplicitCeiling
       ? (isLateralEntry ? Math.min(catMaxPts, perSegmentCap) : catMaxPts)
       : perSegmentCap;
 
-    // Rule 3
-    let catSum = 0;
-    if (catName.includes('arts') || catName.includes('sports') || catName.includes('games')) {
-      catSum = Math.max(...certs.map(c => c.pointsAwarded || 0), 0);
-    } else {
-      catSum = certs.reduce((s, c) => s + (c.pointsAwarded || 0), 0);
-    }
+    const isHighestOnly = catName.includes('arts') || catName.includes('sports') || catName.includes('games');
+    const raw = certs.reduce((s, c) => s + (c.pointsAwarded || 0), 0);
+    const catSum = isHighestOnly
+      ? Math.max(...certs.map(c => c.pointsAwarded || 0), 0)
+      : raw;
 
-    grandTotal += Math.min(catSum, effectiveCap);
+    return {
+      catId: catKey,
+      name: catDoc?.name || 'Uncategorized',
+      raw,
+      counted: Math.min(catSum, effectiveCap),
+      cap: effectiveCap,
+      hasExplicitCeiling,
+      isHighestOnly,
+      certCount: certs.length,
+    };
   });
+}
 
-  return grandTotal;
+/**
+ * @param {Array}   approvedCerts   - approved certs (category populated or ID)
+ * @param {Array}   categories      - all Category objects for ID→doc lookup
+ * @param {Boolean} isLateralEntry
+ * @returns {Number}
+ */
+export function calcCappedPoints(approvedCerts, categories = [], isLateralEntry = false) {
+  return getPointsBreakdown(approvedCerts, categories, isLateralEntry)
+    .reduce((sum, cat) => sum + cat.counted, 0);
 }
 
 export function passThreshold(isLateralEntry) {

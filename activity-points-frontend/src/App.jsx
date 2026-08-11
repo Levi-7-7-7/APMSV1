@@ -26,6 +26,7 @@ import CertificatesPage from './pages/CertificatesPage';
 const Tickets = lazy(() => import('./pages/Tickets'));
 const Profile = lazy(() => import('./pages/Profile'));
 const AppearanceSettings = lazy(() => import('./pages/AppearanceSettings'));
+const PointsExplained = lazy(() => import('./pages/PointsExplained'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
@@ -79,6 +80,7 @@ function App() {
               <Route path="tickets" element={<Tickets />} />
               <Route path="profile" element={<Profile />} />
               <Route path="appearance" element={<AppearanceSettings />} />
+              <Route path="points-explained" element={<PointsExplained />} />
             </Route>
 
             {/* ===== TUTOR ===== */}
