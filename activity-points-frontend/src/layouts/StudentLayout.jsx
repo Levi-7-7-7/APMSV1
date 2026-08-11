@@ -101,8 +101,12 @@ const StudentLayout = () => {
   // tab index at rest, nudged by the live drag fraction mid-swipe (only
   // once paneWidth is known and there's actually somewhere to go — same
   // "resistance at the edges" the track itself already applies via dragX).
+  // Subtracted, not added: the track's own transform is
+  // `-(currentIndex * paneWidth) + dragX`, so a leftward drag (dragX < 0)
+  // pushes the track further left, revealing the *next* tab — i.e. the
+  // indicator must move forward (index increasing) as dragX goes negative.
   const navIndicatorProgress = isSwipeTab
-    ? currentIndex + (isDragging && paneWidth ? dragX / paneWidth : 0)
+    ? currentIndex - (isDragging && paneWidth ? dragX / paneWidth : 0)
     : undefined;
 
   const [userName, setUserName] = useState(() => {

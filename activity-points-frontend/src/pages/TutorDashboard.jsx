@@ -115,9 +115,9 @@ const TutorDashboard = () => {
   }, []);
 
   // Continuous 0..N-1 position for the sidebar/bottom-nav indicator — same
-  // treatment as StudentLayout's navIndicatorProgress.
+  // treatment (and same sign fix) as StudentLayout's navIndicatorProgress.
   const navIndicatorProgress = isSwipeTab
-    ? currentIndex + (isDragging && paneWidth ? dragX / paneWidth : 0)
+    ? currentIndex - (isDragging && paneWidth ? dragX / paneWidth : 0)
     : undefined;
 
   const [menuOpen, setMenuOpen] = useState(false);
