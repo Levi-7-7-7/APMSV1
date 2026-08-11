@@ -1,0 +1,26 @@
+.route-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  width: 100%;
+  animation: route-loader-fade-in 0.15s ease-out;
+}
+
+.route-loader-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid var(--slate-200);
+  border-top-color: var(--blue-600);
+  animation: route-loader-spin 0.7s linear infinite;
+}
+
+@keyframes route-loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes route-loader-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

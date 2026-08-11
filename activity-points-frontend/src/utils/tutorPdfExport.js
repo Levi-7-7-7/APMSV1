@@ -29,8 +29,12 @@
  * exactly once, in full.
  */
 
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+// html2canvas and jsPDF are loaded on demand (see exportStudentsPdf below)
+// rather than imported statically here. Both are sizeable, PDF-export-only
+// dependencies — statically importing them would pull them into whichever
+// bundle this module ends up in even for tutors who never click "Export
+// PDF", the same reasoning already applied to ExcelJS in
+// tutorExcelExport.js.
 import { calcCappedPoints, passThreshold } from './calcPoints';
 
 // ---------------------------------------------------------------------
@@ -415,7 +419,7 @@ function makeHiddenRoot() {
  * section after the first one in a multi-section document always starts on
  * a new page, never sharing a page with the previous section's footer.
  */
-async function renderSectionIntoDoc(doc, { students, certsByStudent, branchName, batchName, logoUrl, isVeryFirstPage }) {
+async function renderSectionIntoDoc(doc, { students, certsByStudent, branchName, batchName, logoUrl, isVeryFirstPage, html2canvas }) {
   const deptName = branchName ? `DEPARTMENT OF ${branchName.toUpperCase()}` : 'DEPARTMENT';
   const batchLabel = batchName ? ` — BATCH ${batchName}` : '';
   const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -638,6 +642,11 @@ export async function exportStudentsPdf({ groups, certsByStudent, logoUrl }) {
     throw new Error('exportStudentsPdf: at least one group is required');
   }
 
+  const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
+    import('jspdf'),
+    import('html2canvas'),
+  ]);
+
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
   for (let gi = 0; gi < groups.length; gi++) {
@@ -648,7 +657,8 @@ export async function exportStudentsPdf({ groups, certsByStudent, logoUrl }) {
       branchName: group.branchName,
       batchName: group.batchName,
       logoUrl,
-      isVeryFirstPage: gi === 0
+      isVeryFirstPage: gi === 0,
+      html2canvas
     });
   }
 
