@@ -1,0 +1,85 @@
+/* ============================================================
+   NOT FOUND (404) — see pages/NotFound.jsx
+   ============================================================ */
+
+.nf-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 2rem 1.25rem;
+  background: linear-gradient(135deg, var(--blue-tint-25), var(--blue-tint-100));
+}
+
+.nf-icon {
+  color: var(--blue-700);
+  background: var(--blue-tint-100);
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.4rem;
+}
+
+.nf-code {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--slate-800);
+  letter-spacing: -0.02em;
+}
+
+.nf-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--slate-700);
+}
+
+.nf-message {
+  margin: 0.15rem 0 0.6rem;
+  max-width: 320px;
+  color: var(--slate-500);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.nf-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.nf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 11px;
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.nf-btn.secondary {
+  background: var(--slate-100);
+  color: var(--slate-700);
+}
+
+.nf-btn.secondary:hover {
+  background: var(--slate-200);
+}
+
+.nf-btn.primary {
+  background: var(--blue-600);
+  color: var(--on-color);
+}
+
+.nf-btn.primary:hover {
+  background: var(--blue-700);
+}

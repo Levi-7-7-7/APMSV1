@@ -39,6 +39,41 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="APMS" />
 
+    <!-- iOS home-screen icon (iOS ignores manifest.json icons entirely) -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon-167.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- iOS splash screens — shown instantly while the installed app is
+         opening, instead of a blank white flash. iOS matches these by
+         exact device-width/height + pixel-ratio, so each common device
+         needs its own entry; devices without a match just get a brief
+         blank flash as before (no regression, purely additive). -->
+    <link rel="apple-touch-startup-image" href="/splash/iphone-se.png"
+          media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="/splash/iphone-11.png"
+          media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="/splash/iphone-12-13-14.png"
+          media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="/splash/iphone-15-16.png"
+          media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="/splash/iphone-pro-max.png"
+          media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="/splash/iphone-15-16-pro-max.png"
+          media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="/splash/ipad-10.png"
+          media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+    <link rel="apple-touch-startup-image" href="/splash/ipad-pro-12.png"
+          media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+
+    <!-- Link previews when the app URL is shared (WhatsApp, Slack, etc.) -->
+    <meta property="og:title" content="Activity Points Management System" />
+    <meta property="og:description" content="Student certificate management and activity points tracking system." />
+    <meta property="og:image" content="/icon-512.png" />
+    <meta property="og:type" content="website" />
+
     <title>Activity Points Management System</title>
   </head>
   <body>

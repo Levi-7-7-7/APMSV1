@@ -1,0 +1,81 @@
+/* ============================================================
+   ERROR BOUNDARY — recovery screen shown when a render error is
+   caught (see components/ErrorBoundary.jsx). Two layouts:
+     .eb-fullscreen — top-level app crash (whole viewport)
+     .eb-inline     — a single section/widget failed, page around it lives
+   ============================================================ */
+
+.eb-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.6rem;
+  padding: 2rem 1.25rem;
+}
+
+.eb-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: linear-gradient(135deg, var(--blue-tint-25), var(--blue-tint-100));
+}
+
+.eb-inline {
+  border-radius: 14px;
+  background: var(--slate-50);
+  border: 1px dashed var(--slate-300);
+  min-height: 140px;
+}
+
+.eb-icon {
+  color: var(--red-600, #dc2626);
+  background: #fee2e2;
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.3rem;
+}
+
+.eb-inline .eb-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.eb-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 750;
+  color: var(--slate-800);
+}
+
+.eb-message {
+  margin: 0;
+  max-width: 320px;
+  color: var(--slate-500);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.eb-retry {
+  margin-top: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--blue-600);
+  color: var(--on-color);
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.eb-retry:hover {
+  background: var(--blue-700);
+}
