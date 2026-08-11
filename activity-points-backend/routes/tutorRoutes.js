@@ -925,11 +925,9 @@ router.patch('/profile-photo', tutorAuth, photoUpload.single('photo'), async (re
     const tutor = await Tutor.findById(req.tutor.id).select('name profilePhoto profilePhotoFileId');
     if (!tutor) return res.status(404).json({ error: 'Tutor not found' });
 
-    // Delete old image from ImageKit if it exists
-    if (tutor.profilePhotoFileId) {
-      try { await imagekit.deleteFile(tutor.profilePhotoFileId); } catch (_) {}
-    }
-
+    // Upload the new photo FIRST — if this fails, the tutor keeps their
+    // existing photo instead of losing it (same safe ordering as
+    // certificate re-upload).
     const extension = path.extname(req.file.originalname) || '.jpg';
     const fileName  = `tutor_${req.tutor.id}_${Date.now()}${extension}`;
 
@@ -940,9 +938,17 @@ router.patch('/profile-photo', tutorAuth, photoUpload.single('photo'), async (re
       useUniqueFileName: false,
     });
 
+    const oldFileId = tutor.profilePhotoFileId;
+
     tutor.profilePhoto       = uploadResponse.url;
     tutor.profilePhotoFileId = uploadResponse.fileId;
     await tutor.save();
+
+    // Only now delete the old image from ImageKit — the new one is already
+    // safely uploaded and saved.
+    if (oldFileId) {
+      try { await imagekit.deleteFile(oldFileId); } catch (_) {}
+    }
 
     logActivity({
       req,

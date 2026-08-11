@@ -265,11 +265,9 @@ router.patch("/profile-photo", adminAuth, photoUpload.single("photo"), async (re
     const admin = await Admin.findById(req.admin.id).select("email profilePhoto profilePhotoFileId");
     if (!admin) return res.status(404).json({ error: "Admin not found" });
 
-    // Delete old image from ImageKit if it exists
-    if (admin.profilePhotoFileId) {
-      try { await imagekit.deleteFile(admin.profilePhotoFileId); } catch (_) {}
-    }
-
+    // Upload the new photo FIRST — if this fails, the admin keeps their
+    // existing photo instead of losing it (same safe ordering as
+    // certificate re-upload).
     const extension = path.extname(req.file.originalname) || ".jpg";
     const fileName = `admin_${req.admin.id}_${Date.now()}${extension}`;
 
@@ -280,9 +278,17 @@ router.patch("/profile-photo", adminAuth, photoUpload.single("photo"), async (re
       useUniqueFileName: false,
     });
 
+    const oldFileId = admin.profilePhotoFileId;
+
     admin.profilePhoto = uploadResponse.url;
     admin.profilePhotoFileId = uploadResponse.fileId;
     await admin.save();
+
+    // Only now delete the old image from ImageKit — the new one is already
+    // safely uploaded and saved.
+    if (oldFileId) {
+      try { await imagekit.deleteFile(oldFileId); } catch (_) {}
+    }
 
     logActivity({
       req,

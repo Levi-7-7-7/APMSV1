@@ -205,21 +205,6 @@ router.patch(
       }
 
       /* ─────────────────────────────────────
-       * DELETE OLD IMAGE FROM IMAGEKIT
-       * ───────────────────────────────────── */
-
-      if (student.profilePhotoFileId) {
-        try {
-          await imagekit.deleteFile(student.profilePhotoFileId);
-        } catch (deleteErr) {
-          console.error(
-            'Failed to delete old ImageKit file:',
-            deleteErr.message,
-          );
-        }
-      }
-
-      /* ─────────────────────────────────────
        * CREATE FILE NAME
        * ───────────────────────────────────── */
 
@@ -230,10 +215,15 @@ router.patch(
         `profile_${Date.now()}${extension}`;
 
       /* ─────────────────────────────────────
-       * UPLOAD TO IMAGEKIT
+       * UPLOAD NEW IMAGE TO IMAGEKIT FIRST
        * Goes into the student's own certificate folder
        * (/certificates/{branch}/{batch}/{studentName}) instead of a
        * separate flat folder, so each student only ever needs one folder.
+       *
+       * Uploaded BEFORE the old photo is touched — same safe ordering as
+       * certificate re-upload — so if this fails (network blip, ImageKit
+       * outage, etc.) the student keeps their existing photo instead of
+       * losing it.
        * ───────────────────────────────────── */
 
       const folderPath = buildStudentCertFolder(student.branch?.name, student.batch?.name, student.name)
@@ -251,10 +241,30 @@ router.patch(
        * SAVE TO DB
        * ───────────────────────────────────── */
 
+      const oldFileId = student.profilePhotoFileId;
+
       student.profilePhoto = uploadResponse.url;
       student.profilePhotoFileId = uploadResponse.fileId;
 
       await student.save();
+
+      /* ─────────────────────────────────────
+       * DELETE OLD IMAGE FROM IMAGEKIT
+       * Only now, once the new photo is safely uploaded AND saved on the
+       * student record — so there's never a window where the old file is
+       * gone but the new one isn't fully in place yet.
+       * ───────────────────────────────────── */
+
+      if (oldFileId) {
+        try {
+          await imagekit.deleteFile(oldFileId);
+        } catch (deleteErr) {
+          console.error(
+            'Failed to delete old ImageKit file:',
+            deleteErr.message,
+          );
+        }
+      }
 
       logActivity({
         req,
