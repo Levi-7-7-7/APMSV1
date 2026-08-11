@@ -66,6 +66,15 @@
   color: var(--slate-500);
 }
 
+/* Secondary line under the capped total — only rendered when the raw sum
+   and the capped sum actually differ, so a student whose points are
+   already under every cap never sees a redundant "0 trimmed" line. */
+.points-summary .raw-points-note {
+  font-size: 0.75rem;
+  color: var(--slate-400);
+  font-weight: 500;
+}
+
 /* ===================== FILTERS ===================== */
 .filters {
   display: flex;
