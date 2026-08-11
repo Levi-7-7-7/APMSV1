@@ -4,9 +4,15 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { registerServiceWorkerForInstallability } from './utils/pushNotifications';
+import { initAutoFullscreenOnFirstClick } from './utils/autoFullscreen';
 import './css/theme.css';
 import './css/CertModal.css';
 import './css/modern.css';
+
+// PC only: goes fullscreen (like F11) on the first click/keypress after the
+// page loads. Browsers block auto-fullscreen on page load itself, so this
+// is the closest real equivalent — see utils/autoFullscreen.js.
+initAutoFullscreenOnFirstClick();
 
 // Registers the SW immediately on load, decoupled from notification
 // permission — this is what makes the app installable on Android/Chrome

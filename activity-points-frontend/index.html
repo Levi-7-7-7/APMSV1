@@ -7,7 +7,27 @@
     <link rel="icon" type="image/png" href="/icon-512.png" />
 
     <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="/manifest.json" id="app-manifest-link" />
+    <script>
+      // PC only: swap in the desktop manifest (display: "fullscreen") before
+      // the browser evaluates install-ability, so "Install App" on desktop
+      // opens without any browser chrome — closest thing to F11 for an
+      // installed app. Phones/tablets keep the standard "standalone"
+      // manifest. Mirrors the isDesktopDevice() heuristic in
+      // src/utils/deviceDetect.js — kept inline here since this must run
+      // before any JS module loads.
+      (function () {
+        try {
+          var hasFinePointer = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+          var isMobileUA = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent || '');
+          if (hasFinePointer && !isMobileUA) {
+            document.getElementById('app-manifest-link').setAttribute('href', '/manifest-desktop.json');
+          }
+        } catch (e) {
+          // Fall back to the default manifest.json — never block page load over this.
+        }
+      })();
+    </script>
 
     <!-- Theme color for mobile browsers -->
     <meta name="theme-color" content="#ffffff" />
