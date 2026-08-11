@@ -20,6 +20,19 @@ function clampCrop(rect, stage, minSize = MIN_CROP_SIZE) {
   };
 }
 
+// Largest box of the given w/h ratio that fits inside the stage, centered.
+// Used for a WhatsApp-style fixed frame: the frame itself never moves or
+// resizes — only the photo underneath is dragged/zoomed into place.
+function aspectCrop(stage, ratio) {
+  let w = stage.w;
+  let h = w / ratio;
+  if (h > stage.h) {
+    h = stage.h;
+    w = h * ratio;
+  }
+  return clampCrop({ x: (stage.w - w) / 2, y: (stage.h - h) / 2, w, h }, stage, 1);
+}
+
 export default function ImageCropModal({
   file,
   busy = false,
@@ -29,6 +42,11 @@ export default function ImageCropModal({
   title = 'Crop image',
   subtitle = 'Drag the image, move the crop area, or grab a corner to resize it.',
   shape = 'rectangle',
+  // When set, the crop frame is locked to this width/height ratio (e.g. 1
+  // for a square) and can't be moved or resized — only the photo behind it
+  // can be dragged/zoomed, same as WhatsApp's profile photo picker. Leave
+  // null for the original free-form crop box (used for certificates/tickets).
+  aspectRatio = null,
   maxStageW = 320,
   maxStageH = 320,
   maxOutputLongSide = 1600,
@@ -36,6 +54,7 @@ export default function ImageCropModal({
   outputQuality = 0.92,
   outputName = 'cropped.jpg',
 }) {
+  const lockCropBox = Boolean(aspectRatio);
   const [imgUrl, setImgUrl] = useState(null);
   const [imgSize, setImgSize] = useState(null);
   const [stage, setStage] = useState(null);
@@ -64,12 +83,14 @@ export default function ImageCropModal({
       const cover = Math.max(stageW / img.naturalWidth, stageH / img.naturalHeight);
       const dispW = img.naturalWidth * cover;
       const dispH = img.naturalHeight * cover;
-      const initialCrop = clampCrop({
-        x: stageW * 0.1,
-        y: stageH * 0.1,
-        w: stageW * 0.8,
-        h: stageH * 0.8,
-      }, { w: stageW, h: stageH });
+      const initialCrop = lockCropBox
+        ? aspectCrop({ w: stageW, h: stageH }, aspectRatio)
+        : clampCrop({
+            x: stageW * 0.1,
+            y: stageH * 0.1,
+            w: stageW * 0.8,
+            h: stageH * 0.8,
+          }, { w: stageW, h: stageH });
 
       setImgSize({ w: img.naturalWidth, h: img.naturalHeight });
       setStage({ w: stageW, h: stageH });
@@ -81,7 +102,7 @@ export default function ImageCropModal({
     };
     img.src = url;
     return () => URL.revokeObjectURL(url);
-  }, [file, maxStageW, maxStageH]);
+  }, [file, maxStageW, maxStageH, lockCropBox, aspectRatio]);
 
   const scale = baseScale * zoom;
 
@@ -185,12 +206,14 @@ export default function ImageCropModal({
 
   const resetCrop = () => {
     if (!stage || !imgSize) return;
-    const initial = clampCrop({
-      x: stage.w * 0.1,
-      y: stage.h * 0.1,
-      w: stage.w * 0.8,
-      h: stage.h * 0.8,
-    }, stage);
+    const initial = lockCropBox
+      ? aspectCrop(stage, aspectRatio)
+      : clampCrop({
+          x: stage.w * 0.1,
+          y: stage.h * 0.1,
+          w: stage.w * 0.8,
+          h: stage.h * 0.8,
+        }, stage);
     const s = baseScale;
     const dispW = imgSize.w * s;
     const dispH = imgSize.h * s;
@@ -283,13 +306,16 @@ export default function ImageCropModal({
 
           {crop && (
             <div
-              className={`imc-crop-box ${shape === 'circle' ? 'imc-crop-circle-preview' : ''}`}
+              className={`imc-crop-box ${shape === 'circle' ? 'imc-crop-circle-preview' : ''} ${lockCropBox ? 'imc-crop-box-fixed' : ''}`}
               style={{ left: crop.x, top: crop.y, width: crop.w, height: crop.h }}
-              onPointerDown={handleCropPointerDown}
+              // When the frame is locked (fixed ratio), it doesn't get its own
+              // drag handler — pointer events fall through to the stage so
+              // dragging always moves the photo, never the frame.
+              onPointerDown={lockCropBox ? undefined : handleCropPointerDown}
             >
               <div className="imc-shade" />
               <div className="imc-grid" />
-              {corners.map(corner => (
+              {!lockCropBox && corners.map(corner => (
                 <button
                   key={corner}
                   type="button"
@@ -303,9 +329,18 @@ export default function ImageCropModal({
         </div>
 
         <div className="imc-help-row">
-          <span>↔ Drag image</span>
-          <span>↙ Drag corners</span>
-          <span>⊙ Move crop</span>
+          {lockCropBox ? (
+            <>
+              <span>↔ Drag photo to reposition</span>
+              <span>🔍 Zoom to fit the frame</span>
+            </>
+          ) : (
+            <>
+              <span>↔ Drag image</span>
+              <span>↙ Drag corners</span>
+              <span>⊙ Move crop</span>
+            </>
+          )}
         </div>
 
         <div className="imc-zoom-row">

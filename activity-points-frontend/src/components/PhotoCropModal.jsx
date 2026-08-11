@@ -7,11 +7,12 @@ export default function PhotoCropModal(props) {
       {...props}
       busy={props.busy ?? props.uploading ?? false}
       title="Crop profile photo"
-      subtitle="Drag the image, move the crop area, or grab any corner to frame your photo exactly how you want."
+      subtitle="Drag or zoom your photo to fit the frame. Every profile photo is saved in the same fixed square, so photos stay consistent across the app."
       shape="rectangle"
+      aspectRatio={1}
       maxStageW={300}
       maxStageH={300}
-      maxOutputLongSide={600}
+      outputSize={480}
       outputQuality={0.9}
       outputName="profile.jpg"
     />
