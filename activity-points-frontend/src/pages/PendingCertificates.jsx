@@ -136,20 +136,40 @@ const PendingCertificates = () => {
   // "All students" navigation afterwards.
   useEffect(() => {
     const studentIdParam = searchParams.get('studentId');
-    if (!studentIdParam || loading) return;
-    const exists = studentGroups.some(g => (g.student?._id || g.student) === studentIdParam);
-    if (exists) setSelectedStudentId(studentIdParam);
-
     const certIdParam = searchParams.get('certId');
+
+    if ((!studentIdParam && !certIdParam) || loading) return;
+
+    // The certificate id is the authoritative target. If an older push
+    // notification (or a stale link) has a missing/wrong studentId, derive
+    // the student from the freshly fetched certificate list instead of
+    // silently falling back to the generic student list.
+    let targetStudentId = studentIdParam;
+    if (certIdParam) {
+      const targetCert = pendingCerts.find(c => String(c._id) === String(certIdParam));
+      const certStudentId = targetCert?.student?._id || targetCert?.student;
+      if (certStudentId) targetStudentId = String(certStudentId);
+    }
+
+    if (targetStudentId) {
+      const exists = studentGroups.some(
+        g => String(g.student?._id || g.student) === String(targetStudentId)
+      );
+      if (exists) setSelectedStudentId(targetStudentId);
+    }
+
     if (certIdParam) {
       setHighlightedCertId(certIdParam);
     }
 
+    // Consume the deep-link only after the fresh data has been loaded and
+    // the target has been resolved. The selected state above survives the
+    // query-string cleanup.
     setSearchParams({}, { replace: true });
     // Scrolling is handled after selectedStudentId has rendered its actual
     // certificate cards below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, studentGroups]);
+  }, [loading, studentGroups, pendingCerts, searchParams, setSearchParams]);
 
   // Once the notification-selected student is rendered, wait for the card
   // to exist before scrolling. This fixes the race introduced by the
@@ -157,17 +177,25 @@ const PendingCertificates = () => {
   useEffect(() => {
     if (!highlightedCertId || !selectedStudentId || loading) return;
     let attempts = 0;
+    let rafId;
+    let timeoutId;
     const scrollToCard = () => {
       const el = document.getElementById(`pending-card-${highlightedCertId}`);
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // The grouped queue is rendered after selectedStudentId changes, so
+        // only scroll once the exact certificate card exists in the DOM.
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
         return;
       }
-      if (++attempts < 20) setTimeout(scrollToCard, 100);
+      if (++attempts < 30) {
+        rafId = requestAnimationFrame(() => {
+          timeoutId = setTimeout(scrollToCard, 80);
+        });
+      }
     };
     const t = setTimeout(scrollToCard, 50);
     const clearHighlight = setTimeout(() => setHighlightedCertId(null), 4000);
-    return () => { clearTimeout(t); clearTimeout(clearHighlight); };
+    return () => { cancelAnimationFrame(rafId); clearTimeout(timeoutId); clearTimeout(t); clearTimeout(clearHighlight); };
   }, [highlightedCertId, selectedStudentId, loading]);
 
   const selectedGroup = selectedStudentId

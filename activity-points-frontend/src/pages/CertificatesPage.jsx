@@ -128,17 +128,26 @@ export default function CertificatesPage() {
     // short window instead of assuming 150ms is enough, especially when the
     // notification opened the page from a cached/remounted dashboard.
     let attempts = 0;
+    let rafId;
+    let timeoutId;
     const scrollToCard = () => {
       const el = document.getElementById(`cert-card-${certId}`);
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // The certificate list is inside the page's own scroll container.
+        // scrollIntoView is used only after the filtered card is actually
+        // mounted, so a notification never lands on the wrong card/position.
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
         return;
       }
-      if (++attempts < 20) setTimeout(scrollToCard, 100);
+      if (++attempts < 30) {
+        rafId = requestAnimationFrame(() => {
+          timeoutId = setTimeout(scrollToCard, 80);
+        });
+      }
     };
     const t = setTimeout(scrollToCard, 50);
     const clearHighlight = setTimeout(() => setHighlightedCertId(null), 4000);
-    return () => { clearTimeout(t); clearTimeout(clearHighlight); };
+    return () => { cancelAnimationFrame(rafId); clearTimeout(timeoutId); clearTimeout(t); clearTimeout(clearHighlight); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, certificates.length]);
 
