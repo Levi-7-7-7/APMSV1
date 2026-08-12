@@ -69,14 +69,15 @@ body, html {
 }
 
 .auth-brand-crest {
-  width: 44px;
-  height: 44px;
+  width: 68px;
+  height: 68px;
   border-radius: 12px;
   object-fit: cover;
   background: rgba(255,255,255,.12);
   padding: 6px;
   box-shadow: 0 8px 20px rgba(0,0,0,.25);
-  margin-bottom: 1.1rem;
+  margin: 0 auto 1.1rem;
+  display: block;
 }
 
 .auth-brand-eyebrow {
@@ -511,6 +512,7 @@ body, html {
    still stacked above the card (not yet side-by-side). */
 @media (min-width: 640px) {
   .auth-brand { padding: 3.5rem 2.5rem 6.5rem; text-align: center; }
+  .auth-brand-crest { margin: 0 auto 1.25rem; }
   .auth-brand-content { max-width: 520px; }
   .auth-brand-title { font-size: 2rem; }
   .auth-panel { margin-top: -4.25rem; }
@@ -557,6 +559,11 @@ body, html {
   }
 
   .auth-brand-content { max-width: 440px; margin: 0; }
+  .auth-brand-crest {
+    width: 92px;
+    height: 92px;
+    margin: 0 0 1.35rem;
+  }
   .auth-brand-title { font-size: 2.3rem; }
 
   .auth-badges { justify-content: flex-start; }
