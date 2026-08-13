@@ -161,18 +161,6 @@ export default function PointsExplained() {
           </div>
         </div>
 
-        <div className="pex-rule">
-          <div className="pex-rule-icon"><Trophy size={18} /></div>
-          <div>
-            <p className="pex-rule-title">Arts, Sports &amp; Games: highest award only</p>
-            <p className="pex-rule-body">
-              Points for participation and points for winning a position <strong>can't be
-              added together</strong> — only your single best-scoring certificate in these
-              categories counts. Submitting five certificates doesn't multiply the total;
-              it just gives the calculation five chances to find your best one.
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* ---------- Personalized breakdown ---------- */}
